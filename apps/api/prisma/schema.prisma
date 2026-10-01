@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────
+// Enums
+// ──────────────────────────────────────────────
+
+enum SkinType {
+  OILY
+  DRY
+  COMBINATION
+  NORMAL
+  SENSITIVE
+}
+
+enum ScanStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ProductCategory {
+  CLEANSER
+  TONER
+  SERUM
+  MOISTURIZER
+  SPF
+  TREATMENT
+  MASK
+  EYE_CREAM
+}
+
+enum SkinConcern {
+  ACNE
+  REDNESS
+  PIGMENTATION
+  DRYNESS
+  FINE_LINES
+  OILINESS
+  SENSITIVITY
+  TEXTURE
+}
+
+enum PriceTier {
+  BUDGET
+  MID
+  PREMIUM
+}
+
+// ──────────────────────────────────────────────
+// Models
+// ──────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  supabaseId    String    @unique
+  email         String    @unique
+  skinType      SkinType?
+  fitzpatrick   Int?      // Fitzpatrick scale: 1-6
+  birthYear     Int?
+  ageRange      String?   // TEENS, TWENTIES, etc.
+  concerns      String[]  // top 3 concerns
+  allergies     String[]  // Ingredient names the user is allergic to
+  isPregnant    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  scans         Scan[]
+  routines      Routine[]
+
+  @@index([supabaseId])
+}
+
+model Scan {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        ScanStatus  @default(PENDING)
+  imageKeys     String[]    // S3 object keys for uploaded images
+  questionnaire Json        // Structured quiz responses (validated by Zod at app layer)
+  createdAt     DateTime    @default(now())
+
+  result        ScanResult?
+
+  @@index([userId])
+  @@index([status])
+}
+
+model ScanResult {
+  id                String    @id @default(cuid())
+  scanId            String    @unique
+  scan              Scan      @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  version           Int       @default(1)
+  skinHealthScore   Int       // 0-100 overall score
+  zoneScores        Json      // { forehead: { acne: 45, redness: 20, ... }, ... }
+  findings          Json      // Finding[] -- individual detected concerns
+  metadata          Json      // Extensible: barrier score, skin age, etc. (added in later phases)
+  modelVersion      String    // Identifies which model/version produced this result
+  processingTimeMs  Int       // How long inference took in milliseconds
+  createdAt         DateTime  @default(now())
+}
+
+model Product {
+  id                String          @id @default(cuid())
+  name              String
+  brand             String
+  category          ProductCategory
+  skinTypes         SkinType[]
+  concerns          SkinConcern[]
+  ingredients       String[]        // Full INCI ingredient list
+  activeIngredients Json            // { name: string, concentration?: string }[]
+  priceTier         PriceTier
+  imageUrl          String?
+  purchaseUrl       String?
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([category])
+  @@index([brand])
+}
+
+model Routine {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scanResultId  String
+  version       Int       @default(1)
+  amSteps       Json      // RoutineStep[] -- morning routine
+  pmSteps       Json      // RoutineStep[] -- evening routine
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model AdherenceLog {
+  id          String    @id @default(cuid())
+  userId      String
+  routineId   String
+  date        DateTime  @db.Date
+  amCompleted Boolean   @default(false)
+  pmCompleted Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, routineId, date])
+  @@index([userId])
+}
