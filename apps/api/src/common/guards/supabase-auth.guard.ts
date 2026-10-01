@@ -33,6 +33,15 @@ export class SupabaseAuthGuard implements CanActivate {
 
     const token = authHeader.slice(7);
 
+    // Development / Test mock token bypass
+    if (
+      process.env["NODE_ENV"] !== "production" &&
+      (token === "mock-dev-token" || token === "dev-token" || token.startsWith("test-"))
+    ) {
+      request.supabaseId = "test-supabase-id-000";
+      return true;
+    }
+
     const {
       data: { user },
       error,
