@@ -59,21 +59,28 @@ enum PriceTier {
 // ──────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(cuid())
-  supabaseId    String    @unique
-  email         String    @unique
-  skinType      SkinType?
-  fitzpatrick   Int?      // Fitzpatrick scale: 1-6
-  birthYear     Int?
-  ageRange      String?   // TEENS, TWENTIES, etc.
-  concerns      String[]  // top 3 concerns
-  allergies     String[]  // Ingredient names the user is allergic to
-  isPregnant    Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                        String    @id @default(cuid())
+  supabaseId                String    @unique
+  email                     String    @unique
+  skinType                  SkinType?
+  fitzpatrick               Int?      // Fitzpatrick scale: 1-6
+  birthYear                 Int?
+  ageRange                  String?   // TEENS, TWENTIES, etc.
+  concerns                  String[]  // top 3 concerns
+  allergies                 String[]  // Ingredient names the user is allergic to
+  isPregnant                Boolean   @default(false)
+  disclaimerAcknowledgedAt  DateTime?
+  disclaimerVersion         Int?
+  amReminderEnabled         Boolean   @default(true)
+  pmReminderEnabled         Boolean   @default(true)
+  scanReminderEnabled       Boolean   @default(true)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 
-  scans         Scan[]
-  routines      Routine[]
+  scans                     Scan[]
+  routines                  Routine[]
+  adherenceLogs             AdherenceLog[]
+  feedbacks                 Feedback[]
 
   @@index([supabaseId])
 }
@@ -143,6 +150,7 @@ model Routine {
 model AdherenceLog {
   id          String    @id @default(cuid())
   userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   routineId   String
   date        DateTime  @db.Date
   amCompleted Boolean   @default(false)
@@ -152,3 +160,21 @@ model AdherenceLog {
   @@unique([userId, routineId, date])
   @@index([userId])
 }
+
+model Feedback {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String    // "feedback" | "bug"
+  content       String
+  screenshotUrl String?
+  appVersion    String?
+  osVersion     String?
+  deviceModel   String?
+  logs          String?
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([type])
+}
+

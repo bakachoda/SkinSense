@@ -104,6 +104,57 @@ export const apiClient = {
     });
   },
 
+  async acknowledgeDisclaimer(version = 1): Promise<{ acknowledged: boolean }> {
+    return request<{ acknowledged: boolean }>("/profile/disclaimer", {
+      method: "POST",
+      body: JSON.stringify({ version }),
+    });
+  },
+
+  async updateNotifications(prefs: {
+    amReminderEnabled?: boolean;
+    pmReminderEnabled?: boolean;
+    scanReminderEnabled?: boolean;
+  }): Promise<{ user: any }> {
+    return request<{ user: any }>("/profile/notifications", {
+      method: "PATCH",
+      body: JSON.stringify(prefs),
+    });
+  },
+
+  async exportUserData(): Promise<{ export: any }> {
+    return request<{ export: any }>("/profile/export", {
+      method: "POST",
+    });
+  },
+
+  async deleteUserData(): Promise<{ success: boolean; message: string }> {
+    return request<{ success: boolean; message: string }>("/profile/data", {
+      method: "DELETE",
+    });
+  },
+
+  async deleteAccount(): Promise<{ success: boolean; message: string }> {
+    return request<{ success: boolean; message: string }>("/profile/account", {
+      method: "DELETE",
+    });
+  },
+
+  async submitFeedback(data: {
+    type: "feedback" | "bug";
+    content: string;
+    screenshotUrl?: string;
+    appVersion?: string;
+    osVersion?: string;
+    deviceModel?: string;
+    logs?: string;
+  }): Promise<{ feedback: any; success: boolean }> {
+    return request<{ feedback: any; success: boolean }>("/feedback", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
   createScanSocket(scanId: string): Socket {
     const socket = io(SOCKET_BASE_URL, {
       transports: ["websocket", "polling"],
@@ -117,3 +168,4 @@ export const apiClient = {
     return socket;
   },
 };
+

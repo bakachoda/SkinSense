@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   CheckCircle2,
 } from "lucide-react-native";
+import { NoScansEmptyState } from "../../components/EmptyStates";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -167,10 +168,7 @@ export default function HomeScreen() {
           {loading ? (
             <ActivityIndicator size="small" color="#10B981" style={{ marginVertical: 20 }} />
           ) : scans.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>No scans recorded yet.</Text>
-              <Text style={styles.emptySub}>Capture your first photo to unlock tracking.</Text>
-            </View>
+            <NoScansEmptyState onTakeScan={() => router.push("/(tabs)/scan")} />
           ) : (
             <View style={styles.historyList}>
               {scans.map((scan, idx) => {

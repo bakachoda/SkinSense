@@ -8,6 +8,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { ArrowDown, ArrowUp, Minus, Calendar, GitCompare } from "lucide-react-native";
+import { NoProgressEmptyState } from "../../components/EmptyStates";
 
 interface ScanComparison {
   zone: string;
@@ -47,8 +48,12 @@ export default function ProgressScreen() {
           </Text>
         </View>
 
-        {/* Side-by-side Scans Cards */}
-        <View style={styles.compareHeroCard}>
+        {comparisons.length === 0 ? (
+          <NoProgressEmptyState />
+        ) : (
+          <>
+            {/* Side-by-side Scans Cards */}
+            <View style={styles.compareHeroCard}>
           <View style={styles.scanCol}>
             <Text style={styles.scanBadge}>Baseline</Text>
             <View style={styles.dateRow}>
@@ -138,6 +143,8 @@ export default function ProgressScreen() {
             </View>
           ))}
         </View>
+      </>
+    )}
       </ScrollView>
     </SafeAreaView>
   );

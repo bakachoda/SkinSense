@@ -12,6 +12,7 @@ import { QueueModule } from "./queue/queue.module";
 import { HealthModule } from "./health/health.module";
 import { AdherenceModule } from "./adherence/adherence.module";
 import { GatewayModule } from "./gateway/gateway.module";
+import { FeedbackModule } from "./feedback/feedback.module";
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 
@@ -35,6 +36,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     QueueModule,
     HealthModule,
     AdherenceModule,
+    FeedbackModule,
   ],
   providers: [
     {

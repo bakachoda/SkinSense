@@ -238,7 +238,7 @@ export const ScanJobPayloadSchema = z.object({
 export type ScanJobPayload = z.infer<typeof ScanJobPayloadSchema>;
 
 // ──────────────────────────────────────────────
-// User Profile (Phase 1, Section 8.5)
+// User Profile & Phase 2 Settings (Phase 2, Sections 1 & 5)
 // ──────────────────────────────────────────────
 
 export const UserProfileSchema = z.object({
@@ -251,11 +251,43 @@ export const UserProfileSchema = z.object({
   birthYear: z.number().int().min(1920).max(2015).nullable().optional(),
   allergies: z.array(z.string()),
   isPregnant: z.boolean(),
+  disclaimerAcknowledgedAt: z.string().datetime().nullable().optional(),
+  disclaimerVersion: z.number().int().nullable().optional(),
+  amReminderEnabled: z.boolean().default(true),
+  pmReminderEnabled: z.boolean().default(true),
+  scanReminderEnabled: z.boolean().default(true),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 
-export const UpdateProfileSchema = QuestionnaireSchema.partial();
+export const UpdateProfileSchema = QuestionnaireSchema.partial().extend({
+  amReminderEnabled: z.boolean().optional(),
+  pmReminderEnabled: z.boolean().optional(),
+  scanReminderEnabled: z.boolean().optional(),
+});
 export type UpdateProfile = z.infer<typeof UpdateProfileSchema>;
+
+export const AcknowledgeDisclaimerSchema = z.object({
+  version: z.number().int().default(1),
+});
+export type AcknowledgeDisclaimer = z.infer<typeof AcknowledgeDisclaimerSchema>;
+
+export const NotificationPreferencesSchema = z.object({
+  amReminderEnabled: z.boolean(),
+  pmReminderEnabled: z.boolean(),
+  scanReminderEnabled: z.boolean(),
+});
+export type NotificationPreferences = z.infer<typeof NotificationPreferencesSchema>;
+
+export const CreateFeedbackSchema = z.object({
+  type: z.enum(["feedback", "bug"]).default("feedback"),
+  content: z.string().min(10, "Content must be at least 10 characters"),
+  screenshotUrl: z.string().optional(),
+  appVersion: z.string().optional(),
+  osVersion: z.string().optional(),
+  deviceModel: z.string().optional(),
+  logs: z.string().optional(),
+});
+export type CreateFeedback = z.infer<typeof CreateFeedbackSchema>;
 
 // ──────────────────────────────────────────────
 // Presigned Upload (Phase 1, Section 8.1)

@@ -25,7 +25,12 @@ import {
   ChevronRight,
   ShieldCheck,
   AlertCircle,
+  Lightbulb,
+  HelpCircle,
 } from "lucide-react-native";
+import { CircularProgressRing, AnalysisProgress } from "../../components/LoadingStates";
+import { MedicalDisclaimerFooter } from "../../components/MedicalDisclaimerFooter";
+
 
 const { width } = Dimensions.get("window");
 
@@ -45,6 +50,11 @@ export default function ScanScreen() {
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [routine, setRoutine] = useState<Routine | null>(null);
   const [activeRoutineTab, setActiveRoutineTab] = useState<"AM" | "PM">("AM");
+  const [serverStage, setServerStage] = useState<string>("segmentation");
+  const [lightingWarning, setLightingWarning] = useState<string | null>(null);
+  const [canBypassLighting, setCanBypassLighting] = useState<boolean>(false);
+  const [showBlurAlert, setShowBlurAlert] = useState<boolean>(false);
+
 
   const cameraRef = useRef<any>(null);
 
@@ -88,6 +98,9 @@ export default function ScanScreen() {
       socket.on("scan:progress", (event: any) => {
         if (event.progress) {
           setProgressPercent(Math.round(event.progress * 100));
+        }
+        if (event.stage) {
+          setServerStage(event.stage);
         }
         if (event.stage === "segmentation") {
           setProgressStage("Segmenting facial zones (forehead, cheeks, chin)...");
@@ -182,6 +195,18 @@ export default function ScanScreen() {
           <View style={[styles.feedbackBadge, isFaceReady && styles.feedbackBadgeReady]}>
             <Text style={styles.feedbackText}>{framingStatus}</Text>
           </View>
+          {lightingWarning && (
+            <View style={styles.lightingWarningBanner}>
+              <Lightbulb size={16} color="#f59e0b" style={{ marginRight: 6 }} />
+              <Text style={styles.lightingWarningText}>{lightingWarning}</Text>
+              <TouchableOpacity
+                onPress={() => setLightingWarning(null)}
+                style={styles.bypassLink}
+              >
+                <Text style={styles.bypassLinkText}>Take Photo Anyway</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </SafeAreaView>
 
         {/* Bottom Shutter Controls */}
@@ -197,41 +222,66 @@ export default function ScanScreen() {
             {isFaceReady ? "Tap to capture & analyze" : "Align face in oval"}
           </Text>
         </SafeAreaView>
+
+        {/* Modal: Photo Too Blurry Check */}
+        {showBlurAlert && (
+          <View style={styles.blurModalOverlay}>
+            <View style={styles.blurModalCard}>
+              <AlertCircle size={36} color="#f59e0b" style={{ marginBottom: 12 }} />
+              <Text style={styles.blurModalTitle}>Photo Looks Blurry</Text>
+              <Text style={styles.blurModalText}>
+                For the best results, hold your phone steady and make sure your face is in focus.
+              </Text>
+              <View style={styles.blurModalActions}>
+                <TouchableOpacity
+                  style={styles.blurSecondaryBtn}
+                  onPress={() => {
+                    setShowBlurAlert(false);
+                    handleCapture();
+                  }}
+                >
+                  <Text style={styles.blurSecondaryText}>Use Anyway</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.blurPrimaryBtn}
+                  onPress={() => setShowBlurAlert(false)}
+                >
+                  <Text style={styles.blurPrimaryText}>Retake</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
     );
   }
 
   // ==========================================
-  // RENDER: UPLOADING & PROGRESS VIEW
+  // RENDER: UPLOADING VIEW (Circular Ring)
   // ==========================================
-  if (stage === "UPLOADING" || stage === "ANALYZING") {
+  if (stage === "UPLOADING") {
     return (
       <SafeAreaView style={styles.progressContainer}>
         <View style={styles.progressCard}>
-          <ActivityIndicator size="large" color="#10B981" />
-          <Text style={styles.progressTitle}>SkinSense AI</Text>
-          <Text style={styles.progressSub}>{progressStage}</Text>
+          <CircularProgressRing progress={progressPercent} label={progressStage} />
+          <Text style={styles.progressSub}>S3 Secure TLS Upload Active</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-          {/* Progress Bar */}
-          <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
-          </View>
-          <Text style={styles.progressPercentText}>{progressPercent}% complete</Text>
-
-          <View style={styles.pipelineSteps}>
-            <Text style={progressPercent >= 25 ? styles.stepDone : styles.stepWait}>
-              ✓ Image quality validation
-            </Text>
-            <Text style={progressPercent >= 50 ? styles.stepDone : styles.stepWait}>
-              {progressPercent >= 50 ? "✓" : "○"} Facial landmark segmentation
-            </Text>
-            <Text style={progressPercent >= 75 ? styles.stepDone : styles.stepWait}>
-              {progressPercent >= 75 ? "✓" : "○"} Deep concern detection & scoring
-            </Text>
-            <Text style={progressPercent >= 90 ? styles.stepDone : styles.stepWait}>
-              {progressPercent >= 90 ? "✓" : "○"} Conflict-free routine formulation
-            </Text>
-          </View>
+  // ==========================================
+  // RENDER: ANALYZING VIEW (3-Stage Animation)
+  // ==========================================
+  if (stage === "ANALYZING") {
+    return (
+      <SafeAreaView style={styles.progressContainer}>
+        <View style={styles.progressCard}>
+          <AnalysisProgress
+            serverStage={serverStage}
+            onTimeoutWait={() => {}}
+            onTimeoutHome={() => setStage("CAMERA")}
+          />
         </View>
       </SafeAreaView>
     );
@@ -389,6 +439,7 @@ export default function ScanScreen() {
           <Text style={styles.retakeScanText}>Take Another Scan</Text>
         </TouchableOpacity>
       </ScrollView>
+      <MedicalDisclaimerFooter bottomOffset={8} />
     </SafeAreaView>
   );
 }
@@ -797,5 +848,93 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
+  },
+  lightingWarningBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(15, 23, 42, 0.9)",
+    borderWidth: 1,
+    borderColor: "#f59e0b",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 8,
+  },
+  lightingWarningText: {
+    color: "#fef3c7",
+    fontSize: 12,
+    flex: 1,
+  },
+  bypassLink: {
+    marginLeft: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: "#334155",
+    borderRadius: 6,
+  },
+  bypassLinkText: {
+    color: "#38bdf8",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  blurModalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+    zIndex: 100,
+  },
+  blurModalCard: {
+    backgroundColor: "#1e293b",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    width: "100%",
+    maxWidth: 360,
+    borderWidth: 1,
+    borderColor: "#334155",
+  },
+  blurModalTitle: {
+    color: "#f8fafc",
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  blurModalText: {
+    color: "#94a3b8",
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: 20,
+  },
+  blurModalActions: {
+    flexDirection: "row",
+    gap: 12,
+    width: "100%",
+  },
+  blurSecondaryBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: "#334155",
+    alignItems: "center",
+  },
+  blurSecondaryText: {
+    color: "#f8fafc",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  blurPrimaryBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: "#06b6d4",
+    alignItems: "center",
+  },
+  blurPrimaryText: {
+    color: "#0f172a",
+    fontWeight: "700",
+    fontSize: 14,
   },
 });
