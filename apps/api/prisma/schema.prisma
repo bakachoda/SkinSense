@@ -86,18 +86,35 @@ model User {
 }
 
 model Scan {
-  id            String      @id @default(cuid())
-  userId        String
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status        ScanStatus  @default(PENDING)
-  imageKeys     String[]    // S3 object keys for uploaded images
-  questionnaire Json        // Structured quiz responses (validated by Zod at app layer)
-  createdAt     DateTime    @default(now())
+  id                 String          @id @default(cuid())
+  userId             String
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status             ScanStatus      @default(PENDING)
+  imageKeys          String[]        // S3 object keys for uploaded images
+  questionnaire      Json            // Structured quiz responses (validated by Zod at app layer)
+  captureMode        String?         // 'audio_guided', 'mirror', 'assisted', 'front_camera'
+  calibrationKey     String?         // S3 key for white reference frame
+  frameCount         Int?            // total frames uploaded
+  environmentScore   String?         // 'green', 'yellow', 'red'
+  physiologicalState Json?           // { exercised: bool, hotShower: bool }
+  createdAt          DateTime        @default(now())
 
-  result        ScanResult?
+  result             ScanResult?
+  selfAssessment     SelfAssessment?
 
   @@index([userId])
   @@index([status])
+}
+
+model SelfAssessment {
+  id          String   @id @default(cuid())
+  scanId      String   @unique
+  scan        Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  selections  Json     // { zone: string, concerns: string[] }[]
+  spotMarkers Json     // SpotMarker[]
+  createdAt   DateTime @default(now())
+
+  @@index([scanId])
 }
 
 model ScanResult {
@@ -108,6 +125,9 @@ model ScanResult {
   skinHealthScore   Int       // 0-100 overall score
   zoneScores        Json      // { forehead: { acne: 45, redness: 20, ... }, ... }
   findings          Json      // Finding[] -- individual detected concerns
+  oilinessMap       Json?     // per-zone oiliness scores from specular analysis
+  zoneCoverage      Json?     // per-zone coverage confidence 0-1
+  scaleFactorMm     Float?    // pixels per mm at capture distance
   metadata          Json      // Extensible: barrier score, skin age, etc. (added in later phases)
   modelVersion      String    // Identifies which model/version produced this result
   processingTimeMs  Int       // How long inference took in milliseconds

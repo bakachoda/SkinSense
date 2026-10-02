@@ -70,6 +70,10 @@ export const FindingSchema = z.object({
     })
     .optional(),
   description: z.string().optional(),
+  calibratedConfidence: z.enum(["HIGH", "MODERATE", "LOW"]).optional(),
+  source: z.enum(["ai_and_user", "ai_only", "user_only"]).optional(),
+  label: z.string().optional(),
+  reanalyze: z.boolean().optional(),
 });
 export type Finding = z.infer<typeof FindingSchema>;
 
@@ -84,7 +88,7 @@ export const ZoneScoreSchema = z.object({
 export type ZoneScore = z.infer<typeof ZoneScoreSchema>;
 
 // ──────────────────────────────────────────────
-// ScanResult (Phase 1, Section 3.4)
+// ScanResult (Phase 1, Section 3.4 & Phase 3, Section 13)
 // ──────────────────────────────────────────────
 
 export const ScanResultMetadataSchema = z
@@ -104,6 +108,9 @@ export const ScanResultSchema = z.object({
   skinHealthScore: z.number().min(0).max(100),
   zoneScores: z.record(z.string(), ZoneScoreSchema),
   findings: z.array(FindingSchema),
+  oilinessMap: z.record(z.string(), z.number()).optional(),
+  zoneCoverage: z.record(z.string(), z.number()).optional(),
+  scaleFactorMm: z.number().optional(),
   metadata: ScanResultMetadataSchema.default({
     modelVersion: "v1.0",
     processingTimeMs: 0,
@@ -215,6 +222,16 @@ export type ProductFilter = z.infer<typeof ProductFilterSchema>;
 export const CreateScanRequestSchema = z.object({
   imageKey: z.string().optional(),
   imageKeys: z.array(z.string()).optional(),
+  calibrationKey: z.string().optional(),
+  captureMode: z.string().optional(),
+  frameCount: z.number().optional(),
+  environmentScore: z.string().optional(),
+  physiologicalState: z
+    .object({
+      exercised: z.boolean(),
+      hotShower: z.boolean(),
+    })
+    .optional(),
   questionnaire: QuestionnaireSchema,
 });
 export type CreateScanRequest = z.infer<typeof CreateScanRequestSchema>;
@@ -231,7 +248,17 @@ export type CreateScanResponse = z.infer<typeof CreateScanResponseSchema>;
 export const ScanJobPayloadSchema = z.object({
   scanId: z.string(),
   userId: z.string(),
-  imageKey: z.string(),
+  imageKey: z.string().optional(),
+  imageKeys: z.array(z.string()).optional(),
+  calibrationKey: z.string().optional(),
+  captureMode: z.string().optional(),
+  environmentScore: z.string().optional(),
+  physiologicalState: z
+    .object({
+      exercised: z.boolean(),
+      hotShower: z.boolean(),
+    })
+    .optional(),
   questionnaire: QuestionnaireSchema,
   modelVersion: z.string().default("v1.0"),
 });

@@ -7,6 +7,9 @@ import type {
   Questionnaire,
   ProductCard,
   CreateAdherenceLog,
+  CreateScanRequest,
+  CreateSelfAssessment,
+  SelfAssessment,
 } from "@skinsense/types";
 import { useAuthStore } from "../stores/auth";
 
@@ -49,19 +52,40 @@ export const apiClient = {
     });
   },
 
-  async createScan(imageKey: string, questionnaire: Questionnaire): Promise<CreateScanResponse> {
+  async createScan(
+    payloadOrKey: string | CreateScanRequest,
+    questionnaire?: Questionnaire,
+  ): Promise<CreateScanResponse> {
+    const body =
+      typeof payloadOrKey === "string"
+        ? { imageKey: payloadOrKey, questionnaire }
+        : payloadOrKey;
+
     return request<CreateScanResponse>("/scans", {
       method: "POST",
-      body: JSON.stringify({ imageKey, questionnaire }),
+      body: JSON.stringify(body),
     });
   },
 
-  async getScan(id: string): Promise<{ scan: any; result?: ScanResult }> {
-    return request<{ scan: any; result?: ScanResult }>(`/scans/${id}`);
+  async submitSelfAssessment(
+    scanId: string,
+    data: CreateSelfAssessment,
+  ): Promise<{ selfAssessment: SelfAssessment; findings?: any }> {
+    return request<{ selfAssessment: SelfAssessment; findings?: any }>(
+      `/scans/${scanId}/self-assessment`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    );
   },
 
-  async getScanResult(scanId: string): Promise<{ result: ScanResult }> {
-    return request<{ result: ScanResult }>(`/scans/${scanId}/result`);
+  async getScan(id: string): Promise<{ scan: any; result?: ScanResult; selfAssessment?: SelfAssessment }> {
+    return request<{ scan: any; result?: ScanResult; selfAssessment?: SelfAssessment }>(`/scans/${id}`);
+  },
+
+  async getScanResult(scanId: string): Promise<{ result: ScanResult; selfAssessment?: SelfAssessment }> {
+    return request<{ result: ScanResult; selfAssessment?: SelfAssessment }>(`/scans/${scanId}/result`);
   },
 
   async getScans(): Promise<{ scans: any[]; total: number }> {

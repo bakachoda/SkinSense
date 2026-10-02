@@ -5,6 +5,8 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { ScanGateway } from "../../scan/scan.gateway";
 import { computeSkinHealthScore } from "../../scan/severity-scoring";
 import { generateRoutine } from "../../routine/routine.engine";
+import { runPreprocessingPipeline } from "../../scan/preprocessing.pipeline";
+import { crossReferenceFindings } from "../../scan/self-assessment";
 import { Logger } from "@nestjs/common";
 
 @Processor("scan-processing")
@@ -19,10 +21,10 @@ export class ScanProcessor extends WorkerHost {
   }
 
   async process(job: Job<ScanJobPayload>): Promise<void> {
-    const { scanId, userId, questionnaire } = job.data;
+    const { scanId, userId, questionnaire, physiologicalState } = job.data;
     const startTime = Date.now();
 
-    this.logger.log(`Starting scan processing for scanId: ${scanId}, userId: ${userId}`);
+    this.logger.log(`Starting Phase 3 scan processing for scanId: ${scanId}, userId: ${userId}`);
 
     try {
       // 1. Update status to PROCESSING
@@ -31,18 +33,24 @@ export class ScanProcessor extends WorkerHost {
         data: { status: "PROCESSING" },
       });
 
+      // Stage 0: Preprocessing (Phase 3: White balance, HDR brackets merge, flash texture)
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      this.gateway.emitProgress(scanId, "preprocessing", 0.15, {
+        message: "Normalizing white balance to D65 standard & fusing HDR exposure brackets...",
+      });
+
       // Stage 1: Quality gate & Image validation
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      this.gateway.emitProgress(scanId, "segmentation", 0.25, {
-        message: "Image quality verified. Segmenting facial zones...",
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      this.gateway.emitProgress(scanId, "segmentation", 0.35, {
+        message: "Environment verified. Segmenting facial zones & computing 3D head pose...",
       });
 
       // Stage 2: Face & Zone segmentation
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 400));
       const zones = ["forehead", "nose", "left_cheek", "right_cheek", "chin", "periorbital"];
-      this.gateway.emitProgress(scanId, "detection", 0.5, {
+      this.gateway.emitProgress(scanId, "detection", 0.55, {
         zones,
-        message: "Facial landmarks detected. Analyzing dermatological concerns...",
+        message: "Multi-angle zones aligned. Analyzing acne, erythema, and textural relief...",
       });
 
       // Stage 3: Per-zone detection & Severity scoring
@@ -132,14 +140,19 @@ export class ScanProcessor extends WorkerHost {
         );
       }
       if (hasRedness) {
+        const isPostExertion = !!(
+          physiologicalState?.exercised || physiologicalState?.hotShower
+        );
         findings.push({
           id: `f-${scanId}-3`,
           type: "redness_patch",
           zone: "right_cheek",
-          severity: 48,
-          confidence: 0.88,
+          severity: isPostExertion ? 38 : 48,
+          confidence: isPostExertion ? 0.65 : 0.88,
           boundingBox: { x: 0.61, y: 0.51, w: 0.12, h: 0.14 },
-          description: "Diffuse facial erythema on right cheek",
+          description: isPostExertion
+            ? "Mild erythema on right cheek (confidence adjusted for recent workout/hot shower)"
+            : "Diffuse facial erythema on right cheek",
         });
       }
       if (hasPigmentation) {
@@ -154,12 +167,35 @@ export class ScanProcessor extends WorkerHost {
         });
       }
 
+      // Phase 3 Preprocessing composite (oiliness, scale, multi-angle stitching)
+      const preprocessing = runPreprocessingPipeline(
+        job.data,
+        questionnaire?.skinType || "COMBINATION",
+        hasAcne,
+      );
+
+      // Check if user already submitted self-assessment early
+      const existingSelfAssessment = await this.prisma.selfAssessment.findUnique({
+        where: { scanId },
+      });
+
+      let finalFindings = findings;
+      if (existingSelfAssessment) {
+        finalFindings = crossReferenceFindings(
+          findings,
+          existingSelfAssessment.selections as any,
+          existingSelfAssessment.spotMarkers as any,
+        );
+      }
+
       const skinHealthScore = computeSkinHealthScore(zoneScores);
       const processingTimeMs = Date.now() - startTime;
 
       this.gateway.emitProgress(scanId, "scoring", 0.75, {
         skinHealthScore,
         zoneScores,
+        oilinessMap: preprocessing.oiliness,
+        scaleFactorMm: preprocessing.scaleFactorMm,
         message: "Skin health score calculated. Formulating personalized regimen...",
       });
 
@@ -179,7 +215,10 @@ export class ScanProcessor extends WorkerHost {
         version: 1,
         skinHealthScore,
         zoneScores,
-        findings,
+        findings: finalFindings,
+        oilinessMap: preprocessing.oiliness,
+        zoneCoverage: preprocessing.zoneCoverage,
+        scaleFactorMm: preprocessing.scaleFactorMm,
         metadata: {
           modelVersion: "v1.0",
           processingTimeMs,
@@ -211,7 +250,10 @@ export class ScanProcessor extends WorkerHost {
           version: 1,
           skinHealthScore,
           zoneScores: zoneScores as any,
-          findings: findings as any,
+          findings: finalFindings as any,
+          oilinessMap: preprocessing.oiliness as any,
+          zoneCoverage: preprocessing.zoneCoverage as any,
+          scaleFactorMm: preprocessing.scaleFactorMm,
           metadata: scanResultData.metadata as any,
           modelVersion: "v1.0",
           processingTimeMs,

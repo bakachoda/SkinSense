@@ -11,7 +11,7 @@ import {
 import { SupabaseAuthGuard } from "../common/guards/supabase-auth.guard";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { ScanService } from "./scan.service";
-import { CreateScanRequestSchema } from "@skinsense/types";
+import { CreateScanRequestSchema, CreateSelfAssessmentSchema } from "@skinsense/types";
 
 @Controller("scans")
 @UseGuards(SupabaseAuthGuard)
@@ -26,6 +26,16 @@ export class ScanController {
   ) {
     const parsed = CreateScanRequestSchema.parse(body);
     return this.scanService.create(supabaseId, parsed);
+  }
+
+  @Post(":id/self-assessment")
+  @HttpCode(HttpStatus.OK)
+  submitSelfAssessment(
+    @Param("id") id: string,
+    @Body() body: unknown,
+  ) {
+    const parsed = CreateSelfAssessmentSchema.parse(body);
+    return this.scanService.submitSelfAssessment(id, parsed);
   }
 
   @Get()
@@ -43,3 +53,4 @@ export class ScanController {
     return this.scanService.getResult(id);
   }
 }
+

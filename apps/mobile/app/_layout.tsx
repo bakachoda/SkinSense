@@ -64,4 +64,4 @@ function RootLayout() {
   );
 }
 
-export default Sentry.wrap(RootLayout);
+export default (process.env["EXPO_PUBLIC_SENTRY_DSN"] ? Sentry.wrap(RootLayout) : RootLayout);

@@ -142,4 +142,77 @@ describe("API Integration Tests (Database & Service Layer)", () => {
       expect(logs.logs.length).toBeGreaterThan(0);
     });
   });
+
+  describe("Phase 3 Capture & Self-Assessment Integration", () => {
+    it("should create multi-frame scan with Phase 3 capture metadata", async () => {
+      const res = await scanService.create("test-supabase-id-000", {
+        imageKeys: ["scans/pose1.jpg", "scans/pose2.jpg", "scans/pose3.jpg"],
+        calibrationKey: "scans/white-balance.jpg",
+        captureMode: "audio_guided",
+        environmentScore: "green",
+        physiologicalState: {
+          exercised: false,
+          hotShower: false,
+        },
+        questionnaire: {
+          skinType: "COMBINATION",
+          concerns: ["ACNE", "OILINESS"],
+          allergies: [],
+          ageRange: "TWENTIES",
+          isPregnant: false,
+        },
+      });
+
+      expect(res.scanId).toBeDefined();
+
+      const scanRecord = await prisma.scan.findUnique({
+        where: { id: res.scanId },
+      });
+      expect(scanRecord?.captureMode).toBe("audio_guided");
+      expect(scanRecord?.calibrationKey).toBe("scans/white-balance.jpg");
+      expect(scanRecord?.environmentScore).toBe("green");
+      expect(scanRecord?.imageKeys.length).toBe(3);
+    });
+
+    it("should submit self-assessment and persist spot markers and zone selections", async () => {
+      const scanRes = await scanService.create("test-supabase-id-000", {
+        imageKeys: ["scans/pose1.jpg"],
+        captureMode: "mirror",
+        questionnaire: {
+          skinType: "OILY",
+          concerns: ["ACNE"],
+          allergies: [],
+          ageRange: "TWENTIES",
+          isPregnant: false,
+        },
+      });
+
+      // Submit self assessment
+      const selfAssessmentRes = await scanService.submitSelfAssessment(scanRes.scanId, {
+        selections: [
+          {
+            zone: "forehead",
+            concerns: ["active_acne", "oiliness"],
+          },
+        ],
+        spotMarkers: [
+          {
+            x: 0.48,
+            y: 0.22,
+            zone: "forehead",
+            userNote: "Forehead breakout area",
+          },
+        ],
+      });
+
+      expect(selfAssessmentRes.selfAssessment).toBeDefined();
+      expect(selfAssessmentRes.selfAssessment.scanId).toBe(scanRes.scanId);
+
+      // Verify retrieval with scan record
+      const fetched = await scanService.findOne(scanRes.scanId);
+      expect(fetched.selfAssessment).toBeDefined();
+      expect((fetched.selfAssessment?.selections as any[])[0].zone).toBe("forehead");
+    });
+  });
 });
+

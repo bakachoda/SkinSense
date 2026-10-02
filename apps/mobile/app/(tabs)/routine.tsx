@@ -129,6 +129,8 @@ export default function RoutineScreen() {
   };
 
   const handleLogAdherence = async () => {
+    console.log("[RoutineScreen] handleLogAdherence triggered! routine:", routine?.id);
+    setAdherenceLogged(true);
     if (!routine) return;
     try {
       const today = new Date().toISOString().split("T")[0]!;
@@ -138,9 +140,8 @@ export default function RoutineScreen() {
         amCompleted: activeTab === "AM" || true,
         pmCompleted: activeTab === "PM" || false,
       });
-      setAdherenceLogged(true);
-    } catch {
-      setAdherenceLogged(true);
+    } catch (e) {
+      console.warn("[RoutineScreen] Error logging adherence:", e);
     }
   };
 
@@ -226,16 +227,13 @@ export default function RoutineScreen() {
                   onPress={() => toggleStep(key)}
                   activeOpacity={0.7}
                 >
-                  <TouchableOpacity
-                    style={styles.checkboxTouch}
-                    onPress={() => toggleStep(key)}
-                  >
+                  <View style={styles.checkboxTouch}>
                     {isChecked ? (
                       <CheckCircle2 size={24} color="#10B981" />
                     ) : (
                       <Circle size={24} color="#4B5563" />
                     )}
-                  </TouchableOpacity>
+                  </View>
 
                   <View style={{ flex: 1 }}>
                     <View style={styles.stepBadgeRow}>

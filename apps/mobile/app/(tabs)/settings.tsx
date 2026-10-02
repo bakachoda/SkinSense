@@ -40,6 +40,7 @@ import {
   MessageSquare,
   Bug,
   CheckCircle,
+  Camera,
 } from "lucide-react-native";
 
 export default function SettingsScreen() {
@@ -55,6 +56,12 @@ export default function SettingsScreen() {
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackType, setFeedbackType] = useState<"feedback" | "bug">("feedback");
+
+  // Phase 3 Capture Quality Toggles
+  const [audioGuidanceEnabled, setAudioGuidanceEnabled] = useState(true);
+  const [multiAngleEnabled, setMultiAngleEnabled] = useState(true);
+  const [selfAssessmentEnabled, setSelfAssessmentEnabled] = useState(true);
+  const [whiteCalibrationEnabled, setWhiteCalibrationEnabled] = useState(true);
 
   // Notifications toggles
   const [amReminder, setAmReminder] = useState(true);
@@ -249,6 +256,65 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* ── 2b. CAPTURE QUALITY (PHASE 3) ── */}
+        <View style={styles.sectionHeaderRow}>
+          <Camera size={16} color="#10b981" />
+          <Text style={styles.sectionHeaderTitle}>Capture Quality (Phase 3)</Text>
+        </View>
+        <View style={styles.cardGroup}>
+          <View style={styles.switchRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowLabel}>Audio-Guided Self-Scan</Text>
+              <Text style={styles.rowSubLabel}>Uses rear camera with voice + haptic cues</Text>
+            </View>
+            <Switch
+              value={audioGuidanceEnabled}
+              onValueChange={setAudioGuidanceEnabled}
+              trackColor={{ false: "#334155", true: "#10b981" }}
+              thumbColor="#ffffff"
+            />
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.switchRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowLabel}>Multi-Angle 3-Pose Capture</Text>
+              <Text style={styles.rowSubLabel}>Frontal, Left 45°, and Right 45°</Text>
+            </View>
+            <Switch
+              value={multiAngleEnabled}
+              onValueChange={setMultiAngleEnabled}
+              trackColor={{ false: "#334155", true: "#10b981" }}
+              thumbColor="#ffffff"
+            />
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.switchRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowLabel}>Dual Validation Self-Assessment</Text>
+              <Text style={styles.rowSubLabel}>Zone checklist & touch-to-mark spot pins</Text>
+            </View>
+            <Switch
+              value={selfAssessmentEnabled}
+              onValueChange={setSelfAssessmentEnabled}
+              trackColor={{ false: "#334155", true: "#10b981" }}
+              thumbColor="#ffffff"
+            />
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.switchRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowLabel}>D65 White Point Calibration</Text>
+              <Text style={styles.rowSubLabel}>Paper reference normalization</Text>
+            </View>
+            <Switch
+              value={whiteCalibrationEnabled}
+              onValueChange={setWhiteCalibrationEnabled}
+              trackColor={{ false: "#334155", true: "#10b981" }}
+              thumbColor="#ffffff"
+            />
+          </View>
+        </View>
+
         {/* ── 3. NOTIFICATIONS SECTION ── */}
         <View style={styles.sectionHeaderRow}>
           <Bell size={16} color="#f59e0b" />
@@ -410,7 +476,7 @@ export default function SettingsScreen() {
       </ScrollView>
 
       {/* ── MODAL: EDIT SKIN PROFILE ── */}
-      <Modal visible={showProfileModal} animationType="slide">
+      <Modal visible={showProfileModal} animationType="slide" onRequestClose={() => setShowProfileModal(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: "#0b0f19" }}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Edit Skin Profile</Text>
@@ -428,7 +494,7 @@ export default function SettingsScreen() {
       </Modal>
 
       {/* ── MODAL: CHANGE PASSWORD ── */}
-      <Modal visible={showPasswordModal} animationType="fade" transparent>
+      <Modal visible={showPasswordModal} animationType="fade" transparent onRequestClose={() => setShowPasswordModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalCardTitle}>Change Password</Text>
@@ -475,7 +541,7 @@ export default function SettingsScreen() {
       </Modal>
 
       {/* ── MODAL: DELETE ALL DATA ── */}
-      <Modal visible={showDeleteDataModal} animationType="fade" transparent>
+      <Modal visible={showDeleteDataModal} animationType="fade" transparent onRequestClose={() => setShowDeleteDataModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={[styles.modalCardTitle, { color: "#f43f5e" }]}>Delete All Data</Text>
@@ -501,7 +567,7 @@ export default function SettingsScreen() {
       </Modal>
 
       {/* ── MODAL: DELETE ACCOUNT ── */}
-      <Modal visible={showDeleteAccountModal} animationType="fade" transparent>
+      <Modal visible={showDeleteAccountModal} animationType="fade" transparent onRequestClose={() => setShowDeleteAccountModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={[styles.modalCardTitle, { color: "#ef4444" }]}>Delete Account</Text>
@@ -527,7 +593,7 @@ export default function SettingsScreen() {
       </Modal>
 
       {/* ── MODAL: FULL MEDICAL DISCLAIMER ── */}
-      <Modal visible={showDisclaimerModal} animationType="slide">
+      <Modal visible={showDisclaimerModal} animationType="slide" onRequestClose={() => setShowDisclaimerModal(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: "#0b0f19" }}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Medical Disclaimer</Text>
@@ -554,7 +620,7 @@ export default function SettingsScreen() {
       </Modal>
 
       {/* ── MODAL: FEEDBACK / BUG REPORT ── */}
-      <Modal visible={showFeedbackModal} animationType="fade" transparent>
+      <Modal visible={showFeedbackModal} animationType="fade" transparent onRequestClose={() => setShowFeedbackModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalCardTitle}>

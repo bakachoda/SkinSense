@@ -46,7 +46,7 @@ export class ScanGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   emitProgress(
     scanId: string,
-    stage: "segmentation" | "detection" | "scoring" | "routine",
+    stage: "preprocessing" | "segmentation" | "detection" | "scoring" | "routine" | string,
     progress: number,
     data?: any,
   ) {

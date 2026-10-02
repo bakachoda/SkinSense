@@ -8,9 +8,15 @@ const ExpoSecureStoreAdapter = {
   removeItem: (key: string) => SecureStore.deleteItemAsync(key),
 };
 
+const supabaseUrl =
+  process.env["EXPO_PUBLIC_SUPABASE_URL"] || "https://mock-skinsense.supabase.co";
+const supabaseAnonKey =
+  process.env["EXPO_PUBLIC_SUPABASE_ANON_KEY"] ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.mock";
+
 export const supabase = createClient(
-  process.env["EXPO_PUBLIC_SUPABASE_URL"] ?? "",
-  process.env["EXPO_PUBLIC_SUPABASE_ANON_KEY"] ?? "",
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       storage: Platform.OS !== "web" ? ExpoSecureStoreAdapter : undefined,
