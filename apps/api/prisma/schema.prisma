@@ -54,6 +54,21 @@ enum PriceTier {
   PREMIUM
 }
 
+enum SubscriptionTier {
+  FREE
+  PRO_MONTHLY
+  PRO_ANNUAL
+  FOUNDER_LIFETIME
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
 // ──────────────────────────────────────────────
 // Models
 // ──────────────────────────────────────────────
@@ -88,6 +103,8 @@ model User {
   products                  UserProduct[]
   medications               Medication[]
   deviceProfiles            DeviceProfile[]
+  subscription              Subscription?
+  scanQuotas                ScanQuota[]
   predictions               Prediction[]
   lifestyleLogs             LifestyleLog[]
   skinTrends                SkinTrend[]
@@ -480,5 +497,37 @@ model HealthSyncLog {
 
   @@index([userId])
   @@index([date])
+}
+
+model Subscription {
+  id                     String             @id @default(cuid())
+  userId                 String             @unique
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier                   SubscriptionTier   @default(FREE)
+  status                 SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart     DateTime           @default(now())
+  currentPeriodEnd       DateTime?
+  trialEndsAt            DateTime?
+  cancelAtPeriodEnd      Boolean            @default(false)
+  provider               String             @default("SANDBOX_TEST")
+  providerSubscriptionId String?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  @@index([userId])
+}
+
+model ScanQuota {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  yearMonth  String   // e.g. "2026-10"
+  scansUsed  Int      @default(0)
+  maxAllowed Int      @default(3) // 3 scans/mo on free tier, Pro is unlimited
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, yearMonth])
+  @@index([userId])
 }
 

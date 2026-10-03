@@ -1,73 +1,148 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import NetInfo from "@react-native-community/netinfo";
-import { WifiOff, X } from "lucide-react-native";
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { WifiOff, RefreshCw, CheckCircle2 } from "lucide-react-native";
+import { useOfflineSync } from "../lib/useOfflineSync";
 
-export function OfflineBanner() {
-  const [isOffline, setIsOffline] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(false);
+export interface OfflineBannerProps {
+  isOffline?: boolean;
+  queuedCount?: number;
+  isSyncing?: boolean;
+  onSyncPress?: () => void;
+  onToggleSimulate?: () => void;
+}
 
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      const offline = state.isConnected === false || state.isInternetReachable === false;
-      setIsOffline(offline);
-      if (!offline) {
-        setIsDismissed(false); // Reset dismissal when connection is restored
-      }
-    });
+export function OfflineBanner(props: OfflineBannerProps) {
+  const sync = useOfflineSync();
 
-    return () => unsubscribe();
-  }, []);
+  const isOffline = props.isOffline !== undefined ? props.isOffline : sync.isOffline;
+  const queuedCount = props.queuedCount !== undefined ? props.queuedCount : sync.queuedCount;
+  const isSyncing = props.isSyncing !== undefined ? props.isSyncing : sync.isSyncing;
+  const onSyncPress = props.onSyncPress || sync.flushQueue;
+  const onToggleSimulate = props.onToggleSimulate || sync.toggleSimulateOffline;
 
-  if (!isOffline || isDismissed) {
-    return null;
-  }
+  if (!isOffline && queuedCount === 0) return null;
 
   return (
-    <View style={styles.banner} accessibilityRole="alert" accessibilityLiveRegion="polite">
-      <View style={styles.content}>
-        <WifiOff size={16} color="#fbbf24" style={styles.icon} />
-        <Text style={styles.text}>You&apos;re offline. Showing cached data.</Text>
+    <View style={[styles.container, isOffline ? styles.offlineBg : styles.syncingBg]}>
+      <View style={styles.leftRow}>
+        {isOffline ? (
+          <WifiOff size={15} color="#991B1B" />
+        ) : (
+          <CheckCircle2 size={15} color="#065F46" />
+        )}
+        <View>
+          <Text style={[styles.title, isOffline ? styles.offlineText : styles.syncingText]}>
+            {isOffline ? "OFFLINE RESILIENCE ACTIVE" : "PENDING SYNC"}
+          </Text>
+          <Text style={styles.subtitle}>
+            {isOffline
+              ? `${queuedCount} change${queuedCount === 1 ? "" : "s"} cached locally`
+              : `${queuedCount} change${queuedCount === 1 ? "" : "s"} pending upload`}
+          </Text>
+        </View>
       </View>
-      <TouchableOpacity
-        style={styles.dismissBtn}
-        onPress={() => setIsDismissed(true)}
-        accessibilityLabel="Dismiss offline banner"
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <X size={16} color="#9ca3af" />
-      </TouchableOpacity>
+
+      <View style={styles.actionRow}>
+        {onSyncPress && !isOffline && (
+          <TouchableOpacity
+            style={styles.syncBtn}
+            onPress={onSyncPress}
+            disabled={isSyncing}
+          >
+            <RefreshCw
+              size={13}
+              color="#FFFFFF"
+              style={isSyncing ? { transform: [{ rotate: "45deg" }] } : undefined}
+            />
+            <Text style={styles.syncBtnText}>{isSyncing ? "Syncing..." : "Sync"}</Text>
+          </TouchableOpacity>
+        )}
+
+        {onToggleSimulate && (
+          <TouchableOpacity style={styles.testBtn} onPress={onToggleSimulate}>
+            <Text style={styles.testBtnText}>
+              {isOffline ? "Go Online" : "Simulate Offline"}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  banner: {
-    backgroundColor: "#1e1b18",
-    borderColor: "#b45309",
-    borderBottomWidth: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+  container: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    zIndex: 9999,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
+    borderWidth: 1,
   },
-  content: {
+  offlineBg: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA",
+  },
+  syncingBg: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#BBF7D0",
+  },
+  leftRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 10,
     flex: 1,
   },
-  icon: {
-    marginRight: 8,
+  title: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.6,
   },
-  text: {
-    color: "#fef3c7",
-    fontSize: 13,
-    fontWeight: "500",
+  offlineText: {
+    color: "#991B1B",
   },
-  dismissBtn: {
-    padding: 4,
-    marginLeft: 8,
+  syncingText: {
+    color: "#065F46",
+  },
+  subtitle: {
+    fontSize: 11,
+    color: "#6B7280",
+    marginTop: 1,
+  },
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  syncBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#0F172A",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  syncBtnText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  testBtn: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  testBtnText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#475569",
   },
 });

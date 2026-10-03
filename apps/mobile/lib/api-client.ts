@@ -298,6 +298,44 @@ export const apiClient = {
     return request<any>(`/engagement/routine-card?name=${encodeURIComponent(userName)}`);
   },
 
+  // ── Phase 11: Monetization & Entitlements ──
+
+  async getSubscriptionPlans(): Promise<any[]> {
+    return request<any[]>("/monetization/plans");
+  },
+
+  async getUserEntitlements(): Promise<any> {
+    return request<any>("/monetization/entitlements");
+  },
+
+  async upgradeSubscription(tier: string, provider = "SANDBOX_TEST"): Promise<any> {
+    return request<any>("/monetization/upgrade", {
+      method: "POST",
+      body: JSON.stringify({ tier, provider }),
+    });
+  },
+
+  async restorePurchases(): Promise<any> {
+    return request<any>("/monetization/restore", {
+      method: "POST",
+    });
+  },
+
+  async cancelSubscription(): Promise<any> {
+    return request<any>("/monetization/cancel", {
+      method: "POST",
+    });
+  },
+
+  // ── Phase 13: Offline Sync & Resilience ──
+
+  async batchSyncOfflineItems(items: any[]): Promise<any> {
+    return request<any>("/sync/batch", {
+      method: "POST",
+      body: JSON.stringify({ items }),
+    });
+  },
+
   createScanSocket(scanId: string): Socket {
     const socket = io(SOCKET_BASE_URL, {
       transports: ["websocket", "polling"],

@@ -38,6 +38,10 @@ import { Interactive3DFaceMap } from "../../components/Interactive3DFaceMap";
 import { ClinicalReportModal } from "../../components/ClinicalReportModal";
 import { SkinDiaryModal } from "../../components/SkinDiaryModal";
 import { PrintableRoutineCardModal } from "../../components/PrintableRoutineCardModal";
+import { PaywallModal } from "../../components/PaywallModal";
+import { OfflineBanner } from "../../components/OfflineBanner";
+import { useOfflineSync } from "../../lib/useOfflineSync";
+import { useEntitlements } from "../../lib/useEntitlements";
 import type {
   LifestyleCheckIn,
   SkinTwinResult,
@@ -126,6 +130,17 @@ export default function HomeScreen() {
   const [showClinicalReport, setShowClinicalReport] = useState(false);
   const [showSkinDiary, setShowSkinDiary] = useState(false);
   const [showRoutineCard, setShowRoutineCard] = useState(false);
+
+  // Phase 11 & 13 Monetization & Offline state
+  const [showPaywall, setShowPaywall] = useState(false);
+  const { tier, scansRemaining, refresh: refreshEntitlements } = useEntitlements();
+  const {
+    isOffline,
+    queuedCount,
+    isSyncing,
+    flushQueue,
+    toggleSimulateOffline,
+  } = useOfflineSync();
 
   const userId = "user-1"; // Derived from auth in production
 
@@ -358,22 +373,52 @@ export default function HomeScreen() {
         {/* Clinical Minimalist Header */}
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <View>
+            <View style={{ flex: 1, marginRight: 8 }}>
               <Text style={styles.brandTitle}>SKINSENSE</Text>
-              <Text style={styles.brandSubtitle}>
-                Clinical Facial Telemetry & Adaptive Regimen
+              <Text style={styles.brandSubtitle} numberOfLines={1}>
+                Clinical Facial Telemetry
               </Text>
             </View>
-            <TouchableOpacity
-              style={styles.profileBtn}
-              onPress={() => setShowProfileModal(true)}
-              activeOpacity={0.8}
-            >
-              <Users size={13} color="#111827" />
-              <Text style={styles.profileBtnText}>{activeProfileName}</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              {/* Membership Tier Badge */}
+              <TouchableOpacity
+                style={[
+                  styles.tierBadge,
+                  tier === "FREE" ? styles.tierBadgeFree : styles.tierBadgePro,
+                ]}
+                onPress={() => setShowPaywall(true)}
+                activeOpacity={0.8}
+              >
+                <Sparkles size={11} color={tier === "FREE" ? "#0284C7" : "#FFFFFF"} />
+                <Text
+                  style={[
+                    styles.tierBadgeText,
+                    tier === "FREE" ? styles.tierBadgeTextFree : styles.tierBadgeTextPro,
+                  ]}
+                >
+                  {tier === "FREE" ? "UPGRADE" : "PRO"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.profileBtn}
+                onPress={() => setShowProfileModal(true)}
+                activeOpacity={0.8}
+              >
+                <Users size={13} color="#111827" />
+                <Text style={styles.profileBtnText}>{activeProfileName}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
+
+        {/* Phase 13: Offline Resilience Banner */}
+        <OfflineBanner
+          isOffline={isOffline}
+          queuedCount={queuedCount}
+          isSyncing={isSyncing}
+          onSyncPress={flushQueue}
+          onToggleSimulate={toggleSimulateOffline}
+        />
 
         {/* Environmental Transition Advisory */}
         <SeasonalAdjustmentBanner
@@ -564,6 +609,15 @@ export default function HomeScreen() {
         visible={showRoutineCard}
         onClose={() => setShowRoutineCard(false)}
       />
+
+      {/* Phase 11: Monetization Paywall Modal */}
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => {
+          setShowPaywall(false);
+          refreshEntitlements();
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -615,6 +669,35 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#111827",
     letterSpacing: 0.3,
+  },
+  tierBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  tierBadgeFree: {
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+  },
+  tierBadgePro: {
+    backgroundColor: "#0F172A",
+    borderWidth: 1,
+    borderColor: "#0F172A",
+  },
+  tierBadgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  tierBadgeTextFree: {
+    color: "#0284C7",
+  },
+  tierBadgeTextPro: {
+    color: "#FFFFFF",
   },
   actionRow: {
     flexDirection: "row",

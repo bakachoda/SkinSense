@@ -8,3 +8,5 @@ export * from "./hardware.js";
 export * from "./longitudinal.js";
 export * from "./ecosystem.js";
 export * from "./engagement.js";
+export * from "./monetization.js";
+export * from "./offline.js";

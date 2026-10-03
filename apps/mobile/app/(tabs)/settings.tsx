@@ -47,11 +47,18 @@ import {
   Baby,
   Globe,
   Users,
+  Sparkles,
+  Wifi,
+  WifiOff,
+  RefreshCw,
 } from "lucide-react-native";
 import { ClinicalExportModal } from "../../components/ClinicalExportModal";
 import { DermatologistShareModal } from "../../components/DermatologistShareModal";
 import { DiagnosisFeedbackModal } from "../../components/DiagnosisFeedbackModal";
 import { ProfileSwitcherModal } from "../../components/ProfileSwitcherModal";
+import { PaywallModal } from "../../components/PaywallModal";
+import { useEntitlements } from "../../lib/useEntitlements";
+import { useOfflineSync } from "../../lib/useOfflineSync";
 
 export default function SettingsScreen() {
   const { questionnaire, resetQuestionnaire } = useQuestionnaireStore();
@@ -73,6 +80,22 @@ export default function SettingsScreen() {
   const [showDiagnosisModal, setShowDiagnosisModal] = useState(false);
   const [showProfileSwitcherModal, setShowProfileSwitcherModal] = useState(false);
   const [dataRegion, setDataRegion] = useState<"US" | "EU" | "APAC">("US");
+
+  // Phase 11 & 13 Monetization & Offline state
+  const [showPaywall, setShowPaywall] = useState(false);
+  const {
+    tier,
+    scansRemaining,
+    maxScansPerMonth,
+    refresh: refreshEntitlements,
+  } = useEntitlements();
+  const {
+    isOffline,
+    queuedCount,
+    isSyncing,
+    flushQueue,
+    toggleSimulateOffline,
+  } = useOfflineSync();
 
   // Phase 3 Capture Quality Toggles
   const [audioGuidanceEnabled, setAudioGuidanceEnabled] = useState(true);
@@ -220,6 +243,118 @@ export default function SettingsScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Settings</Text>
           <Text style={styles.subtitle}>Account, notifications, data & legal policies</Text>
+        </View>
+
+        {/* ── 0. MEMBERSHIP & SUBSCRIPTION (PHASE 11) ── */}
+        <View style={styles.sectionHeaderRow}>
+          <Sparkles size={14} color="#0284C7" />
+          <Text style={[styles.sectionHeaderTitle, { color: "#0284C7" }]}>
+            Membership & Subscription
+          </Text>
+        </View>
+        <View style={[styles.cardGroup, { borderColor: "#BAE6FD" }]}>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Current Plan</Text>
+            <View
+              style={{
+                backgroundColor: tier === "FREE" ? "#F1F5F9" : "#0F172A",
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+                borderRadius: 6,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: "800",
+                  color: tier === "FREE" ? "#475569" : "#FFFFFF",
+                }}
+              >
+                {tier.replace("_", " ")}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Diagnostic AI Scans</Text>
+            <Text style={styles.rowValue}>
+              {scansRemaining === null
+                ? "Unlimited Pro Scans"
+                : `${scansRemaining} of ${maxScansPerMonth} remaining`}
+            </Text>
+          </View>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.clickableRow}
+            onPress={() => {
+              console.log("[SkinSense] Upgrade row pressed!");
+              setShowPaywall(true);
+            }}
+            accessibilityLabel="Manage Subscription"
+          >
+            <Text style={[styles.rowLabel, { color: "#0284C7", fontWeight: "700" }]}>
+              {tier === "FREE" ? "Upgrade to Pro Suite" : "Manage / Switch Plan"}
+            </Text>
+            <ChevronRight size={18} color="#0284C7" />
+          </TouchableOpacity>
+        </View>
+
+        {/* ── 0B. OFFLINE & RESILIENCE (PHASE 13) ── */}
+        <View style={styles.sectionHeaderRow}>
+          {isOffline ? (
+            <WifiOff size={14} color="#DC2626" />
+          ) : (
+            <Wifi size={14} color="#15803D" />
+          )}
+          <Text style={styles.sectionHeaderTitle}>Offline Resilience & Sync</Text>
+        </View>
+        <View style={styles.cardGroup}>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Connection Status</Text>
+            <Text
+              style={[
+                styles.rowValue,
+                { color: isOffline ? "#DC2626" : "#15803D", fontWeight: "700" },
+              ]}
+            >
+              {isOffline ? "Simulated Offline" : "Online & Connected"}
+            </Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Pending Queue</Text>
+            <Text style={styles.rowValue}>
+              {queuedCount} mutation{queuedCount === 1 ? "" : "s"} cached
+            </Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={[styles.row, { justifyContent: "space-between" }]}>
+            <Text style={styles.rowLabel}>Simulate Offline Mode</Text>
+            <Switch
+              value={isOffline}
+              onValueChange={toggleSimulateOffline}
+              trackColor={{ false: "#E5E7EB", true: "#DC2626" }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+          {queuedCount > 0 && (
+            <>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                style={styles.clickableRow}
+                onPress={flushQueue}
+                disabled={isSyncing || isOffline}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <RefreshCw size={14} color="#0284C7" />
+                  <Text style={[styles.rowLabel, { color: "#0284C7" }]}>
+                    {isSyncing ? "Syncing..." : "Sync Pending Mutations Now"}
+                  </Text>
+                </View>
+                <ChevronRight size={18} color="#0284C7" />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         {/* ── 1. ACCOUNT SECTION ── */}
@@ -782,6 +917,15 @@ export default function SettingsScreen() {
       <ProfileSwitcherModal
         visible={showProfileSwitcherModal}
         onClose={() => setShowProfileSwitcherModal(false)}
+      />
+
+      {/* Phase 11: Paywall Modal */}
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => {
+          setShowPaywall(false);
+          refreshEntitlements();
+        }}
       />
     </SafeAreaView>
   );

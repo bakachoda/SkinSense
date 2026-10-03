@@ -19,6 +19,8 @@ import { HardwareModule } from "./hardware/hardware.module";
 import { LongitudinalModule } from "./longitudinal/longitudinal.module";
 import { EcosystemModule } from "./ecosystem/ecosystem.module";
 import { EngagementModule } from "./engagement/engagement.module";
+import { MonetizationModule } from "./monetization/monetization.module";
+import { SyncModule } from "./sync/sync.module";
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 
@@ -49,6 +51,8 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     LongitudinalModule,
     EcosystemModule,
     EngagementModule,
+    MonetizationModule,
+    SyncModule,
   ],
   providers: [
     {
