@@ -502,4 +502,279 @@ describe("API Integration Tests (Database & Service Layer)", () => {
       expect(audit.confidence).toBe("HIGH");
     });
   });
+
+  // ══════════════════════════════════════════════
+  // Phase 5: Hardware & Advanced Capture Integration Tests
+  // ══════════════════════════════════════════════
+
+  describe("Phase 5: Device Profiling & Tier Classification", () => {
+    let deviceProfilingService: any;
+
+    const flagshipCaps = {
+      hasRAW: true, hasLiDAR: true, hasTrueDepth: true, hasMacro: true,
+      hasTelephoto: true, hasUltrawide: true, hasMultiCam: true,
+      has240fps: true, has120fps: true, has60fps: true,
+      hasOIS: true, hasEIS: true,
+      maxPhotoResolution: { width: 8064, height: 6048 },
+      maxVideoResolution: { width: 3840, height: 2160 },
+      nativeSensorResolution: { width: 8064, height: 6048 },
+      hasGyroscope: true, hasAccelerometer: true, hasBarometer: true,
+      hasNeuralEngine: true, hasNNAPI: false,
+      maxDisplayBrightness: 2000, supportsWideColor: true,
+      hardwareTier: "TIER_1_FLAGSHIP" as const,
+    };
+
+    beforeAll(async () => {
+      const { DeviceProfilingService } = await import("./hardware/device-profiling.service");
+      deviceProfilingService = new DeviceProfilingService(prisma);
+    });
+
+    it("should classify TIER_1_FLAGSHIP for LiDAR-equipped flagship", () => {
+      const tier = deviceProfilingService.classifyHardwareTier(flagshipCaps);
+      expect(tier).toBe("TIER_1_FLAGSHIP");
+    });
+
+    it("should classify TIER_2_MIDRANGE when LiDAR missing but RAW available", () => {
+      const midCaps = { ...flagshipCaps, hasLiDAR: false, hasTelephoto: false, has240fps: false };
+      const tier = deviceProfilingService.classifyHardwareTier(midCaps);
+      expect(tier).toBe("TIER_2_MIDRANGE");
+    });
+
+    it("should classify TIER_3_BUDGET for basic devices", () => {
+      const budgetCaps = {
+        ...flagshipCaps,
+        hasLiDAR: false, hasTrueDepth: false, hasMacro: false,
+        hasTelephoto: false, hasRAW: false, has240fps: false, has120fps: false,
+      };
+      const tier = deviceProfilingService.classifyHardwareTier(budgetCaps);
+      expect(tier).toBe("TIER_3_BUDGET");
+    });
+
+    it("should reject sub-1080p cameras via minimum hardware gate", () => {
+      const lowRes = { ...flagshipCaps, maxPhotoResolution: { width: 1280, height: 720 } };
+      const check = deviceProfilingService.meetsMinimumRequirements(lowRes);
+      expect(check.supported).toBe(false);
+      expect(check.reason).toContain("1080p");
+    });
+
+    it("should pass minimum requirements for 1080p+ cameras", () => {
+      const check = deviceProfilingService.meetsMinimumRequirements(flagshipCaps);
+      expect(check.supported).toBe(true);
+    });
+
+    it("should compute noise-adaptive thresholds from device profile", () => {
+      const profile = {
+        noiseFloorRGB: [0.012, 0.009, 0.014] as [number, number, number],
+        dynamicRangeStops: 13.8,
+      };
+      const thresholds = deviceProfilingService.computeAdaptiveThresholds(profile);
+      expect(thresholds.acneThreshold).toBeGreaterThan(0.69);
+      expect(thresholds.erythemaThreshold).toBeGreaterThan(0.64);
+      expect(thresholds.perfusionThreshold).toBeGreaterThan(0.59);
+    });
+
+    it("should increase thresholds for noisy budget sensors", () => {
+      const noisyProfile = {
+        noiseFloorRGB: [0.045, 0.038, 0.052] as [number, number, number],
+        dynamicRangeStops: 9.5,
+      };
+      const thresholds = deviceProfilingService.computeAdaptiveThresholds(noisyProfile);
+      // Noisier sensor + lower DR → higher thresholds to prevent false positives
+      expect(thresholds.acneThreshold).toBeGreaterThan(0.75);
+    });
+  });
+
+  describe("Phase 5: LiDAR Topology & Pore Analysis", () => {
+    let lidarService: any;
+
+    beforeAll(async () => {
+      const { LidarTopologyService } = await import("./hardware/lidar-topology.service");
+      lidarService = new LidarTopologyService();
+    });
+
+    it("should classify raised lesion (height > +0.5mm)", () => {
+      const result = lidarService.classifyLesionTopology({
+        hasDepthData: true,
+        sampleDepthsMm: [278.2, 278.4, 278.1],
+        surroundingDepthsMm: [280.0, 280.1, 279.9],
+        zone: "left_cheek",
+      });
+      expect(result.classification).toBe("raised");
+      expect(result.lesionHeightMm).toBeGreaterThan(0.5);
+    });
+
+    it("should classify depressed scar (height < -0.5mm)", () => {
+      const result = lidarService.classifyLesionTopology({
+        hasDepthData: true,
+        sampleDepthsMm: [281.2, 281.4, 281.1],
+        surroundingDepthsMm: [280.0, 280.1, 279.9],
+        zone: "left_cheek",
+      });
+      expect(result.classification).toBe("depressed");
+      expect(result.lesionHeightMm).toBeLessThan(-0.5);
+    });
+
+    it("should analyze nasal pore depth and congestion", () => {
+      const pores = lidarService.analyzePoreDepth("nose");
+      expect(pores.averageDepthMm).toBeGreaterThan(0);
+      expect(pores.congestionScore).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Phase 5: Photometric Stereo & rPPG", () => {
+    let photometricService: any;
+    let rppgService: any;
+
+    beforeAll(async () => {
+      const { PhotometricStereoService } = await import("./hardware/photometric-stereo.service");
+      const { RppgService } = await import("./hardware/rppg.service");
+      photometricService = new PhotometricStereoService();
+      rppgService = new RppgService();
+    });
+
+    it("should reconstruct surface normals and detect early papules from gyro data", () => {
+      const result = photometricService.reconstructSurfaceNormals(
+        [
+          { timestamp: 10, roll: 0.12, pitch: 0.05, yaw: 0.0 },
+          { timestamp: 20, roll: -0.08, pitch: -0.06, yaw: 0.02 },
+          { timestamp: 30, roll: 0.02, pitch: 0.09, yaw: -0.01 },
+          { timestamp: 40, roll: -0.04, pitch: -0.02, yaw: 0.03 },
+        ],
+        40,
+      );
+      expect(result.meanNormalDeviation).toBeGreaterThan(0);
+      expect(result.microTextureScore).toBeGreaterThan(0);
+    });
+
+    it("should detect active inflammation via rPPG lesion vs surrounding signal", () => {
+      const active = rppgService.analyzePerfusion({
+        hasVideo: true,
+        lesionPixelSignals: [10.2, 10.5, 9.8],
+        surroundingPixelSignals: [5.1, 5.3, 5.0],
+      });
+      expect(active.inflammationStatus).toBe("active");
+      expect(active.subclinicalInflammationDetected).toBe(true);
+    });
+
+    it("should detect resolved inflammation when signals are balanced", () => {
+      const resolved = rppgService.analyzePerfusion({
+        hasVideo: true,
+        lesionPixelSignals: [5.5, 5.8, 5.4],
+        surroundingPixelSignals: [5.0, 5.2, 5.1],
+      });
+      expect(resolved.inflammationStatus).toBe("resolved");
+    });
+  });
+
+  describe("Phase 5: Elasticity & Multispectral Analysis", () => {
+    let elasticityService: any;
+    let multispectralService: any;
+
+    beforeAll(async () => {
+      const { ElasticityService } = await import("./hardware/elasticity.service");
+      const { MultispectralService } = await import("./hardware/multispectral.service");
+      elasticityService = new ElasticityService();
+      multispectralService = new MultispectralService();
+    });
+
+    it("should grade young skin as excellent (tau < 250ms)", () => {
+      const result = elasticityService.analyzeElasticity({
+        hasHighSpeedVideo: true,
+        measuredTauForeheadMs: 220,
+        measuredTauCheeksMs: 235,
+        measuredTauUnderEyeMs: 245,
+      });
+      expect(result.overallGrade).toBe("excellent");
+      expect(result.recoveryTimeMs).toBeLessThan(250);
+      expect(result.firmnessScore).toBeGreaterThan(8.0);
+    });
+
+    it("should grade delayed snapback as fair/poor", () => {
+      const result = elasticityService.analyzeElasticity({
+        hasHighSpeedVideo: true,
+        measuredTauForeheadMs: 520,
+        measuredTauCheeksMs: 560,
+        measuredTauUnderEyeMs: 590,
+      });
+      expect(["fair", "poor"]).toContain(result.overallGrade);
+      expect(result.firmnessScore).toBeLessThan(5.0);
+    });
+
+    it("should isolate bacterial porphyrin fluorescence from multispectral channels", () => {
+      const result = multispectralService.analyzeSpectralChannels({
+        hasMultispectralFrames: true,
+        redIntensity: 175,
+        greenIntensity: 150,
+        blueIntensity: 135,
+        violetIntensity: 190,
+        verticalPolarizedIntensity: 160,
+        horizontalPolarizedIntensity: 100,
+      });
+      expect(result.violetBacteriaSignal).toBeGreaterThan(80);
+      expect(result.bacteriaLevel).toBeGreaterThan(5.0);
+      expect(result.depolarizationRatio).toBeGreaterThan(1.0);
+    });
+  });
+
+  describe("Phase 5: Predictive Analytics Pipeline", () => {
+    let predictionService: any;
+
+    beforeAll(async () => {
+      const { PredictionService } = await import("./hardware/prediction.service");
+      predictionService = new PredictionService(prisma);
+    });
+
+    it("should predict high breakout risk when bacteria + congestion are elevated", () => {
+      const pred = predictionService.predictBreakout({
+        userId: "test-user",
+        congestionScore: 8.2,
+        bacteriaLevel: 7.5,
+        oilinessTrend: 0.45,
+      });
+      expect(pred.riskLevel).toBe("high");
+      expect(pred.timeframe).toBe("24-48 hours");
+      expect(pred.recommendation).toContain("Salicylic Acid");
+      expect(pred.triggerFactors.length).toBeGreaterThan(0);
+    });
+
+    it("should predict low breakout risk when all indicators are stable", () => {
+      const pred = predictionService.predictBreakout({
+        userId: "test-user",
+        congestionScore: 2.0,
+        bacteriaLevel: 1.5,
+        oilinessTrend: -0.1,
+        stressLevel: 2,
+      });
+      expect(pred.riskLevel).toBe("low");
+    });
+
+    it("should project cumulative sun damage via power law to age 50, 60, 70", () => {
+      const proj = predictionService.projectSunDamage({
+        userId: "test-user",
+        userAge: 25,
+        sunDamageScore: 30,
+      });
+      expect(proj.projectedAge50).toBeGreaterThan(30);
+      expect(proj.projectedAge60).toBeGreaterThan(proj.projectedAge50);
+      expect(proj.projectedAge70).toBeGreaterThan(proj.projectedAge60);
+      expect(proj.message).toContain("SPF");
+    });
+
+    it("should forecast high dehydration risk in dry windy conditions", () => {
+      const forecast = predictionService.forecastDehydration({
+        userId: "test-user",
+        weather: { humidityPercent: 18, tempF: 92, windMph: 20 },
+      });
+      expect(forecast.riskLevel).toBe("high");
+      expect(forecast.recommendation).toContain("ceramide");
+    });
+
+    it("should forecast low dehydration risk in comfortable humidity", () => {
+      const forecast = predictionService.forecastDehydration({
+        userId: "test-user",
+        weather: { humidityPercent: 55, tempF: 72, windMph: 5 },
+      });
+      expect(forecast.riskLevel).toBe("low");
+    });
+  });
 });
