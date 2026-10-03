@@ -1,38 +1,139 @@
-version: '3.8'
+version: "3.8"
 
 services:
+  # ──────────────────────────────────────────────
+  # Primary Relational Store
+  # ──────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: skinsense-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: skinsense
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-skinsense}
     ports:
-      - '5432:5432'
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d skinsense']
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-skinsense}"]
+      interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - skinsense-network
 
+  # ──────────────────────────────────────────────
+  # In-Memory Cache & BullMQ Queue Broker
+  # ──────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: skinsense-redis
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 5s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - skinsense-network
+
+  # ──────────────────────────────────────────────
+  # FastAPI AI Inference Pipeline (PyTorch/ONNX)
+  # ──────────────────────────────────────────────
+  inference:
+    build:
+      context: ./apps/inference
+      dockerfile: Dockerfile
+    container_name: skinsense-inference
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - TORCH_DEVICE=cpu
+      - MODEL_VERSION=v1.0-resnet-ensemble
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - skinsense-network
+
+  # ──────────────────────────────────────────────
+  # NestJS Core API Backend
+  # ──────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: skinsense-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-skinsense}?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - INFERENCE_SERVICE_URL=http://inference:8000/api/v1/inference/analyze
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET:-dev-super-secret-key-at-least-32-characters}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET:-skinsense-scans-dev}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      inference:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - skinsense-network
+
+  # ──────────────────────────────────────────────
+  # Next.js 14 Dermatologist Collaboration Portal
+  # ──────────────────────────────────────────────
+  portal:
+    build:
+      context: .
+      dockerfile: apps/portal/Dockerfile
+    container_name: skinsense-portal
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - skinsense-network
+
+networks:
+  skinsense-network:
+    driver: bridge
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
+    driver: local
