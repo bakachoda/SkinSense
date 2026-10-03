@@ -9,9 +9,11 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import { BarChart3, ArrowDown, ArrowUp, Minus, Calendar, GitCompare } from "lucide-react-native";
+import { BarChart3, ArrowDown, ArrowUp, Minus, Calendar, GitCompare, Printer } from "lucide-react-native";
 import { apiClient } from "../../lib/api-client";
 import { SkinTimelineChart } from "../../components/SkinTimelineChart";
+import { BeforeAfterSlider } from "../../components/BeforeAfterSlider";
+import { PrintableRoutineCardModal } from "../../components/PrintableRoutineCardModal";
 import type { SkinTimeline, TrendWindow } from "@skinsense/types";
 
 const WINDOWS: { label: string; value: TrendWindow }[] = [
@@ -35,6 +37,7 @@ export default function ProgressScreen() {
   const [timeline, setTimeline] = useState<SkinTimeline | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showRoutineCard, setShowRoutineCard] = useState(false);
 
   const userId = "user-1";
 
@@ -176,6 +179,24 @@ export default function ProgressScreen() {
           />
         ) : null}
 
+        {/* Phase 10: Landmark-Aligned Before/After Slider */}
+        <BeforeAfterSlider />
+
+        {/* Printable Card Banner Action */}
+        <TouchableOpacity
+          style={styles.printCardBanner}
+          onPress={() => setShowRoutineCard(true)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.printCardIconBox}>
+            <Printer size={16} color="#0284C7" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.printCardTitle}>BATHROOM MIRROR GUIDE</Text>
+            <Text style={styles.printCardSub}>Generate and share printable AM/PM protocol card</Text>
+          </View>
+        </TouchableOpacity>
+
         {/* Scan Comparison Section */}
         <View style={styles.compareSection}>
           <Text style={styles.compareTitle}>ZONE COMPARISON ANALYSIS</Text>
@@ -251,6 +272,12 @@ export default function ProgressScreen() {
           })}
         </View>
       </ScrollView>
+
+      {/* Phase 10: Printable Routine Card Modal */}
+      <PrintableRoutineCardModal
+        visible={showRoutineCard}
+        onClose={() => setShowRoutineCard(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -460,5 +487,35 @@ const styles = StyleSheet.create({
   deltaTextComp: {
     fontSize: 11,
     fontWeight: "800",
+  },
+  printCardBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 14,
+  },
+  printCardIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#E0F2FE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  printCardTitle: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#0369A1",
+    letterSpacing: 0.8,
+  },
+  printCardSub: {
+    fontSize: 12,
+    color: "#475569",
+    marginTop: 1,
   },
 });

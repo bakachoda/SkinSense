@@ -4,6 +4,28 @@ import { ScanService } from "./scan/scan.service";
 import { AuthService } from "./auth/auth.service";
 import { AdherenceService } from "./adherence/adherence.service";
 import { QueueProducer } from "./queue/queue.producer";
+import { TemporalAnalyticsService } from "./longitudinal/temporal-analytics.service";
+import { SkinTwinService } from "./longitudinal/skin-twin.service";
+import { LifestyleCorrelationService } from "./longitudinal/lifestyle-correlation.service";
+import { AchievementService } from "./longitudinal/achievement.service";
+import { PredictionService } from "./hardware/prediction.service";
+import { ElasticityService } from "./hardware/elasticity.service";
+import { MultispectralService } from "./hardware/multispectral.service";
+import { DeviceProfilingService } from "./hardware/device-profiling.service";
+import { LidarTopologyService } from "./hardware/lidar-topology.service";
+import { PhotometricStereoService } from "./hardware/photometric-stereo.service";
+import { RppgService } from "./hardware/rppg.service";
+import { MedicationService } from "./medication/medication.service";
+import { EnvironmentalService } from "./smart-engine/environmental.service";
+import { FitzpatrickService } from "./smart-engine/fitzpatrick.service";
+import { BarrierService } from "./smart-engine/barrier.service";
+import { DifferentialService } from "./smart-engine/differential.service";
+import { EnsembleService } from "./smart-engine/ensemble.service";
+import { ClinicalGradingService } from "./smart-engine/clinical-grading.service";
+import { SkinAgeService } from "./smart-engine/skin-age.service";
+import { SafetyScreeningService } from "./smart-engine/safety-screening.service";
+import { SelfAuditService } from "./smart-engine/self-audit.service";
+import { ReclassificationService } from "./smart-engine/reclassification.service";
 
 describe("API Integration Tests (Database & Service Layer)", () => {
   let prisma: PrismaService;
@@ -12,6 +34,7 @@ describe("API Integration Tests (Database & Service Layer)", () => {
   let authService: AuthService;
   let adherenceService: AdherenceService;
   let mockQueueProducer: Partial<QueueProducer>;
+  let testUserId = "test-supabase-id-000";
 
   beforeAll(async () => {
     prisma = new PrismaService();
@@ -26,6 +49,21 @@ describe("API Integration Tests (Database & Service Layer)", () => {
     };
 
     scanService = new ScanService(prisma, mockQueueProducer as QueueProducer);
+
+    const testUser = await prisma.user.upsert({
+      where: { supabaseId: "test-supabase-id-000" },
+      update: {},
+      create: {
+        id: "test-supabase-id-000",
+        supabaseId: "test-supabase-id-000",
+        email: "test-supabase-000@skinsense.dev",
+        skinType: "COMBINATION",
+        fitzpatrick: 3,
+        concerns: ["acne", "texture"],
+        ageRange: "TWENTIES",
+      },
+    });
+    testUserId = testUser.id;
   });
 
   afterAll(async () => {
@@ -316,8 +354,7 @@ describe("API Integration Tests (Database & Service Layer)", () => {
     let medicationService: any;
     const testSupabaseId = "test-supabase-id-p4-meds";
 
-    beforeAll(async () => {
-      const { MedicationService } = await import("./medication/medication.service");
+    beforeAll(() => {
       medicationService = new MedicationService(prisma);
     });
 
@@ -381,8 +418,7 @@ describe("API Integration Tests (Database & Service Layer)", () => {
   describe("Phase 4: Environmental Context", () => {
     let environmentalService: any;
 
-    beforeAll(async () => {
-      const { EnvironmentalService } = await import("./smart-engine/environmental.service");
+    beforeAll(() => {
       environmentalService = new EnvironmentalService();
     });
 
@@ -410,17 +446,7 @@ describe("API Integration Tests (Database & Service Layer)", () => {
     let selfAuditService: any;
     let reclassificationService: any;
 
-    beforeAll(async () => {
-      const { FitzpatrickService } = await import("./smart-engine/fitzpatrick.service");
-      const { BarrierService } = await import("./smart-engine/barrier.service");
-      const { DifferentialService } = await import("./smart-engine/differential.service");
-      const { EnsembleService } = await import("./smart-engine/ensemble.service");
-      const { ClinicalGradingService } = await import("./smart-engine/clinical-grading.service");
-      const { SkinAgeService } = await import("./smart-engine/skin-age.service");
-      const { SafetyScreeningService } = await import("./smart-engine/safety-screening.service");
-      const { SelfAuditService } = await import("./smart-engine/self-audit.service");
-      const { ReclassificationService } = await import("./smart-engine/reclassification.service");
-
+    beforeAll(() => {
       fitzpatrickService = new FitzpatrickService();
       barrierService = new BarrierService();
       differentialService = new DifferentialService();
@@ -524,8 +550,7 @@ describe("API Integration Tests (Database & Service Layer)", () => {
       hardwareTier: "TIER_1_FLAGSHIP" as const,
     };
 
-    beforeAll(async () => {
-      const { DeviceProfilingService } = await import("./hardware/device-profiling.service");
+    beforeAll(() => {
       deviceProfilingService = new DeviceProfilingService(prisma);
     });
 
@@ -587,8 +612,7 @@ describe("API Integration Tests (Database & Service Layer)", () => {
   describe("Phase 5: LiDAR Topology & Pore Analysis", () => {
     let lidarService: any;
 
-    beforeAll(async () => {
-      const { LidarTopologyService } = await import("./hardware/lidar-topology.service");
+    beforeAll(() => {
       lidarService = new LidarTopologyService();
     });
 
@@ -625,9 +649,7 @@ describe("API Integration Tests (Database & Service Layer)", () => {
     let photometricService: any;
     let rppgService: any;
 
-    beforeAll(async () => {
-      const { PhotometricStereoService } = await import("./hardware/photometric-stereo.service");
-      const { RppgService } = await import("./hardware/rppg.service");
+    beforeAll(() => {
       photometricService = new PhotometricStereoService();
       rppgService = new RppgService();
     });
@@ -670,9 +692,7 @@ describe("API Integration Tests (Database & Service Layer)", () => {
     let elasticityService: any;
     let multispectralService: any;
 
-    beforeAll(async () => {
-      const { ElasticityService } = await import("./hardware/elasticity.service");
-      const { MultispectralService } = await import("./hardware/multispectral.service");
+    beforeAll(() => {
       elasticityService = new ElasticityService();
       multispectralService = new MultispectralService();
     });
@@ -719,8 +739,7 @@ describe("API Integration Tests (Database & Service Layer)", () => {
   describe("Phase 5: Predictive Analytics Pipeline", () => {
     let predictionService: any;
 
-    beforeAll(async () => {
-      const { PredictionService } = await import("./hardware/prediction.service");
+    beforeAll(() => {
       predictionService = new PredictionService(prisma);
     });
 
@@ -785,20 +804,19 @@ describe("API Integration Tests (Database & Service Layer)", () => {
   describe("Phase 6: Temporal Analytics & Timeline", () => {
     let temporalService: any;
 
-    beforeAll(async () => {
-      const { TemporalAnalyticsService } = await import("./longitudinal/temporal-analytics.service");
+    beforeAll(() => {
       temporalService = new TemporalAnalyticsService(prisma);
     });
 
     it("should build a timeline with overall score history from completed scans", async () => {
-      const timeline = await temporalService.buildTimeline("test-supabase-id-000", "all");
+      const timeline = await temporalService.buildTimeline(testUserId, "all");
       expect(timeline.totalScans).toBeGreaterThanOrEqual(0);
       expect(timeline.overallScoreHistory).toBeDefined();
       expect(Array.isArray(timeline.overallScoreHistory)).toBe(true);
     });
 
     it("should detect concern trends and assign direction (improving/declining/stable)", async () => {
-      const timeline = await temporalService.buildTimeline("test-supabase-id-000", "30d");
+      const timeline = await temporalService.buildTimeline(testUserId, "30d");
       expect(timeline.concernTrends).toBeDefined();
       expect(Array.isArray(timeline.concernTrends)).toBe(true);
       for (const trend of timeline.concernTrends) {
@@ -810,7 +828,7 @@ describe("API Integration Tests (Database & Service Layer)", () => {
     });
 
     it("should return ISO-formatted dates for timeline range", async () => {
-      const timeline = await temporalService.buildTimeline("test-supabase-id-000", "all");
+      const timeline = await temporalService.buildTimeline(testUserId, "all");
       expect(timeline.firstScanDate).toBeDefined();
       expect(timeline.latestScanDate).toBeDefined();
     });
@@ -819,20 +837,19 @@ describe("API Integration Tests (Database & Service Layer)", () => {
   describe("Phase 6: Skin Twin Cohort Matching", () => {
     let skinTwinService: any;
 
-    beforeAll(async () => {
-      const { SkinTwinService } = await import("./longitudinal/skin-twin.service");
+    beforeAll(() => {
       skinTwinService = new SkinTwinService(prisma);
     });
 
     it("should return a cohort profile with demographics", async () => {
-      const result = await skinTwinService.findSkinTwin("test-supabase-id-000");
+      const result = await skinTwinService.findSkinTwin(testUserId);
       expect(result.cohort).toBeDefined();
       expect(result.cohort.cohortSize).toBeGreaterThan(0);
       expect(result.matchConfidence).toBeGreaterThan(0);
     });
 
     it("should generate percentile rankings for key metrics", async () => {
-      const result = await skinTwinService.findSkinTwin("test-supabase-id-000");
+      const result = await skinTwinService.findSkinTwin(testUserId);
       expect(result.rankings.length).toBeGreaterThan(0);
       for (const r of result.rankings) {
         expect(r.percentile).toBeGreaterThanOrEqual(0);
@@ -841,7 +858,7 @@ describe("API Integration Tests (Database & Service Layer)", () => {
     });
 
     it("should provide what-worked product recommendations", async () => {
-      const result = await skinTwinService.findSkinTwin("test-supabase-id-000");
+      const result = await skinTwinService.findSkinTwin(testUserId);
       expect(result.whatWorked.length).toBeGreaterThan(0);
       expect(result.whatWorked[0]!.productName).toBeDefined();
       expect(result.whatWorked[0]!.successRate).toBeGreaterThan(0);
@@ -851,13 +868,12 @@ describe("API Integration Tests (Database & Service Layer)", () => {
   describe("Phase 6: Lifestyle Correlation Engine", () => {
     let lifestyleService: any;
 
-    beforeAll(async () => {
-      const { LifestyleCorrelationService } = await import("./longitudinal/lifestyle-correlation.service");
+    beforeAll(() => {
       lifestyleService = new LifestyleCorrelationService(prisma);
     });
 
     it("should log a daily check-in via upsert", async () => {
-      const result = await lifestyleService.logCheckIn("test-supabase-id-000", {
+      const result = await lifestyleService.logCheckIn(testUserId, {
         date: new Date().toISOString().split("T")[0],
         checkIn: {
           sleepHours: 7.5,
@@ -873,7 +889,7 @@ describe("API Integration Tests (Database & Service Layer)", () => {
     });
 
     it("should compute habit scores across 5 categories", async () => {
-      const insights = await lifestyleService.computeInsights("test-supabase-id-000");
+      const insights = await lifestyleService.computeInsights(testUserId);
       expect(insights.habitScores).toBeDefined();
       const categories = insights.habitScores.map((h: any) => h.category);
       expect(categories).toContain("sleep");
@@ -884,13 +900,13 @@ describe("API Integration Tests (Database & Service Layer)", () => {
     });
 
     it("should compute overall lifestyle score 0-100", async () => {
-      const insights = await lifestyleService.computeInsights("test-supabase-id-000");
+      const insights = await lifestyleService.computeInsights(testUserId);
       expect(insights.overallLifestyleScore).toBeGreaterThanOrEqual(0);
       expect(insights.overallLifestyleScore).toBeLessThanOrEqual(100);
     });
 
     it("should compute streaks", async () => {
-      const insights = await lifestyleService.computeInsights("test-supabase-id-000");
+      const insights = await lifestyleService.computeInsights(testUserId);
       expect(insights.currentStreak).toBeGreaterThanOrEqual(0);
       expect(insights.bestStreak).toBeGreaterThanOrEqual(insights.currentStreak);
     });
@@ -899,31 +915,30 @@ describe("API Integration Tests (Database & Service Layer)", () => {
   describe("Phase 6: Achievement & Gamification System", () => {
     let achievementService: any;
 
-    beforeAll(async () => {
-      const { AchievementService } = await import("./longitudinal/achievement.service");
+    beforeAll(() => {
       achievementService = new AchievementService(prisma);
     });
 
     it("should return all achievements with progress", async () => {
-      const progress = await achievementService.getProgress("test-supabase-id-000");
+      const progress = await achievementService.getProgress(testUserId);
       expect(progress.totalCount).toBeGreaterThan(0);
       expect(progress.achievements.length).toBe(progress.totalCount);
       expect(progress.level).toBeGreaterThanOrEqual(1);
     });
 
     it("should compute XP level from thresholds", async () => {
-      const progress = await achievementService.getProgress("test-supabase-id-000");
+      const progress = await achievementService.getProgress(testUserId);
       expect(progress.level).toBeGreaterThanOrEqual(1);
       expect(progress.xpToNextLevel).toBeGreaterThan(0);
     });
 
     it("should evaluate and unlock achievements", async () => {
-      const newlyUnlocked = await achievementService.evaluateAchievements("test-supabase-id-000");
+      const newlyUnlocked = await achievementService.evaluateAchievements(testUserId);
       expect(Array.isArray(newlyUnlocked)).toBe(true);
     });
 
     it("should mark achievements as seen", async () => {
-      await achievementService.markSeen("test-supabase-id-000");
+      await achievementService.markSeen(testUserId);
       // No error thrown = success
     });
   });

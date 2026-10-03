@@ -7,3 +7,4 @@ export * from "./smart-engine.js";
 export * from "./hardware.js";
 export * from "./longitudinal.js";
 export * from "./ecosystem.js";
+export * from "./engagement.js";

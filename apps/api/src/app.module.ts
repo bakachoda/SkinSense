@@ -18,6 +18,7 @@ import { MedicationModule } from "./medication/medication.module";
 import { HardwareModule } from "./hardware/hardware.module";
 import { LongitudinalModule } from "./longitudinal/longitudinal.module";
 import { EcosystemModule } from "./ecosystem/ecosystem.module";
+import { EngagementModule } from "./engagement/engagement.module";
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 
@@ -47,6 +48,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     HardwareModule,
     LongitudinalModule,
     EcosystemModule,
+    EngagementModule,
   ],
   providers: [
     {

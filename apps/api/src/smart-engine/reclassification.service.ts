@@ -24,7 +24,7 @@ export class ReclassificationService {
     // User strips skin thinking it is oily, but low hydration triggers reactive hyper-sebum
     if (oilinessScore > 60 && hydrationScore < 40) {
       measuredType = "DEHYDRATED_OILY";
-      discrepancy = normalizedReported !== "COMBINATION" && normalizedReported !== "OILY";
+      discrepancy = true;
       explanation =
         "High surface oiliness with low epidermal hydration indicates dehydrated-oily skin. Stripping cleansers worsen this — introduce humectants like hyaluronic acid and glycerin to rebalance sebum.";
     }

@@ -253,6 +253,51 @@ export const apiClient = {
     });
   },
 
+  // ── Phase 10: Engagement & Visual Intelligence ──
+
+  async generateClinicalReport(scanData: any): Promise<any> {
+    return request<any>("/engagement/reports/generate", {
+      method: "POST",
+      body: JSON.stringify(scanData),
+    });
+  },
+
+  async getClinicalReport(scanId: string): Promise<any> {
+    return request<any>(`/engagement/reports/${scanId}`);
+  },
+
+  async getSmartNotifications(): Promise<any[]> {
+    return request<any[]>("/engagement/notifications");
+  },
+
+  async updateNotificationPreferences(prefs: any): Promise<any> {
+    return request<any>("/engagement/notifications/preferences", {
+      method: "POST",
+      body: JSON.stringify(prefs),
+    });
+  },
+
+  async markNotificationRead(id: string): Promise<{ success: boolean }> {
+    return request<{ success: boolean }>(`/engagement/notifications/${id}/read`, {
+      method: "POST",
+    });
+  },
+
+  async getSkinDiary(): Promise<any[]> {
+    return request<any[]>("/engagement/diary");
+  },
+
+  async createDiaryEntry(entry: any): Promise<any> {
+    return request<any>("/engagement/diary", {
+      method: "POST",
+      body: JSON.stringify(entry),
+    });
+  },
+
+  async getRoutineCard(userName = "Alex"): Promise<any> {
+    return request<any>(`/engagement/routine-card?name=${encodeURIComponent(userName)}`);
+  },
+
   createScanSocket(scanId: string): Socket {
     const socket = io(SOCKET_BASE_URL, {
       transports: ["websocket", "polling"],

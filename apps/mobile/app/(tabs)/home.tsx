@@ -33,6 +33,11 @@ import { SeasonalAdjustmentBanner } from "../../components/SeasonalAdjustmentBan
 import { HealthConnectCard } from "../../components/HealthConnectCard";
 import { VoiceNoteModal } from "../../components/VoiceNoteModal";
 import { ProfileSwitcherModal } from "../../components/ProfileSwitcherModal";
+import { SkinHealthScoreCard } from "../../components/SkinHealthScoreCard";
+import { Interactive3DFaceMap } from "../../components/Interactive3DFaceMap";
+import { ClinicalReportModal } from "../../components/ClinicalReportModal";
+import { SkinDiaryModal } from "../../components/SkinDiaryModal";
+import { PrintableRoutineCardModal } from "../../components/PrintableRoutineCardModal";
 import type {
   LifestyleCheckIn,
   SkinTwinResult,
@@ -116,6 +121,11 @@ export default function HomeScreen() {
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [activeProfileName, setActiveProfileName] = useState("Primary (You)");
+
+  // Phase 10 Engagement state
+  const [showClinicalReport, setShowClinicalReport] = useState(false);
+  const [showSkinDiary, setShowSkinDiary] = useState(false);
+  const [showRoutineCard, setShowRoutineCard] = useState(false);
 
   const userId = "user-1"; // Derived from auth in production
 
@@ -403,6 +413,21 @@ export default function HomeScreen() {
             <Text style={styles.actionCardLabel}>VOICE NOTE</Text>
             <Text style={styles.actionCardSub} numberOfLines={1}>NLP symptom capture</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => setShowRoutineCard(true)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.actionCardHeader}>
+              <View style={styles.actionCardIcon}>
+                <Calendar size={15} color="#111827" />
+              </View>
+              <ChevronRight size={13} color="#9CA3AF" />
+            </View>
+            <Text style={styles.actionCardLabel}>PRINT CARD</Text>
+            <Text style={styles.actionCardSub} numberOfLines={1}>Mirror routine</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Primary Hero CTA: Capture Scan */}
@@ -424,39 +449,16 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
 
-        {/* Skin Health Telemetry Index */}
-        <View style={styles.statsCard}>
-          <View style={styles.statsRow}>
-            <View>
-              <Text style={styles.statLabel}>CLINICAL SKIN INDEX</Text>
-              <View style={styles.scoreRow}>
-                <Text style={styles.statValue}>{latestScore}</Text>
-                <Text style={styles.statMax}>/100</Text>
-              </View>
-            </View>
-            <View style={styles.statBadge}>
-              <Text style={styles.statBadgeText}>+6 pts from baseline</Text>
-            </View>
-          </View>
+        {/* Phase 10: Skin Health Index & 7-Dimension Breakdown */}
+        <SkinHealthScoreCard
+          score={latestScore}
+          delta={3}
+          onOpenReport={() => setShowClinicalReport(true)}
+          onOpenDiary={() => setShowSkinDiary(true)}
+        />
 
-          <View style={styles.profileTagsRow}>
-            <View style={styles.tagBadge}>
-              <Text style={styles.tagText}>
-                TYPE: {(questionnaire.skinType || "Combination").toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.tagBadge}>
-              <Text style={styles.tagText}>
-                PRIMARY: {(questionnaire.concerns[0] || "Acne").toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.tagBadge}>
-              <Text style={styles.tagText}>
-                AGE: {(questionnaire.ageRange || "20s").toUpperCase()}
-              </Text>
-            </View>
-          </View>
-        </View>
+        {/* Phase 10: Interactive 3D Face Map with Layer Overlays */}
+        <Interactive3DFaceMap />
 
         {/* Health App Biomarkers */}
         <View style={styles.phase6Section}>
@@ -543,6 +545,24 @@ export default function HomeScreen() {
         onSelectProfile={(p) =>
           setActiveProfileName(p.includes("teen") ? "Emma (Teens)" : "Primary (You)")
         }
+      />
+
+      {/* Phase 10: Clinical Report Modal */}
+      <ClinicalReportModal
+        visible={showClinicalReport}
+        onClose={() => setShowClinicalReport(false)}
+      />
+
+      {/* Phase 10: Skin Diary Modal */}
+      <SkinDiaryModal
+        visible={showSkinDiary}
+        onClose={() => setShowSkinDiary(false)}
+      />
+
+      {/* Phase 10: Printable Routine Card Modal */}
+      <PrintableRoutineCardModal
+        visible={showRoutineCard}
+        onClose={() => setShowRoutineCard(false)}
       />
     </SafeAreaView>
   );
