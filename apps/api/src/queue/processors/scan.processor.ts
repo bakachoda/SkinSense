@@ -56,7 +56,7 @@ export class ScanProcessor extends WorkerHost {
     const { scanId, userId, questionnaire, physiologicalState } = job.data;
     const startTime = Date.now();
 
-    this.logger.log(`Starting Phase 4 Smart Engine processing for scanId: ${scanId}, userId: ${userId}`);
+    this.logger.log(`Starting Phase 4/8 Smart Engine + AI Inference processing for scanId: ${scanId}, userId: ${userId}`);
 
     try {
       // 1. Update status to PROCESSING
@@ -64,6 +64,40 @@ export class ScanProcessor extends WorkerHost {
         where: { id: scanId },
         data: { status: "PROCESSING" },
       });
+
+      // Optional: Query Python FastAPI inference service if active
+      let pythonAiFindings: Finding[] = [];
+      let pythonAiScores: Record<string, ZoneScore> | null = null;
+      try {
+        const inferenceUrl = process.env["INFERENCE_SERVICE_URL"] || "http://127.0.0.1:8000/api/v1/inference/analyze";
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1200);
+        const resp = await fetch(inferenceUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scanId,
+            userId,
+            imageKey: job.data.imageKey,
+            questionnaire,
+            physiologicalState,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        if (resp.ok) {
+          const aiData = (await resp.json()) as { findings?: Finding[]; zoneScores?: Record<string, ZoneScore> };
+          this.logger.log(`FastAPI PyTorch inference pipeline succeeded for scanId: ${scanId}`);
+          if (aiData.findings && aiData.findings.length > 0) {
+            pythonAiFindings = aiData.findings;
+          }
+          if (aiData.zoneScores) {
+            pythonAiScores = aiData.zoneScores;
+          }
+        }
+      } catch {
+        // FastAPI microservice offline or local dev; fallback to on-device smart engine consensus
+      }
 
       // Stage 0: Preprocessing (D65 White balance & multi-angle bracket calibration)
       await new Promise((resolve) => setTimeout(resolve, 250));
@@ -204,6 +238,10 @@ export class ScanProcessor extends WorkerHost {
           boundingBox: { x: 0.36, y: 0.38, w: 0.07, h: 0.06 },
           description: "Periorbital hyperpigmentation patch",
         });
+      }
+
+      if (pythonAiFindings.length > 0) {
+        findings.push(...pythonAiFindings);
       }
 
       // Preprocessing composite (oiliness, scale, multi-angle stitching)
