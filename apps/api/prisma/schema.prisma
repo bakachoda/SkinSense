@@ -74,6 +74,10 @@ model User {
   amReminderEnabled         Boolean   @default(true)
   pmReminderEnabled         Boolean   @default(true)
   scanReminderEnabled       Boolean   @default(true)
+  dataRegion                String    @default("US") // US, EU, APAC
+  lifeStage                 String    @default("NONE") // NONE, PREGNANCY, POSTPARTUM, PERIMENOPAUSE, PUBERTY
+  activeProfileId           String?
+  voiceTranscripts          Json?
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
 
@@ -88,6 +92,12 @@ model User {
   lifestyleLogs             LifestyleLog[]
   skinTrends                SkinTrend[]
   achievements              Achievement[]
+  portalAccesses            PortalAccess[]
+  dermatologistNotes        DermatologistNote[]
+  diagnosticCorrections     DiagnosticCorrection[]
+  routineVersions           RoutineVersion[]
+  profiles                  AppProfile[]
+  healthSyncLogs            HealthSyncLog[]
 
   @@index([supabaseId])
 }
@@ -377,5 +387,98 @@ model CohortStats {
 
   @@unique([fitzpatrick, ageRange, concern, metric])
   @@index([fitzpatrick, ageRange])
+}
+
+// ──────────────────────────────────────────────
+// Phase 7: Ecosystem & Scale
+// ──────────────────────────────────────────────
+
+model PortalAccess {
+  id          String              @id @default(cuid())
+  userId      String
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken String              @unique
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  notes       DermatologistNote[]
+  createdAt   DateTime            @default(now())
+
+  @@index([accessToken])
+  @@index([userId])
+}
+
+model DermatologistNote {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portalAccessId String
+  portalAccess   PortalAccess  @relation(fields: [portalAccessId], references: [id], onDelete: Cascade)
+  clinicianName  String?
+  message        String
+  readAt         DateTime?
+  createdAt      DateTime      @default(now())
+
+  @@index([userId])
+  @@index([portalAccessId])
+}
+
+model DiagnosticCorrection {
+  id                    String   @id @default(cuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scanId                String
+  systemDifferential    String
+  professionalDiagnosis String
+  prescriptions         String[]
+  consentToTraining     Boolean  @default(false)
+  createdAt             DateTime @default(now())
+
+  @@index([userId])
+  @@index([scanId])
+}
+
+model RoutineVersion {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routineId    String
+  version      Int
+  amSteps      Json
+  pmSteps      Json
+  changeReason String
+  changedAt    DateTime @default(now())
+
+  @@index([userId, routineId])
+}
+
+model AppProfile {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName          String
+  avatarUri            String?
+  isDefault            Boolean  @default(false)
+  biometricLockEnabled Boolean  @default(false)
+  createdAt            DateTime @default(now())
+
+  @@index([userId])
+}
+
+model HealthSyncLog {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date              DateTime @db.Date
+  sleepHours        Float?
+  sleepQuality      String?  // "poor" | "fair" | "good"
+  hrvAvgMs          Float?
+  hrvTrend          String?  // "decreasing" | "stable" | "increasing"
+  cyclePhase        String?  // "follicular" | "ovulatory" | "luteal" | "menstrual"
+  stepsCount        Int?
+  rawPayloadSummary Json?
+  createdAt         DateTime @default(now())
+
+  @@index([userId])
+  @@index([date])
 }
 

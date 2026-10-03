@@ -412,7 +412,7 @@ describe("Routine Engine", () => {
       );
 
       const phase1Products = routine.phasedPlan!.phases[0]!.products;
-      const categories = phase1Products.map((p) => p.category);
+      const categories = phase1Products.map((p: any) => p.category);
       expect(categories).toContain("CLEANSER");
       expect(categories).toContain("MOISTURIZER");
       expect(categories).toContain("SPF");
@@ -435,13 +435,13 @@ describe("Routine Engine", () => {
       expect(routine.calendar!.schedule.length).toBe(7);
 
       // Check day names
-      const days = routine.calendar!.schedule.map((d) => d.dayOfWeek);
+      const days = routine.calendar!.schedule.map((d: any) => d.dayOfWeek);
       expect(days).toEqual(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]);
 
       // Rest nights should have no TREATMENT steps in PM
-      const restNights = routine.calendar!.schedule.filter((d) => d.isRestNight);
+      const restNights = routine.calendar!.schedule.filter((d: any) => d.isRestNight);
       for (const restNight of restNights) {
-        const hasTreatmentPM = restNight.pmSteps.some((s) => s.category === "TREATMENT");
+        const hasTreatmentPM = restNight.pmSteps.some((s: any) => s.category === "TREATMENT");
         expect(hasTreatmentPM).toBe(false);
       }
     });

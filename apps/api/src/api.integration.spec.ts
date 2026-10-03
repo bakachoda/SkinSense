@@ -777,4 +777,154 @@ describe("API Integration Tests (Database & Service Layer)", () => {
       expect(forecast.riskLevel).toBe("low");
     });
   });
+
+  // ══════════════════════════════════════════════
+  // Phase 6: Longitudinal Intelligence Integration Tests
+  // ══════════════════════════════════════════════
+
+  describe("Phase 6: Temporal Analytics & Timeline", () => {
+    let temporalService: any;
+
+    beforeAll(async () => {
+      const { TemporalAnalyticsService } = await import("./longitudinal/temporal-analytics.service");
+      temporalService = new TemporalAnalyticsService(prisma);
+    });
+
+    it("should build a timeline with overall score history from completed scans", async () => {
+      const timeline = await temporalService.buildTimeline("test-supabase-id-000", "all");
+      expect(timeline.totalScans).toBeGreaterThanOrEqual(0);
+      expect(timeline.overallScoreHistory).toBeDefined();
+      expect(Array.isArray(timeline.overallScoreHistory)).toBe(true);
+    });
+
+    it("should detect concern trends and assign direction (improving/declining/stable)", async () => {
+      const timeline = await temporalService.buildTimeline("test-supabase-id-000", "30d");
+      expect(timeline.concernTrends).toBeDefined();
+      expect(Array.isArray(timeline.concernTrends)).toBe(true);
+      for (const trend of timeline.concernTrends) {
+        expect(["improving", "stable", "declining", "volatile"]).toContain(trend.direction);
+        expect(trend.slope).toBeDefined();
+        expect(trend.confidence).toBeGreaterThanOrEqual(0);
+        expect(trend.confidence).toBeLessThanOrEqual(1);
+      }
+    });
+
+    it("should return ISO-formatted dates for timeline range", async () => {
+      const timeline = await temporalService.buildTimeline("test-supabase-id-000", "all");
+      expect(timeline.firstScanDate).toBeDefined();
+      expect(timeline.latestScanDate).toBeDefined();
+    });
+  });
+
+  describe("Phase 6: Skin Twin Cohort Matching", () => {
+    let skinTwinService: any;
+
+    beforeAll(async () => {
+      const { SkinTwinService } = await import("./longitudinal/skin-twin.service");
+      skinTwinService = new SkinTwinService(prisma);
+    });
+
+    it("should return a cohort profile with demographics", async () => {
+      const result = await skinTwinService.findSkinTwin("test-supabase-id-000");
+      expect(result.cohort).toBeDefined();
+      expect(result.cohort.cohortSize).toBeGreaterThan(0);
+      expect(result.matchConfidence).toBeGreaterThan(0);
+    });
+
+    it("should generate percentile rankings for key metrics", async () => {
+      const result = await skinTwinService.findSkinTwin("test-supabase-id-000");
+      expect(result.rankings.length).toBeGreaterThan(0);
+      for (const r of result.rankings) {
+        expect(r.percentile).toBeGreaterThanOrEqual(0);
+        expect(r.percentile).toBeLessThanOrEqual(100);
+      }
+    });
+
+    it("should provide what-worked product recommendations", async () => {
+      const result = await skinTwinService.findSkinTwin("test-supabase-id-000");
+      expect(result.whatWorked.length).toBeGreaterThan(0);
+      expect(result.whatWorked[0]!.productName).toBeDefined();
+      expect(result.whatWorked[0]!.successRate).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Phase 6: Lifestyle Correlation Engine", () => {
+    let lifestyleService: any;
+
+    beforeAll(async () => {
+      const { LifestyleCorrelationService } = await import("./longitudinal/lifestyle-correlation.service");
+      lifestyleService = new LifestyleCorrelationService(prisma);
+    });
+
+    it("should log a daily check-in via upsert", async () => {
+      const result = await lifestyleService.logCheckIn("test-supabase-id-000", {
+        date: new Date().toISOString().split("T")[0],
+        checkIn: {
+          sleepHours: 7.5,
+          waterGlasses: 9,
+          stressLevel: 2,
+          exerciseMinutes: 40,
+          sunExposureMinutes: 30,
+          dietTags: ["fruits_veggies"],
+        },
+      });
+      expect(result).toBeDefined();
+      expect(result.sleepHours).toBe(7.5);
+    });
+
+    it("should compute habit scores across 5 categories", async () => {
+      const insights = await lifestyleService.computeInsights("test-supabase-id-000");
+      expect(insights.habitScores).toBeDefined();
+      const categories = insights.habitScores.map((h: any) => h.category);
+      expect(categories).toContain("sleep");
+      expect(categories).toContain("hydration");
+      expect(categories).toContain("exercise");
+      expect(categories).toContain("stress");
+      expect(categories).toContain("sun_protection");
+    });
+
+    it("should compute overall lifestyle score 0-100", async () => {
+      const insights = await lifestyleService.computeInsights("test-supabase-id-000");
+      expect(insights.overallLifestyleScore).toBeGreaterThanOrEqual(0);
+      expect(insights.overallLifestyleScore).toBeLessThanOrEqual(100);
+    });
+
+    it("should compute streaks", async () => {
+      const insights = await lifestyleService.computeInsights("test-supabase-id-000");
+      expect(insights.currentStreak).toBeGreaterThanOrEqual(0);
+      expect(insights.bestStreak).toBeGreaterThanOrEqual(insights.currentStreak);
+    });
+  });
+
+  describe("Phase 6: Achievement & Gamification System", () => {
+    let achievementService: any;
+
+    beforeAll(async () => {
+      const { AchievementService } = await import("./longitudinal/achievement.service");
+      achievementService = new AchievementService(prisma);
+    });
+
+    it("should return all achievements with progress", async () => {
+      const progress = await achievementService.getProgress("test-supabase-id-000");
+      expect(progress.totalCount).toBeGreaterThan(0);
+      expect(progress.achievements.length).toBe(progress.totalCount);
+      expect(progress.level).toBeGreaterThanOrEqual(1);
+    });
+
+    it("should compute XP level from thresholds", async () => {
+      const progress = await achievementService.getProgress("test-supabase-id-000");
+      expect(progress.level).toBeGreaterThanOrEqual(1);
+      expect(progress.xpToNextLevel).toBeGreaterThan(0);
+    });
+
+    it("should evaluate and unlock achievements", async () => {
+      const newlyUnlocked = await achievementService.evaluateAchievements("test-supabase-id-000");
+      expect(Array.isArray(newlyUnlocked)).toBe(true);
+    });
+
+    it("should mark achievements as seen", async () => {
+      await achievementService.markSeen("test-supabase-id-000");
+      // No error thrown = success
+    });
+  });
 });

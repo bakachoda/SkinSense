@@ -21,12 +21,18 @@ import {
   ShieldCheck,
   CheckCircle2,
   ClipboardCheck,
+  Users,
+  Mic,
 } from "lucide-react-native";
 import { NoScansEmptyState } from "../../components/EmptyStates";
 import { DailyCheckInModal } from "../../components/DailyCheckInModal";
 import { SkinTwinCard } from "../../components/SkinTwinCard";
 import { InsightsDashboard } from "../../components/InsightsDashboard";
 import { AchievementBadges } from "../../components/AchievementBadges";
+import { SeasonalAdjustmentBanner } from "../../components/SeasonalAdjustmentBanner";
+import { HealthConnectCard } from "../../components/HealthConnectCard";
+import { VoiceNoteModal } from "../../components/VoiceNoteModal";
+import { ProfileSwitcherModal } from "../../components/ProfileSwitcherModal";
 import type {
   LifestyleCheckIn,
   SkinTwinResult,
@@ -78,7 +84,7 @@ const DEFAULT_ACHIEVEMENTS: AchievementProgress = {
     { achievementId: "scans_5", name: "Getting Serious", description: "Complete 5 skin scans", icon: "Layers", category: "scanning", unlockedAt: "", progress: 0.6, isNew: false },
     { achievementId: "routine_3day", name: "Building Habits", description: "Follow your routine for 3 days straight", icon: "Calendar", category: "routine", unlockedAt: "2026-09-15T10:00:00Z", progress: 1, isNew: false },
     { achievementId: "checkin_3day", name: "Mindful Logger", description: "Log daily lifestyle check-ins 3 days in a row", icon: "Clock", category: "lifestyle", unlockedAt: "2026-09-20T10:00:00Z", progress: 1, isNew: false },
-    { achievementId: "score_improvement", name: "On The Mend", description: "Improve your overall skin health score", icon: "Award", category: "health", unlockedAt: "2026-09-25T10:00:00Z", progress: 1, isNew: false },
+    { achievementId: "score_improvement", name: "On The Mend", description: "Improve your overall skin health score", icon: "Award", category: "improvement", unlockedAt: "2026-09-25T10:00:00Z", progress: 1, isNew: false },
     { achievementId: "cohort_top25", name: "Skin Twin Star", description: "Reach the top 25% of your skin twin cohort", icon: "Sparkles", category: "social", unlockedAt: "", progress: 0.72, isNew: false },
     { achievementId: "routine_7day", name: "Weekly Warrior", description: "7-day routine adherence streak", icon: "Flame", category: "routine", unlockedAt: "2026-09-22T10:00:00Z", progress: 1, isNew: false },
     { achievementId: "checkin_first", name: "Self Aware", description: "Log your first lifestyle check-in", icon: "ClipboardCheck", category: "lifestyle", unlockedAt: "2026-09-28T10:00:00Z", progress: 1, isNew: true },
@@ -105,6 +111,11 @@ export default function HomeScreen() {
   const [insights, setInsights] = useState<LifestyleInsights | null>(DEFAULT_INSIGHTS);
   const [achievements, setAchievements] = useState<AchievementProgress | null>(DEFAULT_ACHIEVEMENTS);
   const [todayCheckedIn, setTodayCheckedIn] = useState(false);
+
+  // Phase 7 state
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [activeProfileName, setActiveProfileName] = useState("Primary (You)");
 
   const userId = "user-1"; // Derived from auth in production
 
@@ -203,7 +214,7 @@ export default function HomeScreen() {
             { achievementId: "scans_5", name: "Getting Serious", description: "Complete 5 skin scans", icon: "Layers", category: "scanning", unlockedAt: "", progress: 0.6, isNew: false },
             { achievementId: "routine_3day", name: "Building Habits", description: "Follow your routine for 3 days straight", icon: "Calendar", category: "routine", unlockedAt: "2026-09-15T10:00:00Z", progress: 1, isNew: false },
             { achievementId: "checkin_3day", name: "Mindful Logger", description: "Log daily lifestyle check-ins 3 days in a row", icon: "Clock", category: "lifestyle", unlockedAt: "2026-09-20T10:00:00Z", progress: 1, isNew: false },
-            { achievementId: "score_improvement", name: "On The Mend", description: "Improve your overall skin health score", icon: "Award", category: "health", unlockedAt: "2026-09-25T10:00:00Z", progress: 1, isNew: false },
+            { achievementId: "score_improvement", name: "On The Mend", description: "Improve your overall skin health score", icon: "Award", category: "improvement", unlockedAt: "2026-09-25T10:00:00Z", progress: 1, isNew: false },
             { achievementId: "cohort_top25", name: "Skin Twin Star", description: "Reach the top 25% of your skin twin cohort", icon: "Sparkles", category: "social", unlockedAt: "", progress: 0.72, isNew: false },
             { achievementId: "routine_7day", name: "Weekly Warrior", description: "7-day routine adherence streak", icon: "Flame", category: "routine", unlockedAt: "2026-09-22T10:00:00Z", progress: 1, isNew: false },
             { achievementId: "checkin_first", name: "Self Aware", description: "Log your first lifestyle check-in", icon: "ClipboardCheck", category: "lifestyle", unlockedAt: "2026-09-28T10:00:00Z", progress: 1, isNew: true },
@@ -263,7 +274,7 @@ export default function HomeScreen() {
           { achievementId: "scans_5", name: "Getting Serious", description: "Complete 5 skin scans", icon: "Layers", category: "scanning", unlockedAt: "", progress: 0.6, isNew: false },
           { achievementId: "routine_3day", name: "Building Habits", description: "Follow your routine for 3 days straight", icon: "Calendar", category: "routine", unlockedAt: "2026-09-15T10:00:00Z", progress: 1, isNew: false },
           { achievementId: "checkin_3day", name: "Mindful Logger", description: "Log daily lifestyle check-ins 3 days in a row", icon: "Clock", category: "lifestyle", unlockedAt: "2026-09-20T10:00:00Z", progress: 1, isNew: false },
-          { achievementId: "score_improvement", name: "On The Mend", description: "Improve your overall skin health score", icon: "Award", category: "health", unlockedAt: "2026-09-25T10:00:00Z", progress: 1, isNew: false },
+          { achievementId: "score_improvement", name: "On The Mend", description: "Improve your overall skin health score", icon: "Award", category: "improvement", unlockedAt: "2026-09-25T10:00:00Z", progress: 1, isNew: false },
           { achievementId: "cohort_top25", name: "Skin Twin Star", description: "Reach the top 25% of your skin twin cohort", icon: "Sparkles", category: "social", unlockedAt: "", progress: 0.72, isNew: false },
           { achievementId: "routine_7day", name: "Weekly Warrior", description: "7-day routine adherence streak", icon: "Flame", category: "routine", unlockedAt: "2026-09-22T10:00:00Z", progress: 1, isNew: false },
           { achievementId: "checkin_first", name: "Self Aware", description: "Log your first lifestyle check-in", icon: "ClipboardCheck", category: "lifestyle", unlockedAt: "2026-09-28T10:00:00Z", progress: 1, isNew: true },
@@ -334,33 +345,63 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* Welcome Header */}
+        {/* Welcome Header & Family Profile Row */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>SkinSense HealthOS</Text>
-          <Text style={styles.subGreeting}>
-            Clinical facial analysis & dynamic regimen
-          </Text>
-        </View>
-
-        {/* Daily Check-In Prompt */}
-        {!todayCheckedIn && (
-          <TouchableOpacity
-            style={styles.checkInPrompt}
-            onPress={() => setShowCheckIn(true)}
-            activeOpacity={0.85}
-          >
-            <View style={styles.checkInIconWrap}>
-              <ClipboardCheck size={20} color="#818CF8" />
-            </View>
-            <View style={styles.checkInTextCol}>
-              <Text style={styles.checkInTitle}>Daily Check-In</Text>
-              <Text style={styles.checkInSub}>
-                30 seconds · Track sleep, water, stress & more
+          <View style={styles.headerRow}>
+            <View>
+              <Text style={styles.greeting}>SkinSense HealthOS</Text>
+              <Text style={styles.subGreeting}>
+                Clinical facial analysis & dynamic regimen
               </Text>
             </View>
-            <ChevronRight size={18} color="#818CF8" />
+            <TouchableOpacity
+              style={styles.profileBtn}
+              onPress={() => setShowProfileModal(true)}
+              activeOpacity={0.8}
+            >
+              <Users size={15} color="#38BDF8" />
+              <Text style={styles.profileBtnText}>{activeProfileName}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Phase 7: Seasonal Transition Advisory Banner */}
+        <SeasonalAdjustmentBanner
+          onApplyAdjustment={() => router.push("/(tabs)/routine")}
+        />
+
+        {/* Daily & Voice Check-In Prompts */}
+        <View style={styles.checkInRow}>
+          {!todayCheckedIn && (
+            <TouchableOpacity
+              style={styles.checkInPrompt}
+              onPress={() => setShowCheckIn(true)}
+              activeOpacity={0.85}
+            >
+              <View style={styles.checkInIconWrap}>
+                <ClipboardCheck size={20} color="#818CF8" />
+              </View>
+              <View style={styles.checkInTextCol}>
+                <Text style={styles.checkInTitle}>Daily Check-In</Text>
+                <Text style={styles.checkInSub}>
+                  30s · Sleep, water, stress
+                </Text>
+              </View>
+              <ChevronRight size={18} color="#818CF8" />
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={styles.voiceCheckInBtn}
+            onPress={() => setShowVoiceModal(true)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.voiceIconWrap}>
+              <Mic size={18} color="#A855F7" />
+            </View>
+            <Text style={styles.voiceCheckInText}>Voice Note</Text>
           </TouchableOpacity>
-        )}
+        </View>
 
         {/* Big CTA: Capture Scan */}
         <TouchableOpacity
@@ -418,6 +459,13 @@ export default function HomeScreen() {
               </Text>
             </View>
           </View>
+        </View>
+
+        {/* Phase 7: Health App Integration Biomarkers */}
+        <View style={styles.phase6Section}>
+          <HealthConnectCard
+            onPressDetails={() => router.push("/(tabs)/progress")}
+          />
         </View>
 
         {/* Phase 6: Lifestyle Insights Dashboard */}
@@ -501,6 +549,21 @@ export default function HomeScreen() {
         onClose={() => setShowCheckIn(false)}
         onSubmit={handleCheckInSubmit}
       />
+
+      {/* Phase 7: Voice Note Modal */}
+      <VoiceNoteModal
+        visible={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+      />
+
+      {/* Phase 7: Family Profile Switcher Modal */}
+      <ProfileSwitcherModal
+        visible={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        onSelectProfile={(p) =>
+          setActiveProfileName(p.includes("teen") ? "Emma (Teens)" : "Primary (You)")
+        }
+      />
     </SafeAreaView>
   );
 }
@@ -517,6 +580,27 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 20,
   },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  profileBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#1E293B",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#38BDF840",
+  },
+  profileBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#38BDF8",
+  },
   greeting: {
     fontSize: 26,
     fontWeight: "800",
@@ -528,16 +612,45 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     marginTop: 4,
   },
+  checkInRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 16,
+  },
   checkInPrompt: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(129, 140, 248, 0.08)",
     borderWidth: 1.5,
     borderColor: "rgba(129, 140, 248, 0.25)",
     borderRadius: 16,
-    padding: 14,
-    marginBottom: 16,
-    gap: 12,
+    padding: 12,
+    gap: 10,
+  },
+  voiceCheckInBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(168, 85, 247, 0.08)",
+    borderWidth: 1.5,
+    borderColor: "rgba(168, 85, 247, 0.25)",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  voiceIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(168, 85, 247, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  voiceCheckInText: {
+    color: "#C084FC",
+    fontSize: 12,
+    fontWeight: "700",
   },
   checkInIconWrap: {
     width: 40,

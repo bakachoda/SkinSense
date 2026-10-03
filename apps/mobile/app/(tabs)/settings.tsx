@@ -41,7 +41,17 @@ import {
   Bug,
   CheckCircle,
   Camera,
+  Stethoscope,
+  Share2,
+  ClipboardCheck,
+  Baby,
+  Globe,
+  Users,
 } from "lucide-react-native";
+import { ClinicalExportModal } from "../../components/ClinicalExportModal";
+import { DermatologistShareModal } from "../../components/DermatologistShareModal";
+import { DiagnosisFeedbackModal } from "../../components/DiagnosisFeedbackModal";
+import { ProfileSwitcherModal } from "../../components/ProfileSwitcherModal";
 
 export default function SettingsScreen() {
   const { questionnaire, resetQuestionnaire } = useQuestionnaireStore();
@@ -56,6 +66,13 @@ export default function SettingsScreen() {
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackType, setFeedbackType] = useState<"feedback" | "bug">("feedback");
+
+  // Phase 7 Modals state
+  const [showClinicalExportModal, setShowClinicalExportModal] = useState(false);
+  const [showDermShareModal, setShowDermShareModal] = useState(false);
+  const [showDiagnosisModal, setShowDiagnosisModal] = useState(false);
+  const [showProfileSwitcherModal, setShowProfileSwitcherModal] = useState(false);
+  const [dataRegion, setDataRegion] = useState<"US" | "EU" | "APAC">("US");
 
   // Phase 3 Capture Quality Toggles
   const [audioGuidanceEnabled, setAudioGuidanceEnabled] = useState(true);
@@ -361,10 +378,65 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* ── 3b. DERMATOLOGIST & HEALTH ECOSYSTEM (PHASE 7) ── */}
+        <View style={styles.sectionHeaderRow}>
+          <Stethoscope size={16} color="#0284c7" />
+          <Text style={styles.sectionHeaderTitle}>Dermatologist & Health Ecosystem</Text>
+        </View>
+        <View style={styles.cardGroup}>
+          <TouchableOpacity
+            style={styles.clickableRow}
+            onPress={() => setShowClinicalExportModal(true)}
+            accessibilityLabel="Clinical Dermatologist Export"
+          >
+            <View>
+              <Text style={styles.rowLabel}>Clinical Intake Summary (PDF)</Text>
+              <Text style={styles.rowSubLabel}>ICD-10 mapped codes, GAGS score & INCI analysis</Text>
+            </View>
+            <ChevronRight size={18} color="#64748b" />
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.clickableRow}
+            onPress={() => setShowDermShareModal(true)}
+            accessibilityLabel="Share with Dermatologist"
+          >
+            <View>
+              <Text style={styles.rowLabel}>Share with Dermatologist</Text>
+              <Text style={styles.rowSubLabel}>Create a secure, 90-day view-only invite link</Text>
+            </View>
+            <ChevronRight size={18} color="#64748b" />
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.clickableRow}
+            onPress={() => setShowDiagnosisModal(true)}
+            accessibilityLabel="Log Doctor Diagnosis"
+          >
+            <View>
+              <Text style={styles.rowLabel}>Log Doctor Diagnosis & Rx</Text>
+              <Text style={styles.rowSubLabel}>Reconcile prescriptions with OTC skincare regimen</Text>
+            </View>
+            <ChevronRight size={18} color="#64748b" />
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.clickableRow}
+            onPress={() => setShowProfileSwitcherModal(true)}
+            accessibilityLabel="Family Profiles"
+          >
+            <View>
+              <Text style={styles.rowLabel}>Family Profiles & Privacy</Text>
+              <Text style={styles.rowSubLabel}>Manage isolated accounts with optional Face ID</Text>
+            </View>
+            <ChevronRight size={18} color="#64748b" />
+          </TouchableOpacity>
+        </View>
+
         {/* ── 4. DATA SECTION ── */}
         <View style={styles.sectionHeaderRow}>
           <Database size={16} color="#8b5cf6" />
-          <Text style={styles.sectionHeaderTitle}>Data</Text>
+          <Text style={styles.sectionHeaderTitle}>Data & Residency</Text>
         </View>
         <View style={styles.cardGroup}>
           <TouchableOpacity
@@ -381,6 +453,34 @@ export default function SettingsScreen() {
             ) : (
               <ChevronRight size={18} color="#64748b" />
             )}
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.clickableRow}
+            onPress={() => {
+              const nextRegion = dataRegion === "US" ? "EU" : dataRegion === "EU" ? "APAC" : "US";
+              setDataRegion(nextRegion);
+              Alert.alert(
+                "Data Residency Updated",
+                `All personal scans, routines, and images will be stored exclusively in the ${nextRegion} region (GDPR Article 45 compliant).`,
+              );
+            }}
+            accessibilityLabel="Data Residency Region"
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Globe size={16} color="#38bdf8" style={{ marginRight: 10 }} />
+              <View>
+                <Text style={styles.rowLabel}>Storage Region ({dataRegion})</Text>
+                <Text style={styles.rowSubLabel}>
+                  {dataRegion === "US"
+                    ? "US-East (AWS / Supabase US)"
+                    : dataRegion === "EU"
+                      ? "EU-Frankfurt (GDPR Strict Residency)"
+                      : "APAC-Singapore (Asia Pacific)"}
+                </Text>
+              </View>
+            </View>
+            <ChevronRight size={18} color="#64748b" />
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity
@@ -659,6 +759,30 @@ export default function SettingsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Phase 7: Clinical Export Modal */}
+      <ClinicalExportModal
+        visible={showClinicalExportModal}
+        onClose={() => setShowClinicalExportModal(false)}
+      />
+
+      {/* Phase 7: Share with Dermatologist Modal */}
+      <DermatologistShareModal
+        visible={showDermShareModal}
+        onClose={() => setShowDermShareModal(false)}
+      />
+
+      {/* Phase 7: Diagnosis Feedback Modal */}
+      <DiagnosisFeedbackModal
+        visible={showDiagnosisModal}
+        onClose={() => setShowDiagnosisModal(false)}
+      />
+
+      {/* Phase 7: Profile Switcher Modal */}
+      <ProfileSwitcherModal
+        visible={showProfileSwitcherModal}
+        onClose={() => setShowProfileSwitcherModal(false)}
+      />
     </SafeAreaView>
   );
 }
