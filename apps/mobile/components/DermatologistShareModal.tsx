@@ -85,22 +85,22 @@ export function DermatologistShareModal({
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.iconCircle}>
-                <Share2 size={20} color="#0284C7" />
+                <Share2 size={16} color="#111827" />
               </View>
               <View>
-                <Text style={styles.headerTitle}>Share with Dermatologist</Text>
-                <Text style={styles.headerSub}>Secure, Expiring Clinician Link</Text>
+                <Text style={styles.headerTitle}>CLINICIAN SECURE PORTAL</Text>
+                <Text style={styles.headerSub}>Expiring 90-Day Read-Only Link</Text>
               </View>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
-              <X size={20} color="#94A3B8" />
+              <X size={18} color="#111827" />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {/* Privacy Shield Banner */}
             <View style={styles.privacyBanner}>
-              <Shield size={18} color="#10B981" />
+              <Shield size={16} color="#111827" />
               <View style={styles.privacyContent}>
                 <Text style={styles.privacyTitle}>Zero-Friction Doctor Access</Text>
                 <Text style={styles.privacySub}>
@@ -131,9 +131,9 @@ export function DermatologistShareModal({
                   />
                   <TouchableOpacity style={styles.copyBtn} onPress={handleCopy}>
                     {copied ? (
-                      <Check size={18} color="#10B981" />
+                      <Check size={16} color="#FFFFFF" />
                     ) : (
-                      <Copy size={18} color="#FFFFFF" />
+                      <Copy size={16} color="#FFFFFF" />
                     )}
                   </TouchableOpacity>
                 </View>
@@ -144,8 +144,8 @@ export function DermatologistShareModal({
               </View>
             ) : (
               <View style={styles.emptyCard}>
-                <Clock size={32} color="#64748B" />
-                <Text style={styles.emptyTitle}>No Active Invite Link</Text>
+                <Clock size={28} color="#6B7280" />
+                <Text style={styles.emptyTitle}>NO ACTIVE INVITE LINK</Text>
                 <Text style={styles.emptySub}>
                   Generate a temporary link whenever you have an upcoming consultation.
                 </Text>
@@ -157,7 +157,7 @@ export function DermatologistShareModal({
                   {loading ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <Text style={styles.generateBtnText}>Generate 90-Day Link</Text>
+                    <Text style={styles.generateBtnText}>GENERATE 90-DAY LINK</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -165,7 +165,7 @@ export function DermatologistShareModal({
 
             {/* What your doctor sees */}
             <View style={styles.permissionsCard}>
-              <Text style={styles.permissionsTitle}>WHAT YOUR DOCTOR WILL SEE</Text>
+              <Text style={styles.permissionsTitle}>CLINICIAN VIEW PRIVILEGES</Text>
               <View style={styles.permRow}>
                 <Text style={styles.permBullet}>•</Text>
                 <Text style={styles.permText}>Longitudinal skin score trend and barrier history</Text>
@@ -188,7 +188,7 @@ export function DermatologistShareModal({
           {/* Footer */}
           <View style={styles.footer}>
             <TouchableOpacity style={styles.doneBtn} onPress={onClose}>
-              <Text style={styles.doneBtnText}>Done</Text>
+              <Text style={styles.doneBtnText}>CLOSE</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -200,54 +200,57 @@ export function DermatologistShareModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.75)",
+    backgroundColor: "rgba(17, 24, 39, 0.4)",
     justifyContent: "flex-end",
   },
   container: {
-    backgroundColor: "#0F172A",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     maxHeight: "85%",
-    paddingTop: 20,
+    paddingTop: 18,
     borderWidth: 1,
-    borderColor: "#1E293B",
+    borderColor: "#E5E7EB",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#1E293B",
+    borderBottomColor: "#E5E7EB",
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#0284C720",
+    width: 34,
+    height: 34,
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#F8FAFC",
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   headerSub: {
-    fontSize: 12,
-    color: "#64748B",
+    fontSize: 10,
+    color: "#6B7280",
     marginTop: 2,
+    letterSpacing: 0.5,
   },
   closeBtn: {
     padding: 6,
-    borderRadius: 8,
-    backgroundColor: "#1E293B",
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
   },
   content: {
     paddingHorizontal: 20,
@@ -255,42 +258,44 @@ const styles = StyleSheet.create({
   },
   privacyBanner: {
     flexDirection: "row",
-    gap: 12,
-    backgroundColor: "#10B98115",
-    padding: 14,
-    borderRadius: 12,
+    gap: 10,
+    backgroundColor: "#F9FAFB",
+    padding: 12,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#10B98130",
+    borderColor: "#E5E7EB",
     alignItems: "flex-start",
-    marginBottom: 16,
+    marginBottom: 14,
   },
   privacyContent: {
     flex: 1,
   },
   privacyTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#34D399",
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#111827",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   privacySub: {
     fontSize: 11,
-    color: "#A7F3D0",
-    marginTop: 3,
+    color: "#4B5563",
+    marginTop: 2,
     lineHeight: 16,
   },
   linkCard: {
-    backgroundColor: "#1E293B",
-    borderRadius: 14,
-    padding: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    padding: 14,
     borderWidth: 1,
-    borderColor: "#334155",
-    marginBottom: 16,
+    borderColor: "#E5E7EB",
+    marginBottom: 14,
   },
   linkHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   activePill: {
     flexDirection: "row",
@@ -298,20 +303,22 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   activeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#10B981",
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#111827",
   },
   activeText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#10B981",
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   revokeText: {
-    fontSize: 12,
-    color: "#EF4444",
-    fontWeight: "600",
+    fontSize: 11,
+    color: "#DC2626",
+    fontWeight: "700",
   },
   linkInputRow: {
     flexDirection: "row",
@@ -321,108 +328,113 @@ const styles = StyleSheet.create({
   },
   linkInput: {
     flex: 1,
-    backgroundColor: "#0F172A",
-    borderRadius: 10,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 6,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: "#94A3B8",
-    fontSize: 12,
+    paddingVertical: 8,
+    color: "#111827",
+    fontSize: 11,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
   },
   copyBtn: {
-    backgroundColor: "#0284C7",
+    backgroundColor: "#111827",
     padding: 10,
-    borderRadius: 10,
+    borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
   },
   linkHint: {
-    fontSize: 11,
-    color: "#64748B",
-    lineHeight: 16,
+    fontSize: 10,
+    color: "#6B7280",
+    lineHeight: 15,
   },
   emptyCard: {
-    backgroundColor: "#1E293B",
-    borderRadius: 14,
-    padding: 24,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    padding: 20,
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
   },
   emptyTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#F8FAFC",
-    marginTop: 10,
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginTop: 8,
   },
   emptySub: {
-    fontSize: 12,
-    color: "#64748B",
+    fontSize: 11,
+    color: "#6B7280",
     textAlign: "center",
     marginTop: 4,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   generateBtn: {
-    backgroundColor: "#0284C7",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+    backgroundColor: "#111827",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
   },
   generateBtnText: {
     color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   permissionsCard: {
-    backgroundColor: "#1E293B",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
   },
   permissionsTitle: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#94A3B8",
-    letterSpacing: 0.8,
-    marginBottom: 12,
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginBottom: 10,
   },
   permRow: {
     flexDirection: "row",
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   permBullet: {
-    color: "#38BDF8",
+    color: "#111827",
     fontWeight: "700",
   },
   permText: {
     flex: 1,
-    color: "#E2E8F0",
-    fontSize: 12,
-    lineHeight: 17,
+    color: "#4B5563",
+    fontSize: 11,
+    lineHeight: 16,
   },
   footer: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: "#1E293B",
-    backgroundColor: "#0F172A",
+    borderTopColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
   },
   doneBtn: {
-    backgroundColor: "#1E293B",
-    borderRadius: 12,
-    paddingVertical: 14,
+    backgroundColor: "#111827",
+    borderRadius: 8,
+    paddingVertical: 12,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#334155",
   },
   doneBtnText: {
-    color: "#F8FAFC",
-    fontSize: 14,
-    fontWeight: "600",
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
   },
 });

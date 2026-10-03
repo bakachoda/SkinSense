@@ -24,28 +24,28 @@ export function SeasonalAdjustmentBanner({
     <View style={styles.banner}>
       <View style={styles.topRow}>
         <View style={styles.iconCircle}>
-          <CloudSnow size={18} color="#38BDF8" />
+          <CloudSnow size={16} color="#18181B" />
         </View>
         <View style={styles.titleWrap}>
-          <Text style={styles.badge}>SEASONAL SHIFT DETECTED</Text>
-          <Text style={styles.title}>Winter Dryness Approaching</Text>
+          <Text style={styles.badge}>ENVIRONMENTAL TELEMETRY</Text>
+          <Text style={styles.title}>Seasonal Shift: Humidity Drop (-25%)</Text>
         </View>
-        <TouchableOpacity onPress={handleDismiss} style={styles.closeBtn}>
-          <X size={16} color="#64748B" />
+        <TouchableOpacity onPress={handleDismiss} style={styles.closeBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <X size={15} color="#A1A1AA" />
         </TouchableOpacity>
       </View>
 
       <Text style={styles.body}>
-        Forecast shows a 25% drop in ambient humidity next week. Prevent barrier dehydration by buffering acids and upgrading to a ceramide-rich moisturizer.
+        Ambient humidity drops next week. Buffer active acids and transition toward a lipid-replenishing ceramide barrier cream.
       </Text>
 
       <View style={styles.actionsRow}>
         <TouchableOpacity
           style={styles.actionBtn}
           onPress={onApplyAdjustment}
+          activeOpacity={0.85}
         >
-          <Sparkles size={14} color="#FFFFFF" />
-          <Text style={styles.actionBtnText}>Auto-Adjust Routine</Text>
+          <Text style={styles.actionBtnText}>Update Regimen</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -54,23 +54,23 @@ export function SeasonalAdjustmentBanner({
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: "#0F172A",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#38BDF840",
+    borderColor: "#E4E4E7",
     marginBottom: 16,
   },
   topRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   iconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#38BDF820",
+    width: 30,
+    height: 30,
+    borderRadius: 6,
+    backgroundColor: "#F4F4F5",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
@@ -80,14 +80,15 @@ const styles = StyleSheet.create({
   },
   badge: {
     fontSize: 9,
-    fontWeight: "800",
-    color: "#38BDF8",
-    letterSpacing: 0.8,
+    fontWeight: "700",
+    color: "#71717A",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   title: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#F8FAFC",
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#18181B",
     marginTop: 2,
   },
   closeBtn: {
@@ -95,26 +96,26 @@ const styles = StyleSheet.create({
   },
   body: {
     fontSize: 12,
-    color: "#94A3B8",
-    lineHeight: 17,
+    color: "#52525B",
+    lineHeight: 18,
     marginBottom: 12,
   },
   actionsRow: {
     flexDirection: "row",
-    gap: 10,
   },
   actionBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#0284C7",
+    backgroundColor: "#18181B",
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
   },
   actionBtnText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "600",
+    letterSpacing: 0.3,
   },
 });
+

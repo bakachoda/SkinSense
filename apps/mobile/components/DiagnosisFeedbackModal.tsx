@@ -92,15 +92,15 @@ export function DiagnosisFeedbackModal({
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.iconCircle}>
-                <ClipboardCheck size={20} color="#10B981" />
+                <ClipboardCheck size={16} color="#111827" />
               </View>
               <View>
-                <Text style={styles.headerTitle}>Dermatologist Feedback</Text>
-                <Text style={styles.headerSub}>Post-Visit Diagnosis Capture</Text>
+                <Text style={styles.headerTitle}>LOG DOCTOR DIAGNOSIS</Text>
+                <Text style={styles.headerSub}>Reconcile Rx With OTC Regimen</Text>
               </View>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
-              <X size={20} color="#94A3B8" />
+              <X size={18} color="#111827" />
             </TouchableOpacity>
           </View>
 
@@ -108,8 +108,8 @@ export function DiagnosisFeedbackModal({
             {/* Question 1 */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Stethoscope size={16} color="#38BDF8" />
-                <Text style={styles.sectionTitle}>WHAT WAS YOUR DIAGNOSIS?</Text>
+                <Stethoscope size={14} color="#111827" />
+                <Text style={styles.sectionTitle}>DERMATOLOGIST DIAGNOSIS</Text>
               </View>
               <View style={styles.chipsContainer}>
                 {COMMON_DIAGNOSES.map((diag) => {
@@ -123,7 +123,7 @@ export function DiagnosisFeedbackModal({
                       <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                         {diag}
                       </Text>
-                      {isSelected && <Check size={14} color="#38BDF8" />}
+                      {isSelected && <Check size={12} color="#FFFFFF" />}
                     </TouchableOpacity>
                   );
                 })}
@@ -133,8 +133,8 @@ export function DiagnosisFeedbackModal({
             {/* Question 2 */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Pill size={16} color="#A78BFA" />
-                <Text style={styles.sectionTitle}>DID THEY PRESCRIBE ANYTHING?</Text>
+                <Pill size={14} color="#111827" />
+                <Text style={styles.sectionTitle}>CONCURRENT PRESCRIPTIONS</Text>
               </View>
               <View style={styles.chipsContainer}>
                 {COMMON_PRESCRIPTIONS.map((rx) => {
@@ -142,13 +142,13 @@ export function DiagnosisFeedbackModal({
                   return (
                     <TouchableOpacity
                       key={rx}
-                      style={[styles.chip, isSelected && styles.chipSelectedPurple]}
+                      style={[styles.chip, isSelected && styles.chipSelected]}
                       onPress={() => togglePrescription(rx)}
                     >
-                      <Text style={[styles.chipText, isSelected && styles.chipTextSelectedPurple]}>
+                      <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                         {rx}
                       </Text>
-                      {isSelected && <Check size={14} color="#C084FC" />}
+                      {isSelected && <Check size={12} color="#FFFFFF" />}
                     </TouchableOpacity>
                   );
                 })}
@@ -161,13 +161,13 @@ export function DiagnosisFeedbackModal({
                 <View style={styles.consentLeft}>
                   <Text style={styles.consentTitle}>Model Calibration Consent</Text>
                   <Text style={styles.consentSub}>
-                    Anonymously contribute this correction to teach SkinSense to better differentiate this condition.
+                    Anonymously contribute this correction to teach SkinSense computer vision.
                   </Text>
                 </View>
                 <Switch
                   value={consentToTraining}
                   onValueChange={setConsentToTraining}
-                  trackColor={{ false: "#334155", true: "#0284C7" }}
+                  trackColor={{ false: "#E5E7EB", true: "#111827" }}
                   thumbColor="#FFFFFF"
                 />
               </View>
@@ -184,10 +184,7 @@ export function DiagnosisFeedbackModal({
               {submitting ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <>
-                  <Sparkles size={18} color="#FFFFFF" />
-                  <Text style={styles.submitBtnText}>Reconcile & Update Routine</Text>
-                </>
+                <Text style={styles.submitBtnText}>RECONCILE & UPDATE ROUTINE</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -200,118 +197,114 @@ export function DiagnosisFeedbackModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.75)",
+    backgroundColor: "rgba(17, 24, 39, 0.4)",
     justifyContent: "flex-end",
   },
   container: {
-    backgroundColor: "#0F172A",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     maxHeight: "85%",
-    paddingTop: 20,
+    paddingTop: 18,
     borderWidth: 1,
-    borderColor: "#1E293B",
+    borderColor: "#E5E7EB",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#1E293B",
+    borderBottomColor: "#E5E7EB",
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#10B98120",
+    width: 34,
+    height: 34,
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#F8FAFC",
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   headerSub: {
-    fontSize: 12,
-    color: "#64748B",
+    fontSize: 10,
+    color: "#6B7280",
     marginTop: 2,
+    letterSpacing: 0.5,
   },
   closeBtn: {
     padding: 6,
-    borderRadius: 8,
-    backgroundColor: "#1E293B",
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
   },
   content: {
     paddingHorizontal: 20,
     paddingTop: 16,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
+    gap: 6,
+    marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#94A3B8",
-    letterSpacing: 0.8,
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   chipsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: 6,
   },
   chip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#1E293B",
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 10,
+    backgroundColor: "#F9FAFB",
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
   },
   chipSelected: {
-    backgroundColor: "#0284C720",
-    borderColor: "#0284C7",
-  },
-  chipSelectedPurple: {
-    backgroundColor: "#8B5CF620",
-    borderColor: "#8B5CF6",
+    backgroundColor: "#111827",
+    borderColor: "#111827",
   },
   chipText: {
-    fontSize: 12,
-    color: "#CBD5E1",
-    fontWeight: "500",
+    fontSize: 11,
+    color: "#4B5563",
+    fontWeight: "600",
   },
   chipTextSelected: {
-    color: "#38BDF8",
-    fontWeight: "700",
-  },
-  chipTextSelectedPurple: {
-    color: "#C084FC",
+    color: "#FFFFFF",
     fontWeight: "700",
   },
   consentCard: {
-    backgroundColor: "#1E293B",
-    borderRadius: 12,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 8,
     padding: 14,
-    marginBottom: 24,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
   },
   consentTop: {
     flexDirection: "row",
@@ -323,35 +316,37 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   consentTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#F8FAFC",
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#111827",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   consentSub: {
-    fontSize: 11,
-    color: "#94A3B8",
-    marginTop: 4,
-    lineHeight: 16,
+    fontSize: 10,
+    color: "#6B7280",
+    marginTop: 2,
+    lineHeight: 14,
   },
   footer: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: "#1E293B",
-    backgroundColor: "#0F172A",
+    borderTopColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
   },
   submitBtn: {
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#10B981",
-    borderRadius: 12,
-    paddingVertical: 14,
+    backgroundColor: "#111827",
+    borderRadius: 8,
+    paddingVertical: 12,
   },
   submitBtnText: {
     color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
 });

@@ -13,13 +13,12 @@ import type { Routine, RoutineStep } from "@skinsense/types";
 import {
   Sun,
   Moon,
+  Check,
   CheckCircle2,
   Circle,
-  Flame,
-  Sparkles,
-  Award,
   Barcode,
-  Plus,
+  Sparkles,
+  Flame,
 } from "lucide-react-native";
 import { PhasedRoutineCalendar } from "../../components/PhasedRoutineCalendar";
 import { BarcodeScannerModal } from "../../components/BarcodeScannerModal";
@@ -51,8 +50,8 @@ export default function RoutineScreen() {
               productId: "prod-1",
               productName: "Foaming Facial Cleanser",
               productBrand: "CeraVe",
-              targetIngredients: ["Ceramides", "Niacinamide"],
-              whyChosen: "Cleanses excess oil without stripping barrier",
+              targetIngredients: ["Ceramides 1, 3, 6-II", "Niacinamide 2%"],
+              whyChosen: "Removes lipid excess without disrupting stratum corneum barrier",
               applicationNote: "Wash for 60 seconds with lukewarm water",
             },
             {
@@ -61,9 +60,9 @@ export default function RoutineScreen() {
               productId: "prod-2",
               productName: "Niacinamide 10% + Zinc 1%",
               productBrand: "The Ordinary",
-              targetIngredients: ["Niacinamide", "Zinc PCA"],
-              whyChosen: "Regulates sebum production and targets inflammatory blemishes",
-              applicationNote: "Apply 3-4 drops across entire face",
+              targetIngredients: ["Niacinamide 10%", "Zinc PCA 1%"],
+              whyChosen: "Regulates sebaceous activity and reduces micro-inflammation",
+              applicationNote: "Dispense 3-4 drops across entire facial canvas",
             },
             {
               order: 3,
@@ -71,9 +70,9 @@ export default function RoutineScreen() {
               productId: "prod-3",
               productName: "Hydro Boost Water Gel",
               productBrand: "Neutrogena",
-              targetIngredients: ["Hyaluronic Acid"],
-              whyChosen: "Oil-free gel hydration balanced for combination zones",
-              applicationNote: "Smooth evenly over face and neck",
+              targetIngredients: ["Hyaluronic Acid", "Trehalose"],
+              whyChosen: "Non-occlusive aqueous hydration matrix for high humectant binding",
+              applicationNote: "Smooth evenly over face and cervical region",
             },
             {
               order: 4,
@@ -81,9 +80,9 @@ export default function RoutineScreen() {
               productId: "prod-4",
               productName: "Anthelios Clear Skin Dry Touch SPF 60",
               productBrand: "La Roche-Posay",
-              targetIngredients: ["Silica", "Perlite"],
-              whyChosen: "Matte photoprotection that will not clog pores",
-              applicationNote: "Apply generously 15 minutes before sun exposure",
+              targetIngredients: ["Silica Matrix", "Broad Spectrum UVA/UVB"],
+              whyChosen: "Photostable cellular defence against photo-carcinogenesis and UV-induced hyperpigmentation",
+              applicationNote: "Apply generous 1/4 tsp 15 minutes before UV exposure",
             },
           ],
           pmSteps: [
@@ -93,9 +92,9 @@ export default function RoutineScreen() {
               productId: "prod-1",
               productName: "Foaming Facial Cleanser",
               productBrand: "CeraVe",
-              targetIngredients: ["Ceramides", "Niacinamide"],
-              whyChosen: "Removes SPF and daily pollutants",
-              applicationNote: "Double cleanse if wearing makeup",
+              targetIngredients: ["Ceramides", "Hyaluronic Acid"],
+              whyChosen: "Solubilizes SPF and environmental particulate debris",
+              applicationNote: "Perform gentle circular massage for 60s",
             },
             {
               order: 2,
@@ -103,9 +102,9 @@ export default function RoutineScreen() {
               productId: "prod-5",
               productName: "Salicylic Acid 2% Solution",
               productBrand: "The Ordinary",
-              targetIngredients: ["Salicylic Acid"],
-              whyChosen: "Clears pores and papules overnight",
-              applicationNote: "Apply thin layer to T-zone and blemishes",
+              targetIngredients: ["Salicylic Acid 2% (BHA)"],
+              whyChosen: "Lipophilic follicular penetration clears infundibular follicular occlusion",
+              applicationNote: "Apply targeted thin film to T-zone and comedones",
             },
             {
               order: 3,
@@ -113,9 +112,9 @@ export default function RoutineScreen() {
               productId: "prod-6",
               productName: "PM Facial Moisturizing Lotion",
               productBrand: "CeraVe",
-              targetIngredients: ["Ceramides", "Niacinamide"],
-              whyChosen: "Deep nighttime barrier repair",
-              applicationNote: "Apply liberally before bed",
+              targetIngredients: ["Ceramides 1, 3, 6-II", "Niacinamide 4%"],
+              whyChosen: "Nighttime lamellar lipid restoration and trans-epidermal water loss reduction",
+              applicationNote: "Apply liberally as terminal step before rest",
             },
           ],
         });
@@ -134,7 +133,6 @@ export default function RoutineScreen() {
   };
 
   const handleLogAdherence = async () => {
-    console.log("[RoutineScreen] handleLogAdherence triggered! routine:", routine?.id);
     setAdherenceLogged(true);
     if (!routine) return;
     try {
@@ -163,35 +161,35 @@ export default function RoutineScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Daily Regimen</Text>
-            <Text style={styles.subtitle}>
-              Track your AM & PM clinical applications
-            </Text>
+            <Text style={styles.brandTitle}>REGIMEN GUIDE</Text>
+            <Text style={styles.brandSubtitle}>Clinical Skincare Architecture</Text>
           </View>
           <TouchableOpacity
             style={styles.scanBarcodeButton}
             onPress={() => setIsBarcodeModalVisible(true)}
+            accessibilityLabel="Scan Product"
           >
-            <Barcode size={16} color="#06B6D4" />
-            <Text style={styles.scanBarcodeText}>Scan Product</Text>
+            <Barcode size={14} color="#111827" />
+            <Text style={styles.scanBarcodeText}>SCAN BARCODE</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Streak & Adherence Tracker Banner */}
+        {/* Adherence Streak Banner */}
         <View style={styles.streakBanner}>
-          <View style={styles.flameCircle}>
-            <Flame size={24} color="#F59E0B" />
+          <View style={styles.streakInfo}>
+            <View style={styles.flameCircle}>
+              <Flame size={16} color="#111827" />
+            </View>
+            <View>
+              <Text style={styles.streakTitle}>{streakCount}-DAY ADHERENCE STREAK</Text>
+              <Text style={styles.streakSub}>
+                Consistent barrier application accelerates concern resolution by 45%
+              </Text>
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.streakTitle}>{streakCount} Days Adherence Streak!</Text>
-            <Text style={styles.streakSub}>
-              Consistent barrier support leads to 45% faster concern clearance
-            </Text>
-          </View>
-          <Award size={24} color="#10B981" />
         </View>
 
-        {/* Phase 4: Phased Regimen Progression & Weekly Schedule */}
+        {/* Phased Regimen Progression & Weekly Schedule */}
         <PhasedRoutineCalendar
           currentPhase={(routine as any)?.treatmentPhase || 1}
           phaseName={(routine as any)?.phaseName || "Phase 1: Baseline Stabilization"}
@@ -202,15 +200,15 @@ export default function RoutineScreen() {
           productConflicts={(routine as any)?.productConflicts}
         />
 
-        {/* Tab Switcher: AM vs PM */}
+        {/* Segmented AM / PM Switcher */}
         <View style={styles.tabSwitcher}>
           <TouchableOpacity
             style={[styles.tabButton, activeTab === "AM" && styles.tabButtonActive]}
             onPress={() => setActiveTab("AM")}
           >
-            <Sun size={18} color={activeTab === "AM" ? "#F59E0B" : "#9CA3AF"} />
+            <Sun size={14} color={activeTab === "AM" ? "#111827" : "#9CA3AF"} />
             <Text style={[styles.tabText, activeTab === "AM" && styles.tabTextActive]}>
-              Morning (AM)
+              AM PROTOCOL
             </Text>
           </TouchableOpacity>
 
@@ -218,9 +216,9 @@ export default function RoutineScreen() {
             style={[styles.tabButton, activeTab === "PM" && styles.tabButtonActive]}
             onPress={() => setActiveTab("PM")}
           >
-            <Moon size={18} color={activeTab === "PM" ? "#818CF8" : "#9CA3AF"} />
+            <Moon size={14} color={activeTab === "PM" ? "#111827" : "#9CA3AF"} />
             <Text style={[styles.tabText, activeTab === "PM" && styles.tabTextActive]}>
-              Evening (PM)
+              PM PROTOCOL
             </Text>
           </TouchableOpacity>
         </View>
@@ -228,22 +226,23 @@ export default function RoutineScreen() {
         {/* Progress Header */}
         <View style={styles.progressRow}>
           <Text style={styles.progressText}>
-            {completedCount} of {currentSteps.length} steps completed
+            STEP COMPLETION: {completedCount} OF {currentSteps.length}
           </Text>
           <Text style={styles.percentText}>
             {currentSteps.length > 0
-              ? `${Math.round((completedCount / currentSteps.length) * 100)}%`
+              ? `${Math.round((completedCount / currentSteps.length) * 100)}% COMPLETED`
               : "0%"}
           </Text>
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#10B981" style={{ marginVertical: 40 }} />
+          <ActivityIndicator size="small" color="#111827" style={{ marginVertical: 40 }} />
         ) : (
           <View style={styles.stepsList}>
             {currentSteps.map((step) => {
               const key = `${activeTab}-${step.order}`;
               const isChecked = !!completedSteps[key];
+              const stepNumberFormatted = step.order < 10 ? `0${step.order}` : `${step.order}`;
 
               return (
                 <TouchableOpacity
@@ -252,34 +251,40 @@ export default function RoutineScreen() {
                   onPress={() => toggleStep(key)}
                   activeOpacity={0.7}
                 >
-                  <View style={styles.checkboxTouch}>
-                    {isChecked ? (
-                      <CheckCircle2 size={24} color="#10B981" />
-                    ) : (
-                      <Circle size={24} color="#4B5563" />
-                    )}
-                  </View>
-
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.stepBadgeRow}>
-                      <Text style={styles.stepOrderBadge}>STEP {step.order}</Text>
-                      <Text style={styles.stepTypeBadge}>{step.stepType}</Text>
-                    </View>
-
-                    <Text style={[styles.productName, isChecked && styles.productNameDone]}>
-                      {step.productName}
+                  <View style={styles.stepHeaderRow}>
+                    <Text style={styles.stepBadge}>
+                      {stepNumberFormatted} {step.stepType}
                     </Text>
-                    <Text style={styles.productBrand}>{step.productBrand}</Text>
-
-                    <View style={styles.whyBox}>
-                      <Sparkles size={12} color="#10B981" />
-                      <Text style={styles.whyText}>{step.whyChosen}</Text>
+                    <View style={[styles.checkbox, isChecked && styles.checkboxChecked]}>
+                      {isChecked && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
                     </View>
-
-                    {step.applicationNote && (
-                      <Text style={styles.appNote}>{step.applicationNote}</Text>
-                    )}
                   </View>
+
+                  <Text style={[styles.productName, isChecked && styles.productNameDone]}>
+                    {step.productName}
+                  </Text>
+                  <Text style={styles.productBrand}>{step.productBrand}</Text>
+
+                  {/* Target Active Ingredients Pills */}
+                  {step.targetIngredients && step.targetIngredients.length > 0 && (
+                    <View style={styles.ingredientsRow}>
+                      {step.targetIngredients.map((ing, idx) => (
+                        <View key={idx} style={styles.ingredientPill}>
+                          <Text style={styles.ingredientPillText}>{ing}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Clinical Rationale Box */}
+                  <View style={styles.whyBox}>
+                    <Text style={styles.whyLabel}>CLINICAL FUNCTION</Text>
+                    <Text style={styles.whyText}>{step.whyChosen}</Text>
+                  </View>
+
+                  {step.applicationNote && (
+                    <Text style={styles.appNote}>Application: {step.applicationNote}</Text>
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -292,8 +297,8 @@ export default function RoutineScreen() {
           onPress={handleLogAdherence}
           disabled={adherenceLogged}
         >
-          <Text style={styles.logButtonText}>
-            {adherenceLogged ? "✓ Regimen Logged for Today" : "Log Today's Regimen"}
+          <Text style={[styles.logButtonText, adherenceLogged && styles.logButtonTextDone]}>
+            {adherenceLogged ? "✓ REGIMEN LOGGED FOR TODAY" : "LOG DAILY REGIMEN"}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -326,10 +331,11 @@ export default function RoutineScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0B0F17",
+    backgroundColor: "#F9FAFB",
   },
   scrollContent: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 16,
     paddingBottom: 40,
   },
   header: {
@@ -338,188 +344,248 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  brandTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+  },
+  brandSubtitle: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#6B7280",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginTop: 2,
+  },
   scanBarcodeButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#131B2E",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "rgba(6, 182, 212, 0.4)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    borderColor: "#E5E7EB",
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 6,
   },
   scanBarcodeText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "700",
-    color: "#22D3EE",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#F9FAFB",
-  },
-  subtitle: {
-    fontSize: 13,
-    color: "#9CA3AF",
-    marginTop: 2,
+    color: "#111827",
+    letterSpacing: 1,
   },
   streakBanner: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 16,
+  },
+  streakInfo: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#161E2E",
-    borderWidth: 1,
-    borderColor: "#F59E0B",
-    borderRadius: 16,
-    padding: 16,
     gap: 12,
-    marginBottom: 20,
   },
   flameCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(245, 158, 11, 0.15)",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#F3F4F6",
     justifyContent: "center",
     alignItems: "center",
   },
   streakTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#F59E0B",
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   streakSub: {
-    fontSize: 12,
-    color: "#D1D5DB",
+    fontSize: 11,
+    color: "#6B7280",
     marginTop: 2,
     lineHeight: 16,
   },
   tabSwitcher: {
     flexDirection: "row",
-    backgroundColor: "#161E2E",
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 14,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+    padding: 3,
+    marginVertical: 14,
   },
   tabButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingVertical: 10,
-    borderRadius: 10,
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 6,
   },
   tabButtonActive: {
-    backgroundColor: "#1F2937",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   tabText: {
-    color: "#9CA3AF",
-    fontWeight: "600",
-    fontSize: 14,
+    color: "#6B7280",
+    fontWeight: "700",
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   tabTextActive: {
-    color: "#F9FAFB",
+    color: "#111827",
   },
   progressRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 14,
+    alignItems: "center",
+    marginBottom: 12,
   },
   progressText: {
-    color: "#9CA3AF",
-    fontSize: 13,
+    color: "#6B7280",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   percentText: {
-    color: "#10B981",
-    fontWeight: "700",
-    fontSize: 13,
+    color: "#111827",
+    fontWeight: "800",
+    fontSize: 10,
+    letterSpacing: 0.8,
   },
   stepsList: {
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   stepCard: {
-    flexDirection: "row",
-    backgroundColor: "#161E2E",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#1F2937",
+    borderColor: "#E5E7EB",
     padding: 16,
-    gap: 14,
   },
   stepCardDone: {
-    borderColor: "#10B981",
-    backgroundColor: "#0F281E",
+    opacity: 0.7,
   },
-  checkboxTouch: {
-    paddingTop: 2,
-  },
-  stepBadgeRow: {
+  stepHeaderRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  stepOrderBadge: {
-    color: "#3B82F6",
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
-  stepTypeBadge: {
-    color: "#9CA3AF",
-    fontSize: 11,
-    fontWeight: "600",
+  stepBadge: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1.2,
     textTransform: "uppercase",
   },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  checkboxChecked: {
+    backgroundColor: "#111827",
+    borderColor: "#111827",
+  },
   productName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
-    color: "#F3F4F6",
+    color: "#111827",
   },
   productNameDone: {
     textDecorationLine: "line-through",
     color: "#9CA3AF",
   },
   productBrand: {
-    fontSize: 13,
-    color: "#9CA3AF",
-    marginBottom: 8,
+    fontSize: 12,
+    color: "#6B7280",
+    marginBottom: 10,
+  },
+  ingredientsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 10,
+  },
+  ingredientPill: {
+    backgroundColor: "#F3F4F6",
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  ingredientPillText: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#374151",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   whyBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 6,
-    backgroundColor: "rgba(16, 185, 129, 0.1)",
-    padding: 8,
-    borderRadius: 8,
-    marginBottom: 6,
+    backgroundColor: "#F9FAFB",
+    padding: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginBottom: 8,
+  },
+  whyLabel: {
+    fontSize: 8,
+    fontWeight: "800",
+    color: "#9CA3AF",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 3,
   },
   whyText: {
-    flex: 1,
-    color: "#6EE7B7",
+    color: "#4B5563",
     fontSize: 12,
     lineHeight: 16,
   },
   appNote: {
-    fontSize: 12,
-    color: "#9CA3AF",
+    fontSize: 11,
+    color: "#6B7280",
     fontStyle: "italic",
+    marginTop: 2,
   },
   logButton: {
-    backgroundColor: "#10B981",
+    backgroundColor: "#111827",
     paddingVertical: 14,
-    borderRadius: 14,
+    borderRadius: 8,
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 4,
   },
   logButtonDone: {
-    backgroundColor: "#065F46",
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   logButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+  },
+  logButtonTextDone: {
+    color: "#6B7280",
   },
 });

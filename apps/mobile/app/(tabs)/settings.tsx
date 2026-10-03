@@ -224,7 +224,7 @@ export default function SettingsScreen() {
 
         {/* ── 1. ACCOUNT SECTION ── */}
         <View style={styles.sectionHeaderRow}>
-          <User size={16} color="#06b6d4" />
+          <User size={14} color="#111827" />
           <Text style={styles.sectionHeaderTitle}>Account</Text>
         </View>
         <View style={styles.cardGroup}>
@@ -239,7 +239,7 @@ export default function SettingsScreen() {
             accessibilityLabel="Change Password"
           >
             <Text style={styles.rowLabel}>Change Password</Text>
-            <ChevronRight size={18} color="#64748b" />
+            <ChevronRight size={18} color="#9CA3AF" />
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity
@@ -247,14 +247,14 @@ export default function SettingsScreen() {
             onPress={() => setShowDeleteAccountModal(true)}
             accessibilityLabel="Delete Account"
           >
-            <Text style={[styles.rowLabel, { color: "#ef4444" }]}>Delete Account</Text>
-            <ChevronRight size={18} color="#ef4444" />
+            <Text style={[styles.rowLabel, { color: "#DC2626" }]}>Delete Account</Text>
+            <ChevronRight size={18} color="#DC2626" />
           </TouchableOpacity>
         </View>
 
         {/* ── 2. SKIN PROFILE SECTION ── */}
         <View style={styles.sectionHeaderRow}>
-          <User size={16} color="#10b981" />
+          <User size={14} color="#111827" />
           <Text style={styles.sectionHeaderTitle}>Skin Profile</Text>
         </View>
         <View style={styles.cardGroup}>
@@ -269,14 +269,14 @@ export default function SettingsScreen() {
                 {questionnaire.skinType} • {questionnaire.concerns.join(", ")}
               </Text>
             </View>
-            <ChevronRight size={18} color="#64748b" />
+            <ChevronRight size={18} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
 
         {/* ── 2b. CAPTURE QUALITY (PHASE 3) ── */}
         <View style={styles.sectionHeaderRow}>
-          <Camera size={16} color="#10b981" />
-          <Text style={styles.sectionHeaderTitle}>Capture Quality (Phase 3)</Text>
+          <Camera size={14} color="#111827" />
+          <Text style={styles.sectionHeaderTitle}>Capture Quality (Clinical Diagnostic)</Text>
         </View>
         <View style={styles.cardGroup}>
           <View style={styles.switchRow}>
@@ -287,8 +287,8 @@ export default function SettingsScreen() {
             <Switch
               value={audioGuidanceEnabled}
               onValueChange={setAudioGuidanceEnabled}
-              trackColor={{ false: "#334155", true: "#10b981" }}
-              thumbColor="#ffffff"
+              trackColor={{ false: "#E5E7EB", true: "#111827" }}
+              thumbColor="#FFFFFF"
             />
           </View>
           <View style={styles.divider} />
@@ -300,8 +300,8 @@ export default function SettingsScreen() {
             <Switch
               value={multiAngleEnabled}
               onValueChange={setMultiAngleEnabled}
-              trackColor={{ false: "#334155", true: "#10b981" }}
-              thumbColor="#ffffff"
+              trackColor={{ false: "#E5E7EB", true: "#111827" }}
+              thumbColor="#FFFFFF"
             />
           </View>
           <View style={styles.divider} />
@@ -313,8 +313,8 @@ export default function SettingsScreen() {
             <Switch
               value={selfAssessmentEnabled}
               onValueChange={setSelfAssessmentEnabled}
-              trackColor={{ false: "#334155", true: "#10b981" }}
-              thumbColor="#ffffff"
+              trackColor={{ false: "#E5E7EB", true: "#111827" }}
+              thumbColor="#FFFFFF"
             />
           </View>
           <View style={styles.divider} />
@@ -326,15 +326,15 @@ export default function SettingsScreen() {
             <Switch
               value={whiteCalibrationEnabled}
               onValueChange={setWhiteCalibrationEnabled}
-              trackColor={{ false: "#334155", true: "#10b981" }}
-              thumbColor="#ffffff"
+              trackColor={{ false: "#E5E7EB", true: "#111827" }}
+              thumbColor="#FFFFFF"
             />
           </View>
         </View>
 
         {/* ── 3. NOTIFICATIONS SECTION ── */}
         <View style={styles.sectionHeaderRow}>
-          <Bell size={16} color="#f59e0b" />
+          <Bell size={14} color="#111827" />
           <Text style={styles.sectionHeaderTitle}>Notifications</Text>
         </View>
         <View style={styles.cardGroup}>
@@ -346,8 +346,8 @@ export default function SettingsScreen() {
             <Switch
               value={amReminder}
               onValueChange={(val) => handleToggleNotification("am", val)}
-              trackColor={{ false: "#334155", true: "#06b6d4" }}
-              thumbColor="#ffffff"
+              trackColor={{ false: "#E5E7EB", true: "#111827" }}
+              thumbColor="#FFFFFF"
             />
           </View>
           <View style={styles.divider} />
@@ -359,8 +359,8 @@ export default function SettingsScreen() {
             <Switch
               value={pmReminder}
               onValueChange={(val) => handleToggleNotification("pm", val)}
-              trackColor={{ false: "#334155", true: "#06b6d4" }}
-              thumbColor="#ffffff"
+              trackColor={{ false: "#E5E7EB", true: "#111827" }}
+              thumbColor="#FFFFFF"
             />
           </View>
           <View style={styles.divider} />
@@ -372,16 +372,16 @@ export default function SettingsScreen() {
             <Switch
               value={scanReminder}
               onValueChange={(val) => handleToggleNotification("scan", val)}
-              trackColor={{ false: "#334155", true: "#06b6d4" }}
-              thumbColor="#ffffff"
+              trackColor={{ false: "#E5E7EB", true: "#111827" }}
+              thumbColor="#FFFFFF"
             />
           </View>
         </View>
 
         {/* ── 3b. DERMATOLOGIST & HEALTH ECOSYSTEM (PHASE 7) ── */}
         <View style={styles.sectionHeaderRow}>
-          <Stethoscope size={16} color="#0284c7" />
-          <Text style={styles.sectionHeaderTitle}>Dermatologist & Health Ecosystem</Text>
+          <Stethoscope size={14} color="#111827" />
+          <Text style={styles.sectionHeaderTitle}>Clinical Ecosystem</Text>
         </View>
         <View style={styles.cardGroup}>
           <TouchableOpacity
@@ -393,7 +393,7 @@ export default function SettingsScreen() {
               <Text style={styles.rowLabel}>Clinical Intake Summary (PDF)</Text>
               <Text style={styles.rowSubLabel}>ICD-10 mapped codes, GAGS score & INCI analysis</Text>
             </View>
-            <ChevronRight size={18} color="#64748b" />
+            <ChevronRight size={18} color="#9CA3AF" />
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity
@@ -405,7 +405,7 @@ export default function SettingsScreen() {
               <Text style={styles.rowLabel}>Share with Dermatologist</Text>
               <Text style={styles.rowSubLabel}>Create a secure, 90-day view-only invite link</Text>
             </View>
-            <ChevronRight size={18} color="#64748b" />
+            <ChevronRight size={18} color="#9CA3AF" />
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity
@@ -417,7 +417,7 @@ export default function SettingsScreen() {
               <Text style={styles.rowLabel}>Log Doctor Diagnosis & Rx</Text>
               <Text style={styles.rowSubLabel}>Reconcile prescriptions with OTC skincare regimen</Text>
             </View>
-            <ChevronRight size={18} color="#64748b" />
+            <ChevronRight size={18} color="#9CA3AF" />
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity
@@ -429,13 +429,13 @@ export default function SettingsScreen() {
               <Text style={styles.rowLabel}>Family Profiles & Privacy</Text>
               <Text style={styles.rowSubLabel}>Manage isolated accounts with optional Face ID</Text>
             </View>
-            <ChevronRight size={18} color="#64748b" />
+            <ChevronRight size={18} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
 
         {/* ── 4. DATA SECTION ── */}
         <View style={styles.sectionHeaderRow}>
-          <Database size={16} color="#8b5cf6" />
+          <Database size={14} color="#111827" />
           <Text style={styles.sectionHeaderTitle}>Data & Residency</Text>
         </View>
         <View style={styles.cardGroup}>
@@ -445,13 +445,13 @@ export default function SettingsScreen() {
             accessibilityLabel="Export My Data"
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Download size={16} color="#94a3b8" style={{ marginRight: 10 }} />
+              <Download size={15} color="#4B5563" style={{ marginRight: 10 }} />
               <Text style={styles.rowLabel}>Export My Data</Text>
             </View>
             {exportLoading ? (
-              <ActivityIndicator size="small" color="#06b6d4" />
+              <ActivityIndicator size="small" color="#111827" />
             ) : (
-              <ChevronRight size={18} color="#64748b" />
+              <ChevronRight size={18} color="#9CA3AF" />
             )}
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -468,7 +468,7 @@ export default function SettingsScreen() {
             accessibilityLabel="Data Residency Region"
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Globe size={16} color="#38bdf8" style={{ marginRight: 10 }} />
+              <Globe size={15} color="#4B5563" style={{ marginRight: 10 }} />
               <View>
                 <Text style={styles.rowLabel}>Storage Region ({dataRegion})</Text>
                 <Text style={styles.rowSubLabel}>
@@ -480,7 +480,7 @@ export default function SettingsScreen() {
                 </Text>
               </View>
             </View>
-            <ChevronRight size={18} color="#64748b" />
+            <ChevronRight size={18} color="#9CA3AF" />
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity
@@ -489,16 +489,16 @@ export default function SettingsScreen() {
             accessibilityLabel="Delete All My Data"
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Trash2 size={16} color="#f43f5e" style={{ marginRight: 10 }} />
-              <Text style={[styles.rowLabel, { color: "#f43f5e" }]}>Delete All My Data</Text>
+              <Trash2 size={15} color="#DC2626" style={{ marginRight: 10 }} />
+              <Text style={[styles.rowLabel, { color: "#DC2626" }]}>Delete All My Data</Text>
             </View>
-            <ChevronRight size={18} color="#f43f5e" />
+            <ChevronRight size={18} color="#DC2626" />
           </TouchableOpacity>
         </View>
 
         {/* ── 5. ABOUT SECTION ── */}
         <View style={styles.sectionHeaderRow}>
-          <Info size={16} color="#3b82f6" />
+          <Info size={14} color="#111827" />
           <Text style={styles.sectionHeaderTitle}>About</Text>
         </View>
         <View style={styles.cardGroup}>
@@ -513,7 +513,7 @@ export default function SettingsScreen() {
             accessibilityLabel="Privacy Policy"
           >
             <Text style={styles.rowLabel}>Privacy Policy</Text>
-            <ExternalLink size={16} color="#64748b" />
+            <ExternalLink size={15} color="#9CA3AF" />
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity
@@ -522,7 +522,7 @@ export default function SettingsScreen() {
             accessibilityLabel="Terms of Service"
           >
             <Text style={styles.rowLabel}>Terms of Service</Text>
-            <ExternalLink size={16} color="#64748b" />
+            <ExternalLink size={15} color="#9CA3AF" />
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity
@@ -531,13 +531,13 @@ export default function SettingsScreen() {
             accessibilityLabel="Medical Disclaimer"
           >
             <Text style={styles.rowLabel}>Medical Disclaimer</Text>
-            <ShieldAlert size={16} color="#f59e0b" />
+            <ShieldAlert size={15} color="#4B5563" />
           </TouchableOpacity>
         </View>
 
         {/* ── 6. SUPPORT SECTION ── */}
         <View style={styles.sectionHeaderRow}>
-          <LifeBuoy size={16} color="#ec4899" />
+          <LifeBuoy size={14} color="#111827" />
           <Text style={styles.sectionHeaderTitle}>Support</Text>
         </View>
         <View style={styles.cardGroup}>
@@ -550,10 +550,10 @@ export default function SettingsScreen() {
             accessibilityLabel="Send Feedback"
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <MessageSquare size={16} color="#94a3b8" style={{ marginRight: 10 }} />
+              <MessageSquare size={15} color="#4B5563" style={{ marginRight: 10 }} />
               <Text style={styles.rowLabel}>Send Feedback</Text>
             </View>
-            <ChevronRight size={18} color="#64748b" />
+            <ChevronRight size={18} color="#9CA3AF" />
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity
@@ -565,10 +565,10 @@ export default function SettingsScreen() {
             accessibilityLabel="Report a Bug"
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Bug size={16} color="#f43f5e" style={{ marginRight: 10 }} />
+              <Bug size={15} color="#4B5563" style={{ marginRight: 10 }} />
               <Text style={styles.rowLabel}>Report a Bug</Text>
             </View>
-            <ChevronRight size={18} color="#64748b" />
+            <ChevronRight size={18} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
 
@@ -577,11 +577,11 @@ export default function SettingsScreen() {
 
       {/* ── MODAL: EDIT SKIN PROFILE ── */}
       <Modal visible={showProfileModal} animationType="slide" onRequestClose={() => setShowProfileModal(false)}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#0b0f19" }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Edit Skin Profile</Text>
-            <TouchableOpacity onPress={() => setShowProfileModal(false)}>
-              <X size={24} color="#94a3b8" />
+            <TouchableOpacity onPress={() => setShowProfileModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <X size={20} color="#111827" />
             </TouchableOpacity>
           </View>
           <QuestionnaireWizard
@@ -601,7 +601,7 @@ export default function SettingsScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Current Password"
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#9CA3AF"
               secureTextEntry
               value={currentPassword}
               onChangeText={setCurrentPassword}
@@ -609,7 +609,7 @@ export default function SettingsScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="New Password (min 6 chars)"
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#9CA3AF"
               secureTextEntry
               value={newPassword}
               onChangeText={setNewPassword}
@@ -617,7 +617,7 @@ export default function SettingsScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Confirm New Password"
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#9CA3AF"
               secureTextEntry
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -644,7 +644,7 @@ export default function SettingsScreen() {
       <Modal visible={showDeleteDataModal} animationType="fade" transparent onRequestClose={() => setShowDeleteDataModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={[styles.modalCardTitle, { color: "#f43f5e" }]}>Delete All Data</Text>
+            <Text style={[styles.modalCardTitle, { color: "#DC2626" }]}>Delete All Data</Text>
             <Text style={styles.modalCardBody}>
               This will permanently delete all your scans, routines, and skin profile data. Your account will remain active, but you&apos;ll need to retake the questionnaire.
             </Text>
@@ -656,10 +656,10 @@ export default function SettingsScreen() {
                 <Text style={styles.modalCancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalPrimaryBtn, { backgroundColor: "#f43f5e" }]}
+                style={[styles.modalPrimaryBtn, { backgroundColor: "#DC2626" }]}
                 onPress={handleDeleteData}
               >
-                <Text style={[styles.modalPrimaryText, { color: "#ffffff" }]}>Delete Data</Text>
+                <Text style={[styles.modalPrimaryText, { color: "#FFFFFF" }]}>Delete Data</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -670,7 +670,7 @@ export default function SettingsScreen() {
       <Modal visible={showDeleteAccountModal} animationType="fade" transparent onRequestClose={() => setShowDeleteAccountModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={[styles.modalCardTitle, { color: "#ef4444" }]}>Delete Account</Text>
+            <Text style={[styles.modalCardTitle, { color: "#DC2626" }]}>Delete Account</Text>
             <Text style={styles.modalCardBody}>
               This will permanently delete your account and all associated data, including scan history, routines, and skin profile. This action cannot be undone.
             </Text>
@@ -682,10 +682,10 @@ export default function SettingsScreen() {
                 <Text style={styles.modalCancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalPrimaryBtn, { backgroundColor: "#ef4444" }]}
+                style={[styles.modalPrimaryBtn, { backgroundColor: "#DC2626" }]}
                 onPress={handleDeleteAccount}
               >
-                <Text style={[styles.modalPrimaryText, { color: "#ffffff" }]}>Delete Account</Text>
+                <Text style={[styles.modalPrimaryText, { color: "#FFFFFF" }]}>Delete Account</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -694,18 +694,18 @@ export default function SettingsScreen() {
 
       {/* ── MODAL: FULL MEDICAL DISCLAIMER ── */}
       <Modal visible={showDisclaimerModal} animationType="slide" onRequestClose={() => setShowDisclaimerModal(false)}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#0b0f19" }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Medical Disclaimer</Text>
-            <TouchableOpacity onPress={() => setShowDisclaimerModal(false)}>
-              <X size={24} color="#94a3b8" />
+            <TouchableOpacity onPress={() => setShowDisclaimerModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <X size={20} color="#111827" />
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={{ padding: 24 }}>
             <View style={styles.disclaimerShieldWrapper}>
-              <ShieldAlert size={48} color="#f59e0b" />
+              <ShieldAlert size={40} color="#111827" />
             </View>
-            <Text style={styles.disclaimerFullTitle}>Important: This Is Not Medical Advice</Text>
+            <Text style={styles.disclaimerFullTitle}>Clinical & Diagnostic Disclaimer</Text>
             <View style={styles.disclaimerBox}>
               <Text style={styles.disclaimerFullText}>{DISCLAIMER_FULL}</Text>
             </View>
@@ -713,7 +713,7 @@ export default function SettingsScreen() {
               style={styles.modalPrimaryBtn}
               onPress={() => setShowDisclaimerModal(false)}
             >
-              <Text style={styles.modalPrimaryText}>Close</Text>
+              <Text style={styles.modalPrimaryText}>I Understand & Acknowledge</Text>
             </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
@@ -734,7 +734,7 @@ export default function SettingsScreen() {
             <TextInput
               style={[styles.modalInput, { height: 100, textAlignVertical: "top" }]}
               placeholder="Tell us more (min 10 characters)..."
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#9CA3AF"
               multiline
               value={feedbackContent}
               onChangeText={setFeedbackContent}
@@ -790,7 +790,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b0f19",
+    backgroundColor: "#F9FAFB",
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -801,14 +801,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    color: "#f8fafc",
-    fontSize: 28,
+    color: "#111827",
+    fontSize: 20,
     fontWeight: "800",
+    letterSpacing: 2,
+    textTransform: "uppercase",
   },
   subtitle: {
-    color: "#94a3b8",
-    fontSize: 14,
-    marginTop: 4,
+    color: "#6B7280",
+    fontSize: 10,
+    fontWeight: "600",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginTop: 3,
   },
 
   sectionHeaderRow: {
@@ -819,18 +824,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionHeaderTitle: {
-    color: "#f8fafc",
-    fontSize: 14,
+    color: "#6B7280",
+    fontSize: 10,
     fontWeight: "700",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 1.2,
   },
 
   cardGroup: {
-    backgroundColor: "#1e293b",
-    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
     overflow: "hidden",
   },
   row: {
@@ -856,22 +861,22 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: "#334155",
+    backgroundColor: "#F3F4F6",
     marginLeft: 16,
   },
   rowLabel: {
-    color: "#f8fafc",
-    fontSize: 15,
-    fontWeight: "500",
+    color: "#111827",
+    fontSize: 13,
+    fontWeight: "600",
   },
   rowSubLabel: {
-    color: "#94a3b8",
-    fontSize: 12,
+    color: "#6B7280",
+    fontSize: 11,
     marginTop: 2,
   },
   rowValue: {
-    color: "#94a3b8",
-    fontSize: 14,
+    color: "#6B7280",
+    fontSize: 13,
   },
 
   modalHeader: {
@@ -881,81 +886,84 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#334155",
+    borderBottomColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
   },
   modalTitle: {
-    color: "#f8fafc",
-    fontSize: 18,
+    color: "#111827",
+    fontSize: 16,
     fontWeight: "700",
+    letterSpacing: 0.5,
   },
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    backgroundColor: "rgba(17, 24, 39, 0.4)",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
   },
   modalCard: {
-    backgroundColor: "#1e293b",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     padding: 20,
     width: "100%",
     maxWidth: 380,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
   },
   modalCardTitle: {
-    color: "#f8fafc",
-    fontSize: 18,
+    color: "#111827",
+    fontSize: 16,
     fontWeight: "700",
     marginBottom: 8,
   },
   modalCardBody: {
-    color: "#94a3b8",
+    color: "#6B7280",
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 16,
   },
   modalInput: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "#F9FAFB",
     borderWidth: 1,
-    borderColor: "#334155",
-    borderRadius: 10,
+    borderColor: "#E5E7EB",
+    borderRadius: 6,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    color: "#f8fafc",
-    fontSize: 14,
+    color: "#111827",
+    fontSize: 13,
     marginBottom: 12,
   },
   modalButtonsRow: {
     flexDirection: "row",
-    gap: 12,
+    gap: 10,
     marginTop: 8,
   },
   modalCancelBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: "#334155",
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
     alignItems: "center",
   },
   modalCancelText: {
-    color: "#f8fafc",
-    fontSize: 14,
+    color: "#374151",
+    fontSize: 13,
     fontWeight: "600",
   },
   modalPrimaryBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: "#06b6d4",
+    borderRadius: 6,
+    backgroundColor: "#111827",
     alignItems: "center",
   },
   modalPrimaryText: {
-    color: "#0f172a",
-    fontSize: 14,
+    color: "#FFFFFF",
+    fontSize: 13,
     fontWeight: "700",
+    letterSpacing: 0.5,
   },
 
   disclaimerShieldWrapper: {
@@ -963,23 +971,24 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   disclaimerFullTitle: {
-    color: "#f8fafc",
-    fontSize: 20,
+    color: "#111827",
+    fontSize: 18,
     fontWeight: "800",
     textAlign: "center",
     marginBottom: 16,
+    letterSpacing: 0.5,
   },
   disclaimerBox: {
-    backgroundColor: "#1e293b",
+    backgroundColor: "#FFFFFF",
     padding: 18,
-    borderRadius: 14,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "rgba(245, 158, 11, 0.3)",
+    borderColor: "#E5E7EB",
     marginBottom: 24,
   },
   disclaimerFullText: {
-    color: "#cbd5e1",
-    fontSize: 14,
-    lineHeight: 22,
+    color: "#4B5563",
+    fontSize: 13,
+    lineHeight: 20,
   },
 });

@@ -145,9 +145,9 @@ export default function ProgressScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Skin Timeline</Text>
-          <Text style={styles.subtitle}>
-            Track your skin evolution across scans
+          <Text style={styles.brandTitle}>PROGRESSION METRICS</Text>
+          <Text style={styles.brandSubtitle}>
+            Clinical Delta & Zone Telemetry
           </Text>
         </View>
 
@@ -168,7 +168,7 @@ export default function ProgressScreen() {
 
         {/* Timeline Chart */}
         {loading ? (
-          <ActivityIndicator size="large" color="#818CF8" style={{ marginVertical: 40 }} />
+          <ActivityIndicator size="small" color="#111827" style={{ marginVertical: 40 }} />
         ) : timeline ? (
           <SkinTimelineChart
             timeline={timeline}
@@ -176,40 +176,40 @@ export default function ProgressScreen() {
           />
         ) : null}
 
-        {/* Scan Comparison Section (preserved from original) */}
+        {/* Scan Comparison Section */}
         <View style={styles.compareSection}>
-          <Text style={styles.compareTitle}>Scan Comparison</Text>
+          <Text style={styles.compareTitle}>ZONE COMPARISON ANALYSIS</Text>
           <Text style={styles.compareSub}>
-            Side-by-side progression tracking across facial zones
+            Direct delta tracking between diagnostic intervals
           </Text>
 
           {/* Side-by-side hero */}
           <View style={styles.compareHeroCard}>
             <View style={styles.scanCol}>
-              <Text style={styles.scanBadge}>Baseline</Text>
+              <Text style={styles.scanBadge}>BASELINE</Text>
               <View style={styles.dateRow}>
-                <Calendar size={14} color="#9CA3AF" />
+                <Calendar size={12} color="#6B7280" />
                 <Text style={styles.scanDateText}>{baselineDate}</Text>
               </View>
               <Text style={styles.compareScore}>{overallBefore}</Text>
-              <Text style={styles.scoreSub}>Health Index</Text>
+              <Text style={styles.scoreSub}>HEALTH INDEX</Text>
             </View>
 
             <View style={styles.dividerCol}>
               <View style={styles.vsBadge}>
-                <GitCompare size={16} color="#60A5FA" />
+                <GitCompare size={14} color="#111827" />
               </View>
               <Text style={styles.vsText}>VS</Text>
             </View>
 
             <View style={styles.scanCol}>
-              <Text style={[styles.scanBadge, styles.scanBadgeCurrent]}>Current</Text>
+              <Text style={[styles.scanBadge, styles.scanBadgeCurrent]}>CURRENT</Text>
               <View style={styles.dateRow}>
-                <Calendar size={14} color="#9CA3AF" />
+                <Calendar size={12} color="#6B7280" />
                 <Text style={styles.scanDateText}>{currentDate}</Text>
               </View>
-              <Text style={[styles.compareScore, { color: "#10B981" }]}>{overallAfter}</Text>
-              <Text style={styles.scoreSub}>Health Index</Text>
+              <Text style={[styles.compareScore, { color: "#111827" }]}>{overallAfter}</Text>
+              <Text style={styles.scoreSub}>HEALTH INDEX</Text>
             </View>
           </View>
 
@@ -224,11 +224,25 @@ export default function ProgressScreen() {
                 </View>
                 <View style={styles.barContainer}>
                   <View style={[styles.barBefore, { width: `${comp.before}%` }]} />
-                  <View style={[styles.barAfter, { width: `${comp.after}%`, backgroundColor: improved ? "#10B981" : "#EF4444" }]} />
+                  <View
+                    style={[
+                      styles.barAfter,
+                      { width: `${comp.after}%`, backgroundColor: improved ? "#111827" : "#DC2626" },
+                    ]}
+                  />
                 </View>
                 <View style={styles.deltaBox}>
-                  {improved ? <ArrowDown size={12} color="#10B981" /> : <ArrowUp size={12} color="#EF4444" />}
-                  <Text style={[styles.deltaTextComp, { color: improved ? "#10B981" : "#EF4444" }]}>
+                  {improved ? (
+                    <ArrowDown size={12} color="#111827" />
+                  ) : (
+                    <ArrowUp size={12} color="#DC2626" />
+                  )}
+                  <Text
+                    style={[
+                      styles.deltaTextComp,
+                      { color: improved ? "#111827" : "#DC2626" },
+                    ]}
+                  >
                     {Math.abs(comp.delta)}
                   </Text>
                 </View>
@@ -244,74 +258,88 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0B0F17",
+    backgroundColor: "#F9FAFB",
   },
   scrollContent: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 16,
     paddingBottom: 40,
   },
   header: {
     marginBottom: 16,
   },
-  title: {
-    fontSize: 24,
+  brandTitle: {
+    fontSize: 20,
     fontWeight: "800",
-    color: "#F9FAFB",
-    letterSpacing: -0.4,
+    color: "#111827",
+    letterSpacing: 2,
+    textTransform: "uppercase",
   },
-  subtitle: {
-    fontSize: 14,
-    color: "#9CA3AF",
-    marginTop: 4,
+  brandSubtitle: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#6B7280",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginTop: 2,
   },
   windowRow: {
     flexDirection: "row",
-    gap: 8,
-    marginBottom: 20,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+    padding: 3,
+    marginBottom: 16,
   },
   windowBtn: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: "#1F2937",
+    paddingVertical: 7,
+    borderRadius: 6,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#374151",
   },
   windowBtnActive: {
-    backgroundColor: "rgba(129, 140, 248, 0.15)",
-    borderColor: "#818CF8",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   windowText: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: 10,
+    fontWeight: "700",
     color: "#6B7280",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   windowTextActive: {
-    color: "#818CF8",
+    color: "#111827",
   },
   compareSection: {
-    marginTop: 24,
+    marginTop: 20,
   },
   compareTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#F9FAFB",
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   compareSub: {
-    fontSize: 13,
-    color: "#9CA3AF",
-    marginTop: 4,
-    marginBottom: 16,
+    fontSize: 10,
+    color: "#6B7280",
+    marginTop: 2,
+    marginBottom: 14,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   compareHeroCard: {
     flexDirection: "row",
-    backgroundColor: "#161E2E",
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    padding: 16,
     borderWidth: 1,
-    borderColor: "#1F2937",
-    marginBottom: 16,
+    borderColor: "#E5E7EB",
+    marginBottom: 12,
     alignItems: "center",
   },
   scanCol: {
@@ -320,18 +348,19 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   scanBadge: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#9CA3AF",
-    backgroundColor: "#1F2937",
-    paddingHorizontal: 10,
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#6B7280",
+    backgroundColor: "#F3F4F6",
+    paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: 4,
     overflow: "hidden",
+    letterSpacing: 1,
   },
   scanBadgeCurrent: {
-    backgroundColor: "rgba(16, 185, 129, 0.15)",
-    color: "#10B981",
+    backgroundColor: "#111827",
+    color: "#FFFFFF",
   },
   dateRow: {
     flexDirection: "row",
@@ -339,44 +368,48 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   scanDateText: {
-    fontSize: 11,
+    fontSize: 10,
     color: "#6B7280",
+    fontWeight: "600",
   },
   compareScore: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: "800",
-    color: "#F9FAFB",
+    color: "#111827",
   },
   scoreSub: {
-    fontSize: 11,
-    color: "#6B7280",
+    fontSize: 9,
+    color: "#9CA3AF",
+    fontWeight: "700",
+    letterSpacing: 0.8,
   },
   dividerCol: {
     alignItems: "center",
-    gap: 6,
+    gap: 4,
     paddingHorizontal: 12,
   },
   vsBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#1F2937",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#F3F4F6",
     alignItems: "center",
     justifyContent: "center",
   },
   vsText: {
-    fontSize: 10,
-    fontWeight: "700",
+    fontSize: 9,
+    fontWeight: "800",
     color: "#6B7280",
+    letterSpacing: 1,
   },
   zoneCompareRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#161E2E",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: "#1F2937",
+    borderColor: "#E5E7EB",
     marginBottom: 8,
     gap: 10,
   },
@@ -384,19 +417,21 @@ const styles = StyleSheet.create({
     width: 90,
   },
   zoneName: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#F9FAFB",
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#111827",
   },
   zoneConcern: {
-    fontSize: 11,
+    fontSize: 10,
     color: "#6B7280",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   barContainer: {
     flex: 1,
-    height: 20,
-    backgroundColor: "#1F2937",
-    borderRadius: 10,
+    height: 12,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 6,
     overflow: "hidden",
     position: "relative",
   },
@@ -405,26 +440,25 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     height: "100%",
-    backgroundColor: "rgba(239, 68, 68, 0.25)",
-    borderRadius: 10,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 6,
   },
   barAfter: {
     position: "absolute",
     top: 0,
     left: 0,
     height: "100%",
-    borderRadius: 10,
-    opacity: 0.7,
+    borderRadius: 6,
   },
   deltaBox: {
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
-    width: 40,
+    width: 36,
     justifyContent: "flex-end",
   },
   deltaTextComp: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 11,
+    fontWeight: "800",
   },
 });

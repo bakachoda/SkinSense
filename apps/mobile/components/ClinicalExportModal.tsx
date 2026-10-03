@@ -89,15 +89,15 @@ export function ClinicalExportModal({
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.iconCircle}>
-                <Stethoscope size={20} color="#0284C7" />
+                <Stethoscope size={18} color="#111827" />
               </View>
               <View>
-                <Text style={styles.headerTitle}>Clinical Dermatologist Export</Text>
-                <Text style={styles.headerSub}>ICD-10 Mapped Intake Report</Text>
+                <Text style={styles.headerTitle}>CLINICAL INTAKE SUMMARY</Text>
+                <Text style={styles.headerSub}>ICD-10 Mapped Diagnostic Report</Text>
               </View>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
-              <X size={20} color="#94A3B8" />
+              <X size={18} color="#111827" />
             </TouchableOpacity>
           </View>
 
@@ -112,7 +112,7 @@ export function ClinicalExportModal({
                 </View>
                 <View style={styles.metricBox}>
                   <Text style={styles.metricLabel}>BARRIER HEALTH</Text>
-                  <Text style={[styles.metricValue, { color: "#10B981" }]}>
+                  <Text style={styles.metricValue}>
                     {patientData?.barrierScore || 68}/100
                   </Text>
                 </View>
@@ -126,7 +126,7 @@ export function ClinicalExportModal({
             {/* Clinical Grading Box */}
             <View style={styles.gradingCard}>
               <View style={styles.gradingHeader}>
-                <ShieldCheck size={16} color="#0284C7" />
+                <ShieldCheck size={14} color="#111827" />
                 <Text style={styles.gradingTitle}>CLINICAL GRADING SCALES</Text>
               </View>
               <View style={styles.gradingRow}>
@@ -164,7 +164,7 @@ export function ClinicalExportModal({
             {/* Active Medications & Interaction Screening */}
             <View style={styles.section}>
               <View style={styles.sectionHeaderWithIcon}>
-                <Pill size={16} color="#8B5CF6" />
+                <Pill size={14} color="#111827" />
                 <Text style={styles.sectionTitle}>ACTIVE MEDICATIONS & SAFETY</Text>
               </View>
               {medications.map((m, idx) => (
@@ -173,9 +173,9 @@ export function ClinicalExportModal({
                 </View>
               ))}
               <View style={styles.interactionAlert}>
-                <AlertTriangle size={16} color="#F59E0B" />
+                <AlertTriangle size={14} color="#B45309" />
                 <Text style={styles.interactionText}>
-                  Prescription retinoid active. Concurrent OTC chemical exfoliants have been locked to prevent dermatitis.
+                  Prescription retinoid active. Concurrent OTC chemical exfoliants have been locked to prevent barrier dermatitis.
                 </Text>
               </View>
             </View>
@@ -183,7 +183,7 @@ export function ClinicalExportModal({
             {/* Medical Disclaimer */}
             <View style={styles.disclaimerBox}>
               <Text style={styles.disclaimerText}>
-                Intake summary compiled from multi-spectral camera computer vision. This document is intended solely for clinical intake assistance and does not replace in-person dermatological evaluation.
+                Intake summary compiled from multi-spectral computer vision telemetry. Intended solely for clinical triage and does not replace formal dermatological diagnosis.
               </Text>
             </View>
           </ScrollView>
@@ -191,7 +191,7 @@ export function ClinicalExportModal({
           {/* Action Footer */}
           <View style={styles.footer}>
             <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
-              <Share2 size={18} color="#0284C7" />
+              <Share2 size={16} color="#111827" />
               <Text style={styles.shareBtnText}>Share</Text>
             </TouchableOpacity>
 
@@ -204,7 +204,7 @@ export function ClinicalExportModal({
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
-                  <Download size={18} color="#FFFFFF" />
+                  <Download size={16} color="#FFFFFF" />
                   <Text style={styles.downloadBtnText}>Export PDF</Text>
                 </>
               )}
@@ -219,78 +219,82 @@ export function ClinicalExportModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.75)",
+    backgroundColor: "rgba(17, 24, 39, 0.4)",
     justifyContent: "flex-end",
   },
   container: {
-    backgroundColor: "#0F172A",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     maxHeight: "90%",
-    paddingTop: 20,
+    paddingTop: 18,
     borderWidth: 1,
-    borderColor: "#1E293B",
+    borderColor: "#E5E7EB",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#1E293B",
+    borderBottomColor: "#E5E7EB",
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#0284C720",
+    width: 34,
+    height: 34,
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#F8FAFC",
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   headerSub: {
-    fontSize: 12,
-    color: "#64748B",
+    fontSize: 10,
+    color: "#6B7280",
     marginTop: 2,
+    letterSpacing: 0.5,
   },
   closeBtn: {
     padding: 6,
-    borderRadius: 8,
-    backgroundColor: "#1E293B",
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
   },
   content: {
     paddingHorizontal: 20,
     paddingTop: 16,
   },
   summaryCard: {
-    backgroundColor: "#1E293B",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     padding: 14,
-    marginBottom: 14,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
   },
   sectionTitle: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#94A3B8",
-    letterSpacing: 0.8,
-    marginBottom: 10,
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginBottom: 8,
   },
   sectionHeaderWithIcon: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
     marginBottom: 8,
   },
   gridRow: {
@@ -301,35 +305,38 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   metricLabel: {
-    fontSize: 10,
-    color: "#64748B",
-    fontWeight: "600",
-    marginBottom: 4,
+    fontSize: 9,
+    color: "#6B7280",
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    marginBottom: 2,
   },
   metricValue: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#F8FAFC",
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#111827",
   },
   gradingCard: {
-    backgroundColor: "#0284C710",
-    borderRadius: 12,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 8,
     padding: 14,
-    marginBottom: 14,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#0284C730",
+    borderColor: "#E5E7EB",
   },
   gradingHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
+    gap: 6,
+    marginBottom: 8,
   },
   gradingTitle: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#38BDF8",
-    letterSpacing: 0.6,
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   gradingRow: {
     flexDirection: "row",
@@ -340,150 +347,157 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   gradeNum: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "800",
-    color: "#F8FAFC",
+    color: "#111827",
   },
   gradeLabel: {
-    fontSize: 11,
-    color: "#94A3B8",
+    fontSize: 10,
+    color: "#6B7280",
     marginTop: 2,
   },
   gradeDivider: {
     width: 1,
-    height: 32,
-    backgroundColor: "#0284C730",
+    height: 28,
+    backgroundColor: "#E5E7EB",
   },
   section: {
-    backgroundColor: "#1E293B",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     padding: 14,
-    marginBottom: 14,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
   },
   findingRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#33415550",
+    borderBottomColor: "#F3F4F6",
   },
   findingLeft: {
     flex: 1,
   },
   findingZone: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#38BDF8",
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 0.8,
   },
   findingCondition: {
-    fontSize: 13,
-    color: "#E2E8F0",
-    marginTop: 2,
+    fontSize: 12,
+    color: "#374151",
+    marginTop: 1,
   },
   findingRight: {
     alignItems: "flex-end",
-    gap: 4,
+    gap: 2,
   },
   icdBadge: {
-    backgroundColor: "#0284C720",
-    paddingHorizontal: 8,
+    backgroundColor: "#F3F4F6",
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: "#0284C750",
+    borderColor: "#E5E7EB",
   },
   icdText: {
-    color: "#38BDF8",
-    fontSize: 11,
-    fontWeight: "700",
+    color: "#111827",
+    fontSize: 10,
+    fontWeight: "800",
   },
   findingSeverity: {
-    fontSize: 11,
-    color: "#94A3B8",
+    fontSize: 10,
+    color: "#6B7280",
+    fontWeight: "600",
   },
   medItem: {
-    backgroundColor: "#0F172A",
+    backgroundColor: "#F9FAFB",
     padding: 10,
-    borderRadius: 8,
-    marginBottom: 8,
+    borderRadius: 6,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   medText: {
-    color: "#E2E8F0",
-    fontSize: 13,
-    fontWeight: "500",
+    color: "#111827",
+    fontSize: 12,
+    fontWeight: "600",
   },
   interactionAlert: {
     flexDirection: "row",
     gap: 8,
-    backgroundColor: "#F59E0B15",
+    backgroundColor: "#FFFBEB",
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#F59E0B30",
+    borderColor: "#FDE68A",
     alignItems: "flex-start",
   },
   interactionText: {
     flex: 1,
-    color: "#FCD34D",
+    color: "#78350F",
     fontSize: 11,
-    lineHeight: 16,
+    lineHeight: 15,
   },
   disclaimerBox: {
-    backgroundColor: "#0F172A",
+    backgroundColor: "#F9FAFB",
     padding: 12,
-    borderRadius: 8,
-    marginBottom: 24,
+    borderRadius: 6,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#1E293B",
+    borderColor: "#E5E7EB",
   },
   disclaimerText: {
     fontSize: 10,
-    color: "#64748B",
-    lineHeight: 15,
+    color: "#6B7280",
+    lineHeight: 14,
     fontStyle: "italic",
   },
   footer: {
     flexDirection: "row",
-    gap: 12,
+    gap: 10,
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: "#1E293B",
-    backgroundColor: "#0F172A",
+    borderTopColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
   },
   shareBtn: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#1E293B",
-    borderRadius: 12,
-    paddingVertical: 14,
+    gap: 6,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+    paddingVertical: 12,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
   },
   shareBtnText: {
-    color: "#38BDF8",
-    fontSize: 14,
-    fontWeight: "600",
+    color: "#111827",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   downloadBtn: {
     flex: 1.6,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#0284C7",
-    borderRadius: 12,
-    paddingVertical: 14,
+    gap: 6,
+    backgroundColor: "#111827",
+    borderRadius: 8,
+    paddingVertical: 12,
   },
   downloadBtnText: {
     color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
 });

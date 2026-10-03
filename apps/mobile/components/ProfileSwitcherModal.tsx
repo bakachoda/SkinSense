@@ -105,15 +105,15 @@ export function ProfileSwitcherModal({
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.iconCircle}>
-                <Users size={20} color="#0284C7" />
+                <Users size={16} color="#111827" />
               </View>
               <View>
-                <Text style={styles.headerTitle}>Family Profiles</Text>
-                <Text style={styles.headerSub}>Isolated Scans & Routines</Text>
+                <Text style={styles.headerTitle}>FAMILY PROFILES</Text>
+                <Text style={styles.headerSub}>Isolated Scans & Clinical Data</Text>
               </View>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
-              <X size={20} color="#94A3B8" />
+              <X size={18} color="#111827" />
             </TouchableOpacity>
           </View>
 
@@ -129,7 +129,7 @@ export function ProfileSwitcherModal({
                     onPress={() => handleSwitch(p.id, p.biometricLockEnabled)}
                   >
                     <View style={styles.avatarCircle}>
-                      <User size={18} color={isActive ? "#0284C7" : "#94A3B8"} />
+                      <User size={16} color="#111827" />
                     </View>
                     <View style={styles.profileInfo}>
                       <Text style={styles.profileName}>{p.displayName}</Text>
@@ -141,7 +141,7 @@ export function ProfileSwitcherModal({
                         )}
                         {p.biometricLockEnabled && (
                           <View style={styles.lockBadge}>
-                            <Lock size={10} color="#38BDF8" />
+                            <Lock size={9} color="#111827" />
                             <Text style={styles.lockBadgeText}>FACE ID LOCK</Text>
                           </View>
                         )}
@@ -149,7 +149,7 @@ export function ProfileSwitcherModal({
                     </View>
                     {isActive ? (
                       <View style={styles.checkCircle}>
-                        <Check size={14} color="#FFFFFF" />
+                        <Check size={12} color="#FFFFFF" strokeWidth={3} />
                       </View>
                     ) : null}
                   </TouchableOpacity>
@@ -160,11 +160,11 @@ export function ProfileSwitcherModal({
             {/* Add Profile Section */}
             {showAddForm ? (
               <View style={styles.addForm}>
-                <Text style={styles.formTitle}>Add New Family Member</Text>
+                <Text style={styles.formTitle}>ADD NEW FAMILY PROFILE</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. Leo (Teens) or Mom"
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor="#9CA3AF"
                   value={newProfileName}
                   onChangeText={setNewProfileName}
                 />
@@ -176,7 +176,7 @@ export function ProfileSwitcherModal({
                   <Switch
                     value={newProfileLock}
                     onValueChange={setNewProfileLock}
-                    trackColor={{ false: "#334155", true: "#0284C7" }}
+                    trackColor={{ false: "#E5E7EB", true: "#111827" }}
                     thumbColor="#FFFFFF"
                   />
                 </View>
@@ -200,8 +200,8 @@ export function ProfileSwitcherModal({
                 style={styles.addProfileBtn}
                 onPress={() => setShowAddForm(true)}
               >
-                <Plus size={18} color="#0284C7" />
-                <Text style={styles.addProfileText}>Add Profile</Text>
+                <Plus size={14} color="#111827" />
+                <Text style={styles.addProfileText}>Add Family Profile</Text>
               </TouchableOpacity>
             )}
           </ScrollView>
@@ -209,7 +209,7 @@ export function ProfileSwitcherModal({
           {/* Footer */}
           <View style={styles.footer}>
             <TouchableOpacity style={styles.doneBtn} onPress={onClose}>
-              <Text style={styles.doneBtnText}>Close</Text>
+              <Text style={styles.doneBtnText}>CLOSE</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -221,81 +221,84 @@ export function ProfileSwitcherModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.75)",
+    backgroundColor: "rgba(17, 24, 39, 0.4)",
     justifyContent: "flex-end",
   },
   container: {
-    backgroundColor: "#0F172A",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     maxHeight: "85%",
-    paddingTop: 20,
+    paddingTop: 18,
     borderWidth: 1,
-    borderColor: "#1E293B",
+    borderColor: "#E5E7EB",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#1E293B",
+    borderBottomColor: "#E5E7EB",
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#0284C720",
+    width: 34,
+    height: 34,
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#F8FAFC",
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   headerSub: {
-    fontSize: 12,
-    color: "#64748B",
+    fontSize: 10,
+    color: "#6B7280",
     marginTop: 2,
+    letterSpacing: 0.5,
   },
   closeBtn: {
     padding: 6,
-    borderRadius: 8,
-    backgroundColor: "#1E293B",
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
   },
   content: {
     paddingHorizontal: 20,
     paddingTop: 16,
   },
   list: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1E293B",
-    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     padding: 14,
-    marginBottom: 10,
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
   },
   profileCardActive: {
-    borderColor: "#0284C7",
-    backgroundColor: "#0284C710",
+    borderColor: "#111827",
+    backgroundColor: "#F9FAFB",
   },
   avatarCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#0F172A",
+    width: 36,
+    height: 36,
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -304,45 +307,51 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
-    color: "#F8FAFC",
+    color: "#111827",
   },
   badgesRow: {
     flexDirection: "row",
     gap: 6,
-    marginTop: 4,
+    marginTop: 3,
   },
   defaultBadge: {
-    backgroundColor: "#334155",
+    backgroundColor: "#F3F4F6",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   defaultBadgeText: {
     fontSize: 9,
-    fontWeight: "700",
-    color: "#94A3B8",
+    fontWeight: "800",
+    color: "#6B7280",
+    letterSpacing: 0.5,
   },
   lockBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#0284C720",
+    backgroundColor: "#F3F4F6",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   lockBadgeText: {
     fontSize: 9,
-    fontWeight: "700",
-    color: "#38BDF8",
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 0.5,
   },
   checkCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#0284C7",
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    backgroundColor: "#111827",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -350,43 +359,47 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#1E293B",
-    borderRadius: 12,
-    paddingVertical: 14,
+    gap: 6,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    paddingVertical: 12,
     borderWidth: 1,
-    borderColor: "#0284C750",
+    borderColor: "#D1D5DB",
     borderStyle: "dashed",
     marginBottom: 20,
   },
   addProfileText: {
-    color: "#38BDF8",
-    fontSize: 14,
-    fontWeight: "600",
+    color: "#111827",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   addForm: {
-    backgroundColor: "#1E293B",
-    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
   },
   formTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#F8FAFC",
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1,
+    textTransform: "uppercase",
     marginBottom: 10,
   },
   input: {
-    backgroundColor: "#0F172A",
-    borderRadius: 10,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 6,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: "#F8FAFC",
+    color: "#111827",
     fontSize: 13,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E5E7EB",
     marginBottom: 12,
   },
   lockToggleRow: {
@@ -399,13 +412,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   lockToggleTitle: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#F8FAFC",
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#111827",
   },
   lockToggleSub: {
-    fontSize: 11,
-    color: "#64748B",
+    fontSize: 10,
+    color: "#6B7280",
+    marginTop: 1,
   },
   formActions: {
     flexDirection: "row",
@@ -415,42 +429,47 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     alignItems: "center",
-    backgroundColor: "#0F172A",
-    borderRadius: 8,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 6,
   },
   cancelBtnText: {
-    color: "#94A3B8",
+    color: "#374151",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   saveBtn: {
     flex: 1,
     paddingVertical: 10,
     alignItems: "center",
-    backgroundColor: "#0284C7",
-    borderRadius: 8,
+    backgroundColor: "#111827",
+    borderRadius: 6,
   },
   saveBtnText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   footer: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: "#1E293B",
-    backgroundColor: "#0F172A",
+    borderTopColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
   },
   doneBtn: {
-    backgroundColor: "#1E293B",
-    borderRadius: 12,
-    paddingVertical: 14,
+    backgroundColor: "#111827",
+    borderRadius: 8,
+    paddingVertical: 12,
     alignItems: "center",
   },
   doneBtnText: {
-    color: "#F8FAFC",
-    fontSize: 14,
-    fontWeight: "600",
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
   },
 });

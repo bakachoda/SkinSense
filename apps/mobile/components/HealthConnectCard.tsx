@@ -41,66 +41,45 @@ export function HealthConnectCard({
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.iconCircle}>
-            <Activity size={18} color="#EC4899" />
+            <Activity size={16} color="#18181B" />
           </View>
           <View>
-            <Text style={styles.title}>Health App Synced Biomarkers</Text>
-            <Text style={styles.subTitle}>Apple Health & Health Connect Active</Text>
+            <Text style={styles.badgeLabel}>BIOMARKER TELEMETRY</Text>
+            <Text style={styles.title}>Physiological Signals</Text>
           </View>
         </View>
-        <ChevronRight size={18} color="#64748B" />
+        <ChevronRight size={16} color="#A1A1AA" />
       </View>
 
       {/* Metric 3-Column Grid */}
       <View style={styles.grid}>
         {/* Sleep */}
         <View style={styles.metricBox}>
-          <View style={styles.metricHeader}>
-            <Moon size={14} color="#38BDF8" />
-            <Text style={styles.metricLabel}>SLEEP</Text>
-          </View>
+          <Text style={styles.metricLabel}>SLEEP DURATION</Text>
           <Text style={styles.metricValue}>{sleepHours} hrs</Text>
-          <View style={[styles.badge, { backgroundColor: `${getQualityColor()}20` }]}>
-            <Text style={[styles.badgeText, { color: getQualityColor() }]}>
-              {sleepQuality.toUpperCase()}
-            </Text>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{sleepQuality.toUpperCase()}</Text>
           </View>
         </View>
 
         {/* HRV Stress */}
         <View style={styles.metricBox}>
-          <View style={styles.metricHeader}>
-            <Heart size={14} color="#F43F5E" />
-            <Text style={styles.metricLabel}>HRV STRESS</Text>
-          </View>
+          <Text style={styles.metricLabel}>HRV STATUS</Text>
           <Text style={styles.metricValue}>
             {hrvTrend === "increasing" ? "Low Stress" : hrvTrend === "stable" ? "Optimal" : "Elevated"}
           </Text>
-          <View style={[styles.badge, { backgroundColor: "#10B98120" }]}>
-            <Text style={[styles.badgeText, { color: "#10B981" }]}>RECOVERED</Text>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>STEADY</Text>
           </View>
         </View>
 
         {/* Cycle Phase */}
         <View style={styles.metricBox}>
-          <View style={styles.metricHeader}>
-            <Calendar size={14} color="#A855F7" />
-            <Text style={styles.metricLabel}>CYCLE</Text>
-          </View>
+          <Text style={styles.metricLabel}>HORMONAL CYCLE</Text>
           <Text style={styles.metricValue}>{cyclePhase.toUpperCase()}</Text>
-          <View
-            style={[
-              styles.badge,
-              { backgroundColor: isLutealHormonalRisk ? "#EF444420" : "#10B98120" },
-            ]}
-          >
-            <Text
-              style={[
-                styles.badgeText,
-                { color: isLutealHormonalRisk ? "#EF4444" : "#10B981" },
-              ]}
-            >
-              {isLutealHormonalRisk ? "FLARE RISK" : "NORMAL"}
+          <View style={[styles.badge, isLutealHormonalRisk && styles.badgeCaution]}>
+            <Text style={[styles.badgeText, isLutealHormonalRisk && styles.badgeTextCaution]}>
+              {isLutealHormonalRisk ? "LUTEAL FLARE" : "NORMAL"}
             </Text>
           </View>
         </View>
@@ -110,7 +89,7 @@ export function HealthConnectCard({
       {isLutealHormonalRisk && (
         <View style={styles.insightBox}>
           <Text style={styles.insightText}>
-            Progesterone spike detected in luteal phase: androgenic sebum activity elevated around chin and jawline. Keep BHA targeted in T-zone.
+            Progesterone elevation detected in luteal phase: androgenic sebum activity elevated around chin and jawline. Keep BHA targeted in T-zone.
           </Text>
         </View>
       )}
@@ -120,11 +99,11 @@ export function HealthConnectCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#1E293B",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#E4E4E7",
     marginBottom: 16,
   },
   header: {
@@ -139,21 +118,24 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#EC489920",
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: "#F4F4F5",
     alignItems: "center",
     justifyContent: "center",
   },
-  title: {
-    fontSize: 14,
+  badgeLabel: {
+    fontSize: 9,
     fontWeight: "700",
-    color: "#F8FAFC",
+    color: "#71717A",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
-  subTitle: {
-    fontSize: 11,
-    color: "#64748B",
+  title: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#18181B",
     marginTop: 1,
   },
   grid: {
@@ -163,27 +145,23 @@ const styles = StyleSheet.create({
   },
   metricBox: {
     flex: 1,
-    backgroundColor: "#0F172A",
-    borderRadius: 10,
+    backgroundColor: "#FAFAFA",
+    borderRadius: 6,
     padding: 10,
     borderWidth: 1,
-    borderColor: "#33415550",
-  },
-  metricHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 6,
+    borderColor: "#E4E4E7",
   },
   metricLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "700",
-    color: "#94A3B8",
+    color: "#71717A",
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
   metricValue: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#F8FAFC",
+    color: "#18181B",
     marginBottom: 6,
   },
   badge: {
@@ -191,22 +169,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+    backgroundColor: "#F4F4F5",
+    borderWidth: 1,
+    borderColor: "#E4E4E7",
   },
   badgeText: {
     fontSize: 9,
     fontWeight: "700",
+    color: "#52525B",
+    letterSpacing: 0.5,
+  },
+  badgeCaution: {
+    backgroundColor: "#FEF3C7",
+    borderColor: "#FDE68A",
+  },
+  badgeTextCaution: {
+    color: "#B45309",
   },
   insightBox: {
     marginTop: 12,
-    backgroundColor: "#EF444410",
+    backgroundColor: "#F4F4F5",
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#EF444425",
+    borderColor: "#E4E4E7",
   },
   insightText: {
     fontSize: 11,
-    color: "#FCA5A5",
+    color: "#52525B",
     lineHeight: 16,
   },
 });
+

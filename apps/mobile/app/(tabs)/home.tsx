@@ -341,17 +341,17 @@ export default function HomeScreen() {
               loadScans();
               loadPhase6Data();
             }}
-            tintColor="#10B981"
+            tintColor="#111827"
           />
         }
       >
-        {/* Welcome Header & Family Profile Row */}
+        {/* Clinical Minimalist Header */}
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <View>
-              <Text style={styles.greeting}>SkinSense HealthOS</Text>
-              <Text style={styles.subGreeting}>
-                Clinical facial analysis & dynamic regimen
+              <Text style={styles.brandTitle}>SKINSENSE</Text>
+              <Text style={styles.brandSubtitle}>
+                Clinical Facial Telemetry & Adaptive Regimen
               </Text>
             </View>
             <TouchableOpacity
@@ -359,141 +359,123 @@ export default function HomeScreen() {
               onPress={() => setShowProfileModal(true)}
               activeOpacity={0.8}
             >
-              <Users size={15} color="#38BDF8" />
+              <Users size={13} color="#111827" />
               <Text style={styles.profileBtnText}>{activeProfileName}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Phase 7: Seasonal Transition Advisory Banner */}
+        {/* Environmental Transition Advisory */}
         <SeasonalAdjustmentBanner
           onApplyAdjustment={() => router.push("/(tabs)/routine")}
         />
 
-        {/* Daily & Voice Check-In Prompts */}
-        <View style={styles.checkInRow}>
+        {/* Minimalist Telemetry & Dictation Actions */}
+        <View style={styles.actionRow}>
           {!todayCheckedIn && (
             <TouchableOpacity
-              style={styles.checkInPrompt}
+              style={styles.actionCard}
               onPress={() => setShowCheckIn(true)}
               activeOpacity={0.85}
             >
-              <View style={styles.checkInIconWrap}>
-                <ClipboardCheck size={20} color="#818CF8" />
+              <View style={styles.actionCardHeader}>
+                <View style={styles.actionCardIcon}>
+                  <ClipboardCheck size={15} color="#111827" />
+                </View>
+                <ChevronRight size={13} color="#9CA3AF" />
               </View>
-              <View style={styles.checkInTextCol}>
-                <Text style={styles.checkInTitle}>Daily Check-In</Text>
-                <Text style={styles.checkInSub}>
-                  30s · Sleep, water, stress
-                </Text>
-              </View>
-              <ChevronRight size={18} color="#818CF8" />
+              <Text style={styles.actionCardLabel}>DAILY LOG</Text>
+              <Text style={styles.actionCardSub} numberOfLines={1}>Sleep, stress, water</Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
-            style={styles.voiceCheckInBtn}
+            style={styles.actionCard}
             onPress={() => setShowVoiceModal(true)}
             activeOpacity={0.85}
           >
-            <View style={styles.voiceIconWrap}>
-              <Mic size={18} color="#A855F7" />
+            <View style={styles.actionCardHeader}>
+              <View style={styles.actionCardIcon}>
+                <Mic size={15} color="#111827" />
+              </View>
+              <ChevronRight size={13} color="#9CA3AF" />
             </View>
-            <Text style={styles.voiceCheckInText}>Voice Note</Text>
+            <Text style={styles.actionCardLabel}>VOICE NOTE</Text>
+            <Text style={styles.actionCardSub} numberOfLines={1}>NLP symptom capture</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Big CTA: Capture Scan */}
+        {/* Primary Hero CTA: Capture Scan */}
         <TouchableOpacity
           style={styles.heroScanCard}
           onPress={() => router.push("/(tabs)/scan")}
-          activeOpacity={0.85}
+          activeOpacity={0.9}
         >
           <View style={styles.heroTextCol}>
+            <Text style={styles.heroBadge}>DIAGNOSTIC CAPTURE</Text>
             <Text style={styles.heroTitle}>New Skin Analysis</Text>
             <Text style={styles.heroSub}>
-              Take a front photo with real-time zone detection & quality checks
+              Multi-angle calibration, photometric topology & real-time quality verification.
             </Text>
-            <View style={styles.heroBadge}>
-              <Sparkles size={14} color="#10B981" />
-              <Text style={styles.heroBadgeText}>AI Camera Guide Ready</Text>
+            <View style={styles.heroBtn}>
+              <Camera size={14} color="#111827" style={{ marginRight: 6 }} />
+              <Text style={styles.heroBtnText}>Initiate Scan</Text>
             </View>
-          </View>
-          <View style={styles.cameraIconCircle}>
-            <Camera size={26} color="#FFFFFF" />
           </View>
         </TouchableOpacity>
 
-        {/* Current Skin Health Metric Card */}
+        {/* Skin Health Telemetry Index */}
         <View style={styles.statsCard}>
           <View style={styles.statsRow}>
             <View>
-              <Text style={styles.statLabel}>Latest Skin Health</Text>
+              <Text style={styles.statLabel}>CLINICAL SKIN INDEX</Text>
               <View style={styles.scoreRow}>
-                <Text style={[styles.statValue, { color: getScoreColor(latestScore) }]}>
-                  {latestScore}
-                </Text>
+                <Text style={styles.statValue}>{latestScore}</Text>
                 <Text style={styles.statMax}>/100</Text>
               </View>
             </View>
             <View style={styles.statBadge}>
-              <TrendingUp size={16} color="#10B981" />
-              <Text style={styles.statBadgeText}>+6 pts improvement</Text>
+              <Text style={styles.statBadgeText}>+6 pts from baseline</Text>
             </View>
           </View>
 
           <View style={styles.profileTagsRow}>
             <View style={styles.tagBadge}>
               <Text style={styles.tagText}>
-                Type: {questionnaire.skinType || "Combination"}
+                TYPE: {(questionnaire.skinType || "Combination").toUpperCase()}
               </Text>
             </View>
             <View style={styles.tagBadge}>
               <Text style={styles.tagText}>
-                Top: {questionnaire.concerns[0] || "Acne"}
+                PRIMARY: {(questionnaire.concerns[0] || "Acne").toUpperCase()}
               </Text>
             </View>
             <View style={styles.tagBadge}>
               <Text style={styles.tagText}>
-                Age: {questionnaire.ageRange || "20s"}
+                AGE: {(questionnaire.ageRange || "20s").toUpperCase()}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Phase 7: Health App Integration Biomarkers */}
+        {/* Health App Biomarkers */}
         <View style={styles.phase6Section}>
           <HealthConnectCard
             onPressDetails={() => router.push("/(tabs)/progress")}
           />
         </View>
 
-        {/* Phase 6: Lifestyle Insights Dashboard */}
-        <View style={styles.phase6Section}>
-          <InsightsDashboard insights={insights} />
-        </View>
-
-        {/* Phase 6: Skin Twin Card */}
-        <View style={styles.phase6Section}>
-          <SkinTwinCard skinTwin={skinTwin} />
-        </View>
-
-        {/* Phase 6: Achievement Badges */}
-        <View style={styles.phase6Section}>
-          <AchievementBadges progress={achievements} onMarkSeen={handleMarkSeen} />
-        </View>
-
         {/* Scan History Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Scan History</Text>
+            <Text style={styles.sectionTitle}>SCAN RECORD ARCHIVE</Text>
             <TouchableOpacity onPress={() => router.push("/(tabs)/progress")}>
-              <Text style={styles.sectionAction}>Compare Scans</Text>
+              <Text style={styles.sectionAction}>View Telemetry →</Text>
             </TouchableOpacity>
           </View>
 
           {loading ? (
-            <ActivityIndicator size="small" color="#10B981" style={{ marginVertical: 20 }} />
+            <ActivityIndicator size="small" color="#111827" style={{ marginVertical: 20 }} />
           ) : scans.length === 0 ? (
             <NoScansEmptyState onTakeScan={() => router.push("/(tabs)/scan")} />
           ) : (
@@ -516,25 +498,23 @@ export default function HomeScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={styles.dateCircle}>
-                      <Calendar size={18} color="#9CA3AF" />
+                      <Calendar size={14} color="#111827" />
                     </View>
                     <View style={styles.historyInfo}>
                       <Text style={styles.historyDate}>{scanDate}</Text>
                       <Text style={styles.historyStatus}>
-                        {scan.status === "COMPLETED" ? "Full analysis complete" : scan.status}
+                        {scan.status === "COMPLETED" ? "Diagnostic evaluation complete" : scan.status}
                       </Text>
                     </View>
                     <View style={styles.historyScoreBox}>
-                      <Text style={[styles.historyScoreText, { color: getScoreColor(score) }]}>
-                        {score}
-                      </Text>
+                      <Text style={styles.historyScoreText}>{score}</Text>
                       {delta !== null && (
-                        <Text style={[styles.deltaText, { color: delta >= 0 ? "#10B981" : "#EF4444" }]}>
+                        <Text style={[styles.deltaText, { color: delta >= 0 ? "#15803D" : "#B91C1C" }]}>
                           {delta >= 0 ? `+${delta}` : `${delta}`}
                         </Text>
                       )}
                     </View>
-                    <ChevronRight size={18} color="#4B5563" />
+                    <ChevronRight size={14} color="#A1A1AA" />
                   </TouchableOpacity>
                 );
               })}
@@ -571,7 +551,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0B0F17",
+    backgroundColor: "#F9FAFB",
   },
   scrollContent: {
     padding: 20,
@@ -585,145 +565,127 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  brandTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 2,
+  },
+  brandSubtitle: {
+    fontSize: 10,
+    color: "#6B7280",
+    fontWeight: "600",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginTop: 3,
+  },
   profileBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#1E293B",
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#38BDF840",
+    borderColor: "#E5E7EB",
   },
   profileBtnText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#38BDF8",
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#111827",
+    letterSpacing: 0.3,
   },
-  greeting: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#F9FAFB",
-    letterSpacing: -0.5,
-  },
-  subGreeting: {
-    fontSize: 14,
-    color: "#9CA3AF",
-    marginTop: 4,
-  },
-  checkInRow: {
+  actionRow: {
     flexDirection: "row",
     gap: 10,
     marginBottom: 16,
   },
-  checkInPrompt: {
+  actionCard: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(129, 140, 248, 0.08)",
-    borderWidth: 1.5,
-    borderColor: "rgba(129, 140, 248, 0.25)",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 8,
     padding: 12,
-    gap: 10,
   },
-  voiceCheckInBtn: {
+  actionCardHeader: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(168, 85, 247, 0.08)",
-    borderWidth: 1.5,
-    borderColor: "rgba(168, 85, 247, 0.25)",
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    marginBottom: 8,
   },
-  voiceIconWrap: {
+  actionCardIcon: {
     width: 28,
     height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(168, 85, 247, 0.15)",
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
     alignItems: "center",
     justifyContent: "center",
   },
-  voiceCheckInText: {
-    color: "#C084FC",
-    fontSize: 12,
+  actionCardLabel: {
+    fontSize: 10,
     fontWeight: "700",
+    color: "#111827",
+    letterSpacing: 0.8,
   },
-  checkInIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(129, 140, 248, 0.15)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkInTextCol: {
-    flex: 1,
-  },
-  checkInTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#818CF8",
-  },
-  checkInSub: {
-    fontSize: 12,
+  actionCardSub: {
+    fontSize: 11,
     color: "#6B7280",
     marginTop: 2,
   },
   heroScanCard: {
-    flexDirection: "row",
-    backgroundColor: "#161E2E",
-    borderWidth: 1.5,
-    borderColor: "#10B981",
-    borderRadius: 20,
+    backgroundColor: "#111827",
+    borderRadius: 8,
     padding: 20,
-    alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 16,
   },
   heroTextCol: {
-    flex: 1,
-    paddingRight: 14,
+    width: "100%",
+  },
+  heroBadge: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#9CA3AF",
+    letterSpacing: 1.5,
+    marginBottom: 6,
   },
   heroTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#FFFFFF",
+    letterSpacing: -0.2,
     marginBottom: 4,
   },
   heroSub: {
-    fontSize: 13,
+    fontSize: 12,
     color: "#9CA3AF",
     lineHeight: 18,
-    marginBottom: 10,
+    marginBottom: 16,
   },
-  heroBadge: {
+  heroBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-  },
-  heroBadgeText: {
-    color: "#10B981",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  cameraIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#10B981",
     justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+  },
+  heroBtnText: {
+    color: "#111827",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   statsCard: {
-    backgroundColor: "#161E2E",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#1F2937",
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 20,
+    borderColor: "#E5E7EB",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
   },
   statsRow: {
     flexDirection: "row",
@@ -731,11 +693,10 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   statLabel: {
-    fontSize: 13,
-    color: "#9CA3AF",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    fontWeight: "600",
+    fontSize: 9,
+    color: "#6B7280",
+    letterSpacing: 1.2,
+    fontWeight: "700",
   },
   scoreRow: {
     flexDirection: "row",
@@ -744,46 +705,49 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   statValue: {
-    fontSize: 42,
+    fontSize: 32,
     fontWeight: "800",
+    color: "#111827",
   },
   statMax: {
-    fontSize: 16,
-    color: "#6B7280",
+    fontSize: 14,
+    color: "#9CA3AF",
     fontWeight: "600",
   },
   statBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(16, 185, 129, 0.15)",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   statBadgeText: {
-    color: "#10B981",
-    fontSize: 13,
+    color: "#111827",
+    fontSize: 11,
     fontWeight: "600",
   },
   profileTagsRow: {
     flexDirection: "row",
-    gap: 8,
-    marginTop: 16,
+    gap: 6,
+    marginTop: 14,
     borderTopWidth: 1,
-    borderTopColor: "#1F2937",
-    paddingTop: 14,
+    borderTopColor: "#F3F4F6",
+    paddingTop: 12,
   },
   tagBadge: {
-    backgroundColor: "#1F2937",
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    backgroundColor: "#F9FAFB",
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   tagText: {
-    color: "#D1D5DB",
-    fontSize: 12,
-    fontWeight: "500",
+    color: "#4B5563",
+    fontSize: 10,
+    fontWeight: "600",
+    letterSpacing: 0.5,
   },
   phase6Section: {
     marginBottom: 16,
@@ -798,49 +762,52 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 11,
     fontWeight: "700",
-    color: "#F9FAFB",
+    color: "#6B7280",
+    letterSpacing: 1.2,
   },
   sectionAction: {
-    color: "#60A5FA",
-    fontSize: 13,
+    color: "#111827",
+    fontSize: 11,
     fontWeight: "600",
   },
   emptyCard: {
-    backgroundColor: "#161E2E",
+    backgroundColor: "#FFFFFF",
     padding: 24,
-    borderRadius: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
     alignItems: "center",
   },
   emptyText: {
-    color: "#F3F4F6",
-    fontSize: 15,
+    color: "#111827",
+    fontSize: 14,
     fontWeight: "600",
   },
   emptySub: {
-    color: "#9CA3AF",
-    fontSize: 13,
+    color: "#6B7280",
+    fontSize: 12,
     marginTop: 4,
   },
   historyList: {
-    gap: 10,
+    gap: 8,
   },
   historyItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#161E2E",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#1F2937",
-    borderRadius: 14,
-    padding: 14,
+    borderColor: "#E5E7EB",
+    borderRadius: 8,
+    padding: 12,
     gap: 12,
   },
   dateCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#1F2937",
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -848,25 +815,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   historyDate: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "600",
-    color: "#F9FAFB",
+    color: "#111827",
   },
   historyStatus: {
-    fontSize: 12,
-    color: "#9CA3AF",
-    marginTop: 2,
+    fontSize: 11,
+    color: "#6B7280",
+    marginTop: 1,
   },
   historyScoreBox: {
     alignItems: "flex-end",
   },
   historyScoreText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
+    color: "#111827",
   },
   deltaText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
-    marginTop: 2,
+    marginTop: 1,
   },
 });

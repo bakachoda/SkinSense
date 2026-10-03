@@ -65,7 +65,7 @@ export function PhasedRoutineCalendar({
       <View style={styles.phasesCard}>
         <View style={styles.phaseHeaderRow}>
           <View style={styles.titleBadge}>
-            <Layers size={16} color="#06B6D4" />
+            <Layers size={14} color="#111827" />
             <Text style={styles.sectionTitle}>4-Phase Regimen Progression</Text>
           </View>
           <View style={styles.phasePill}>
@@ -90,7 +90,7 @@ export function PhasedRoutineCalendar({
                   ]}
                 >
                   {isCompleted ? (
-                    <CheckCircle size={14} color="#10B981" />
+                    <CheckCircle size={14} color="#FFFFFF" />
                   ) : (
                     <Text
                       style={[
@@ -120,10 +120,10 @@ export function PhasedRoutineCalendar({
       <View style={styles.calendarCard}>
         <View style={styles.calendarHeaderRow}>
           <View style={styles.titleBadge}>
-            <Calendar size={16} color="#A855F7" />
+            <Calendar size={14} color="#111827" />
             <Text style={styles.sectionTitle}>Weekly Application Schedule</Text>
           </View>
-          <Text style={styles.legendText}>Alternating Active / Recovery</Text>
+          <Text style={styles.legendText}>Active / Recovery Protocol</Text>
         </View>
 
         <View style={styles.weekGrid}>
@@ -144,16 +144,14 @@ export function PhasedRoutineCalendar({
                   style={[
                     styles.nightTag,
                     {
-                      backgroundColor: isActive
-                        ? "rgba(168, 85, 247, 0.2)"
-                        : "rgba(16, 185, 129, 0.15)",
+                      backgroundColor: isActive ? "#111827" : "#F3F4F6",
                     },
                   ]}
                 >
                   <Text
                     style={[
                       styles.nightTagText,
-                      { color: isActive ? "#C084FC" : "#34D399" },
+                      { color: isActive ? "#FFFFFF" : "#6B7280" },
                     ]}
                   >
                     {isActive ? "Active" : "Reset"}
@@ -195,10 +193,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   lockoutCard: {
-    backgroundColor: "rgba(239, 68, 68, 0.12)",
+    backgroundColor: "#FEF2F2",
     borderWidth: 1,
-    borderColor: "rgba(239, 68, 68, 0.35)",
-    borderRadius: 14,
+    borderColor: "#FCA5A5",
+    borderRadius: 8,
     padding: 14,
   },
   lockoutHeader: {
@@ -208,22 +206,23 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   lockoutTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "800",
-    color: "#F87171",
-    letterSpacing: 0.5,
+    color: "#DC2626",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   lockoutDesc: {
     fontSize: 12,
-    color: "#FCA5A5",
-    lineHeight: 17,
+    color: "#991B1B",
+    lineHeight: 18,
   },
   phasesCard: {
-    backgroundColor: "#131B2E",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#1E293B",
+    borderColor: "#E5E7EB",
   },
   phaseHeaderRow: {
     flexDirection: "row",
@@ -237,27 +236,31 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#F8FAFC",
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   phasePill: {
-    backgroundColor: "rgba(6, 182, 212, 0.15)",
+    backgroundColor: "#F3F4F6",
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 999,
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: "rgba(6, 182, 212, 0.3)",
+    borderColor: "#E5E7EB",
   },
   phasePillText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "800",
-    color: "#22D3EE",
+    color: "#374151",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   phaseNameText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
-    color: "#94A3B8",
+    color: "#4B5563",
     marginBottom: 16,
   },
   phaseStepsTrack: {
@@ -270,48 +273,50 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   nodeCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#0B111E",
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#F9FAFB",
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: "#D1D5DB",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 4,
   },
   nodeCircleCompleted: {
-    borderColor: "#10B981",
-    backgroundColor: "rgba(16, 185, 129, 0.15)",
+    borderColor: "#111827",
+    backgroundColor: "#111827",
   },
   nodeCircleCurrent: {
-    borderColor: "#06B6D4",
-    backgroundColor: "rgba(6, 182, 212, 0.2)",
+    borderColor: "#111827",
+    backgroundColor: "#FFFFFF",
     borderWidth: 2,
   },
   nodeNumber: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
-    color: "#64748B",
+    color: "#6B7280",
   },
   nodeNumberCurrent: {
-    color: "#22D3EE",
+    color: "#111827",
   },
   nodeLabel: {
-    fontSize: 10,
-    color: "#64748B",
+    fontSize: 9,
+    color: "#6B7280",
     fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   nodeLabelCurrent: {
-    color: "#F8FAFC",
-    fontWeight: "700",
+    color: "#111827",
+    fontWeight: "800",
   },
   calendarCard: {
-    backgroundColor: "#131B2E",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#1E293B",
+    borderColor: "#E5E7EB",
   },
   calendarHeaderRow: {
     flexDirection: "row",
@@ -320,9 +325,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   legendText: {
-    fontSize: 10,
-    color: "#64748B",
-    fontWeight: "600",
+    fontSize: 9,
+    color: "#6B7280",
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   weekGrid: {
     flexDirection: "row",
@@ -330,23 +337,24 @@ const styles = StyleSheet.create({
   },
   dayColumn: {
     flex: 1,
-    backgroundColor: "#0B111E",
-    borderRadius: 8,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 6,
     paddingVertical: 8,
     paddingHorizontal: 2,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#1E293B",
+    borderColor: "#E5E7EB",
   },
   dayColumnActive: {
-    borderColor: "rgba(168, 85, 247, 0.4)",
-    backgroundColor: "rgba(168, 85, 247, 0.05)",
+    borderColor: "#111827",
+    backgroundColor: "#FFFFFF",
   },
   dayLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#94A3B8",
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#374151",
     marginBottom: 4,
+    textTransform: "uppercase",
   },
   nightTag: {
     paddingHorizontal: 4,
@@ -357,18 +365,21 @@ const styles = StyleSheet.create({
   nightTagText: {
     fontSize: 8,
     fontWeight: "800",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
   dayFocus: {
     fontSize: 8,
-    color: "#64748B",
+    color: "#6B7280",
     textAlign: "center",
-    lineHeight: 10,
+    lineHeight: 11,
+    paddingHorizontal: 2,
   },
   conflictCard: {
-    backgroundColor: "rgba(245, 158, 11, 0.1)",
+    backgroundColor: "#FFFBEB",
     borderWidth: 1,
-    borderColor: "rgba(245, 158, 11, 0.3)",
-    borderRadius: 12,
+    borderColor: "#FDE68A",
+    borderRadius: 8,
     padding: 12,
   },
   conflictHeader: {
@@ -378,9 +389,11 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   conflictTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "800",
-    color: "#FBBF24",
+    color: "#B45309",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   conflictItem: {
     marginTop: 4,
@@ -388,10 +401,11 @@ const styles = StyleSheet.create({
   conflictPair: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#FDE68A",
+    color: "#92400E",
   },
   conflictReason: {
     fontSize: 11,
-    color: "#D97706",
+    color: "#78350F",
+    lineHeight: 15,
   },
 });
