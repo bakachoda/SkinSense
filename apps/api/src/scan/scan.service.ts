@@ -40,7 +40,7 @@ export class ScanService {
     const key = data.imageKey || (data.imageKeys && data.imageKeys[0]) || "scans/default.jpg";
     const imageKeys = data.imageKeys && data.imageKeys.length > 0 ? data.imageKeys : [key];
 
-    // Create the scan record in PENDING state with Phase 3 attributes
+    // Create the scan record in PENDING state with Phase 3 & Phase 5 attributes
     const scan = await this.prisma.scan.create({
       data: {
         userId: user.id,
@@ -53,6 +53,19 @@ export class ScanService {
         environmentScore: data.environmentScore || "green",
         physiologicalState: data.physiologicalState
           ? (data.physiologicalState as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
+        deviceCapabilities: (data as any).deviceCapabilities
+          ? ((data as any).deviceCapabilities as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
+        rawFileUrl: (data as any).rawFileUrl,
+        depthMapUrl: (data as any).depthMapUrl,
+        pointCloudUrl: (data as any).pointCloudUrl,
+        videoUrl: (data as any).videoUrl,
+        gyroData: (data as any).gyroData
+          ? ((data as any).gyroData as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
+        multispectralUrls: (data as any).multispectralUrls
+          ? ((data as any).multispectralUrls as unknown as Prisma.InputJsonValue)
           : Prisma.JsonNull,
       },
     });

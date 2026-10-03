@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,10 +6,22 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
-import { ArrowDown, ArrowUp, Minus, Calendar, GitCompare } from "lucide-react-native";
-import { NoProgressEmptyState } from "../../components/EmptyStates";
+import { BarChart3, ArrowDown, ArrowUp, Minus, Calendar, GitCompare } from "lucide-react-native";
+import { apiClient } from "../../lib/api-client";
+import { SkinTimelineChart } from "../../components/SkinTimelineChart";
+import type { SkinTimeline, TrendWindow } from "@skinsense/types";
 
+const WINDOWS: { label: string; value: TrendWindow }[] = [
+  { label: "7D", value: "7d" },
+  { label: "30D", value: "30d" },
+  { label: "90D", value: "90d" },
+  { label: "All", value: "all" },
+];
+
+// Comparison data (kept from original progress screen)
 interface ScanComparison {
   zone: string;
   concern: string;
@@ -19,6 +31,13 @@ interface ScanComparison {
 }
 
 export default function ProgressScreen() {
+  const [window, setWindow] = useState<TrendWindow>("30d");
+  const [timeline, setTimeline] = useState<SkinTimeline | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const userId = "user-1";
+
   const [baselineDate] = useState("Sep 14, 2026");
   const [currentDate] = useState("Oct 01, 2026");
 
@@ -37,114 +56,186 @@ export default function ProgressScreen() {
   const overallAfter = 81;
   const overallDelta = overallAfter - overallBefore;
 
+  const loadTimeline = async () => {
+    try {
+      const res = await apiClient.getTimeline(userId, window);
+      setTimeline(res?.timeline ?? null);
+    } catch {
+      // Synthetic timeline for offline preview
+      setTimeline({
+        overallScoreHistory: [
+          { date: "2026-09-01T00:00:00Z", value: 65, scanId: "s1" },
+          { date: "2026-09-08T00:00:00Z", value: 68, scanId: "s2" },
+          { date: "2026-09-15T00:00:00Z", value: 72, scanId: "s3" },
+          { date: "2026-09-22T00:00:00Z", value: 70, scanId: "s4" },
+          { date: "2026-10-01T00:00:00Z", value: 78, scanId: "s5" },
+        ],
+        concernTrends: [
+          {
+            concern: "acne", zone: "left_cheek", direction: "improving", slope: -1.2,
+            dataPoints: [
+              { date: "2026-09-01T00:00:00Z", value: 68 },
+              { date: "2026-09-15T00:00:00Z", value: 55 },
+              { date: "2026-10-01T00:00:00Z", value: 45 },
+            ],
+            currentValue: 45, previousValue: 68, delta: -23, confidence: 0.85,
+          },
+          {
+            concern: "redness", zone: "right_cheek", direction: "improving", slope: -0.8,
+            dataPoints: [
+              { date: "2026-09-01T00:00:00Z", value: 48 },
+              { date: "2026-09-15T00:00:00Z", value: 40 },
+              { date: "2026-10-01T00:00:00Z", value: 30 },
+            ],
+            currentValue: 30, previousValue: 48, delta: -18, confidence: 0.78,
+          },
+          {
+            concern: "dryness", zone: "periorbital", direction: "improving", slope: -1.5,
+            dataPoints: [
+              { date: "2026-09-01T00:00:00Z", value: 65 },
+              { date: "2026-09-15T00:00:00Z", value: 50 },
+              { date: "2026-10-01T00:00:00Z", value: 42 },
+            ],
+            currentValue: 42, previousValue: 65, delta: -23, confidence: 0.82,
+          },
+          {
+            concern: "oiliness", zone: "nose", direction: "stable", slope: -0.3,
+            dataPoints: [
+              { date: "2026-09-01T00:00:00Z", value: 70 },
+              { date: "2026-09-15T00:00:00Z", value: 68 },
+              { date: "2026-10-01T00:00:00Z", value: 65 },
+            ],
+            currentValue: 65, previousValue: 70, delta: -5, confidence: 0.65,
+          },
+        ],
+        breakpoints: [
+          {
+            date: "2026-09-22T00:00:00Z", concern: "skinHealthScore", zone: "overall",
+            type: "valley", valueBefore: 72, valueAfter: 78,
+            possibleCause: "Skin stress detected — possibly environmental or routine change",
+          },
+        ],
+        seasonalPatterns: [],
+        totalScans: 5,
+        firstScanDate: "2026-09-01T00:00:00Z",
+        latestScanDate: "2026-10-01T00:00:00Z",
+      });
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    loadTimeline();
+  }, [window]);
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); loadTimeline(); }}
+            tintColor="#10B981"
+          />
+        }
+      >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Scan Comparison</Text>
+          <Text style={styles.title}>Skin Timeline</Text>
           <Text style={styles.subtitle}>
-            Side-by-side progression tracking across facial zones
+            Track your skin evolution across scans
           </Text>
         </View>
 
-        {comparisons.length === 0 ? (
-          <NoProgressEmptyState />
-        ) : (
-          <>
-            {/* Side-by-side Scans Cards */}
-            <View style={styles.compareHeroCard}>
-          <View style={styles.scanCol}>
-            <Text style={styles.scanBadge}>Baseline</Text>
-            <View style={styles.dateRow}>
-              <Calendar size={14} color="#9CA3AF" />
-              <Text style={styles.scanDateText}>{baselineDate}</Text>
-            </View>
-            <Text style={styles.compareScore}>{overallBefore}</Text>
-            <Text style={styles.scoreSub}>Health Index</Text>
-          </View>
-
-          <View style={styles.dividerCol}>
-            <View style={styles.vsBadge}>
-              <GitCompare size={16} color="#60A5FA" />
-            </View>
-            <Text style={styles.vsText}>VS</Text>
-          </View>
-
-          <View style={styles.scanCol}>
-            <Text style={[styles.scanBadge, styles.scanBadgeCurrent]}>Current</Text>
-            <View style={styles.dateRow}>
-              <Calendar size={14} color="#9CA3AF" />
-              <Text style={styles.scanDateText}>{currentDate}</Text>
-            </View>
-            <Text style={[styles.compareScore, { color: "#10B981" }]}>{overallAfter}</Text>
-            <Text style={styles.scoreSub}>Health Index</Text>
-          </View>
+        {/* Window Selector */}
+        <View style={styles.windowRow}>
+          {WINDOWS.map((w) => (
+            <TouchableOpacity
+              key={w.value}
+              onPress={() => setWindow(w.value)}
+              style={[styles.windowBtn, window === w.value && styles.windowBtnActive]}
+            >
+              <Text style={[styles.windowText, window === w.value && styles.windowTextActive]}>
+                {w.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Overall Delta Banner */}
-        <View style={styles.overallBanner}>
-          <View style={styles.deltaCircle}>
-            <ArrowUp size={20} color="#10B981" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.overallBannerTitle}>
-              +{overallDelta} Points Net Improvement
-            </Text>
-            <Text style={styles.overallBannerSub}>
-              Noticeable reduction in inflammatory acne lesions and cheek erythema.
-            </Text>
-          </View>
-        </View>
+        {/* Timeline Chart */}
+        {loading ? (
+          <ActivityIndicator size="large" color="#818CF8" style={{ marginVertical: 40 }} />
+        ) : timeline ? (
+          <SkinTimelineChart
+            timeline={timeline}
+            windowLabel={WINDOWS.find((w) => w.value === window)?.label || "30D"}
+          />
+        ) : null}
 
-        {/* Per-Zone Delta Table (Section 7.2) */}
-        <View style={styles.tableCard}>
-          <Text style={styles.tableTitle}>Per-Zone Score Deltas</Text>
+        {/* Scan Comparison Section (preserved from original) */}
+        <View style={styles.compareSection}>
+          <Text style={styles.compareTitle}>Scan Comparison</Text>
+          <Text style={styles.compareSub}>
+            Side-by-side progression tracking across facial zones
+          </Text>
 
-          <View style={styles.tableHeader}>
-            <Text style={[styles.colHeader, { flex: 2 }]}>ZONE & CONCERN</Text>
-            <Text style={[styles.colHeader, { flex: 1, textAlign: "center" }]}>BEFORE</Text>
-            <Text style={[styles.colHeader, { flex: 1, textAlign: "center" }]}>AFTER</Text>
-            <Text style={[styles.colHeader, { flex: 1, textAlign: "right" }]}>DELTA</Text>
-          </View>
-
-          {comparisons.map((row, idx) => (
-            <View key={idx} style={styles.tableRow}>
-              <View style={{ flex: 2 }}>
-                <Text style={styles.rowZone}>{row.zone}</Text>
-                <Text style={styles.rowConcern}>{row.concern}</Text>
+          {/* Side-by-side hero */}
+          <View style={styles.compareHeroCard}>
+            <View style={styles.scanCol}>
+              <Text style={styles.scanBadge}>Baseline</Text>
+              <View style={styles.dateRow}>
+                <Calendar size={14} color="#9CA3AF" />
+                <Text style={styles.scanDateText}>{baselineDate}</Text>
               </View>
+              <Text style={styles.compareScore}>{overallBefore}</Text>
+              <Text style={styles.scoreSub}>Health Index</Text>
+            </View>
 
-              <Text style={[styles.rowValue, { flex: 1, textAlign: "center" }]}>
-                {row.before}
-              </Text>
+            <View style={styles.dividerCol}>
+              <View style={styles.vsBadge}>
+                <GitCompare size={16} color="#60A5FA" />
+              </View>
+              <Text style={styles.vsText}>VS</Text>
+            </View>
 
-              <Text style={[styles.rowValue, { flex: 1, textAlign: "center", color: "#F3F4F6" }]}>
-                {row.after}
-              </Text>
+            <View style={styles.scanCol}>
+              <Text style={[styles.scanBadge, styles.scanBadgeCurrent]}>Current</Text>
+              <View style={styles.dateRow}>
+                <Calendar size={14} color="#9CA3AF" />
+                <Text style={styles.scanDateText}>{currentDate}</Text>
+              </View>
+              <Text style={[styles.compareScore, { color: "#10B981" }]}>{overallAfter}</Text>
+              <Text style={styles.scoreSub}>Health Index</Text>
+            </View>
+          </View>
 
-              <View style={[styles.deltaCol, { flex: 1, alignItems: "flex-end" }]}>
-                <View
-                  style={[
-                    styles.deltaBadge,
-                    row.delta < 0 ? styles.deltaBadgeGood : styles.deltaBadgeNeutral,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.deltaBadgeText,
-                      row.delta < 0 ? styles.deltaBadgeTextGood : styles.deltaBadgeTextNeutral,
-                    ]}
-                  >
-                    {row.delta < 0 ? `${row.delta}` : `+${row.delta}`}
+          {/* Zone Comparisons */}
+          {comparisons.map((comp, i) => {
+            const improved = comp.delta < 0;
+            return (
+              <View key={i} style={styles.zoneCompareRow}>
+                <View style={styles.zoneLabel}>
+                  <Text style={styles.zoneName}>{comp.zone}</Text>
+                  <Text style={styles.zoneConcern}>{comp.concern}</Text>
+                </View>
+                <View style={styles.barContainer}>
+                  <View style={[styles.barBefore, { width: `${comp.before}%` }]} />
+                  <View style={[styles.barAfter, { width: `${comp.after}%`, backgroundColor: improved ? "#10B981" : "#EF4444" }]} />
+                </View>
+                <View style={styles.deltaBox}>
+                  {improved ? <ArrowDown size={12} color="#10B981" /> : <ArrowUp size={12} color="#EF4444" />}
+                  <Text style={[styles.deltaTextComp, { color: improved ? "#10B981" : "#EF4444" }]}>
+                    {Math.abs(comp.delta)}
                   </Text>
                 </View>
               </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
-      </>
-    )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -160,69 +251,109 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: "800",
     color: "#F9FAFB",
+    letterSpacing: -0.4,
   },
   subtitle: {
     fontSize: 14,
     color: "#9CA3AF",
     marginTop: 4,
   },
+  windowRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 20,
+  },
+  windowBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: "#1F2937",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#374151",
+  },
+  windowBtnActive: {
+    backgroundColor: "rgba(129, 140, 248, 0.15)",
+    borderColor: "#818CF8",
+  },
+  windowText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  windowTextActive: {
+    color: "#818CF8",
+  },
+  compareSection: {
+    marginTop: 24,
+  },
+  compareTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#F9FAFB",
+  },
+  compareSub: {
+    fontSize: 13,
+    color: "#9CA3AF",
+    marginTop: 4,
+    marginBottom: 16,
+  },
   compareHeroCard: {
     flexDirection: "row",
     backgroundColor: "#161E2E",
     borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
     borderColor: "#1F2937",
-    padding: 20,
     marginBottom: 16,
     alignItems: "center",
   },
   scanCol: {
     flex: 1,
     alignItems: "center",
+    gap: 4,
   },
   scanBadge: {
-    backgroundColor: "#1F2937",
-    color: "#9CA3AF",
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "600",
+    color: "#9CA3AF",
+    backgroundColor: "#1F2937",
+    paddingHorizontal: 10,
     paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    textTransform: "uppercase",
-    marginBottom: 8,
+    borderRadius: 8,
+    overflow: "hidden",
   },
   scanBadgeCurrent: {
-    backgroundColor: "rgba(16, 185, 129, 0.2)",
+    backgroundColor: "rgba(16, 185, 129, 0.15)",
     color: "#10B981",
   },
   dateRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    marginBottom: 6,
   },
   scanDateText: {
-    color: "#9CA3AF",
-    fontSize: 12,
+    fontSize: 11,
+    color: "#6B7280",
   },
   compareScore: {
-    fontSize: 40,
+    fontSize: 36,
     fontWeight: "800",
-    color: "#F3F4F6",
+    color: "#F9FAFB",
   },
   scoreSub: {
     fontSize: 11,
     color: "#6B7280",
-    textTransform: "uppercase",
   },
   dividerCol: {
     alignItems: "center",
+    gap: 6,
     paddingHorizontal: 12,
   },
   vsBadge: {
@@ -230,114 +361,70 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: "#1F2937",
-    justifyContent: "center",
     alignItems: "center",
-    marginBottom: 4,
+    justifyContent: "center",
   },
   vsText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
     color: "#6B7280",
   },
-  overallBanner: {
+  zoneCompareRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#0F281E",
-    borderWidth: 1,
-    borderColor: "#10B981",
-    borderRadius: 16,
-    padding: 16,
-    gap: 14,
-    marginBottom: 20,
-  },
-  deltaCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(16, 185, 129, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  overallBannerTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#10B981",
-    marginBottom: 2,
-  },
-  overallBannerSub: {
-    fontSize: 12,
-    color: "#6EE7B7",
-    lineHeight: 16,
-  },
-  tableCard: {
     backgroundColor: "#161E2E",
-    borderRadius: 18,
+    borderRadius: 12,
+    padding: 12,
     borderWidth: 1,
     borderColor: "#1F2937",
-    padding: 18,
-  },
-  tableTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#F9FAFB",
-    marginBottom: 16,
-  },
-  tableHeader: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#1F2937",
-    paddingBottom: 10,
     marginBottom: 8,
+    gap: 10,
   },
-  colHeader: {
+  zoneLabel: {
+    width: 90,
+  },
+  zoneName: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#F9FAFB",
+  },
+  zoneConcern: {
     fontSize: 11,
-    fontWeight: "700",
     color: "#6B7280",
-    letterSpacing: 0.5,
   },
-  tableRow: {
+  barContainer: {
+    flex: 1,
+    height: 20,
+    backgroundColor: "#1F2937",
+    borderRadius: 10,
+    overflow: "hidden",
+    position: "relative",
+  },
+  barBefore: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    height: "100%",
+    backgroundColor: "rgba(239, 68, 68, 0.25)",
+    borderRadius: 10,
+  },
+  barAfter: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    height: "100%",
+    borderRadius: 10,
+    opacity: 0.7,
+  },
+  deltaBox: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#162235",
+    gap: 2,
+    width: 40,
+    justifyContent: "flex-end",
   },
-  rowZone: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#F3F4F6",
-  },
-  rowConcern: {
-    fontSize: 12,
-    color: "#9CA3AF",
-  },
-  rowValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#9CA3AF",
-  },
-  deltaCol: {
-    justifyContent: "center",
-  },
-  deltaBadge: {
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-  },
-  deltaBadgeGood: {
-    backgroundColor: "rgba(16, 185, 129, 0.2)",
-  },
-  deltaBadgeNeutral: {
-    backgroundColor: "#1F2937",
-  },
-  deltaBadgeText: {
-    fontSize: 12,
+  deltaTextComp: {
+    fontSize: 13,
     fontWeight: "700",
-  },
-  deltaBadgeTextGood: {
-    color: "#10B981",
-  },
-  deltaBadgeTextNeutral: {
-    color: "#9CA3AF",
   },
 });

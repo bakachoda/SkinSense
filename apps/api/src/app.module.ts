@@ -13,6 +13,10 @@ import { HealthModule } from "./health/health.module";
 import { AdherenceModule } from "./adherence/adherence.module";
 import { GatewayModule } from "./gateway/gateway.module";
 import { FeedbackModule } from "./feedback/feedback.module";
+import { SmartEngineModule } from "./smart-engine/smart-engine.module";
+import { MedicationModule } from "./medication/medication.module";
+import { HardwareModule } from "./hardware/hardware.module";
+import { LongitudinalModule } from "./longitudinal/longitudinal.module";
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 
@@ -37,6 +41,10 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     HealthModule,
     AdherenceModule,
     FeedbackModule,
+    SmartEngineModule,
+    MedicationModule,
+    HardwareModule,
+    LongitudinalModule,
   ],
   providers: [
     {

@@ -53,7 +53,7 @@ export function PreScanChecklistModal({
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onDismiss}>
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} style={{ flexShrink: 1 }}>
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.iconCircle}>

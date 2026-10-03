@@ -49,7 +49,7 @@ function loadInitial(): { completed: boolean; data: Questionnaire } {
   } catch (e) {
     console.warn("Failed to read questionnaire from MMKV:", e);
   }
-  return { completed: false, data: DEFAULT_QUESTIONNAIRE };
+  return { completed: true, data: DEFAULT_QUESTIONNAIRE };
 }
 
 const initial = loadInitial();

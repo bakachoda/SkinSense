@@ -18,7 +18,11 @@ import {
   Flame,
   Sparkles,
   Award,
+  Barcode,
+  Plus,
 } from "lucide-react-native";
+import { PhasedRoutineCalendar } from "../../components/PhasedRoutineCalendar";
+import { BarcodeScannerModal } from "../../components/BarcodeScannerModal";
 
 export default function RoutineScreen() {
   const [routine, setRoutine] = useState<Routine | null>(null);
@@ -27,6 +31,7 @@ export default function RoutineScreen() {
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
   const [adherenceLogged, setAdherenceLogged] = useState<boolean>(false);
   const [streakCount] = useState<number>(7);
+  const [isBarcodeModalVisible, setIsBarcodeModalVisible] = useState(false);
 
   useEffect(() => {
     async function fetchRoutine() {
@@ -157,10 +162,19 @@ export default function RoutineScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Daily Regimen</Text>
-          <Text style={styles.subtitle}>
-            Track your AM & PM clinical applications
-          </Text>
+          <View>
+            <Text style={styles.title}>Daily Regimen</Text>
+            <Text style={styles.subtitle}>
+              Track your AM & PM clinical applications
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.scanBarcodeButton}
+            onPress={() => setIsBarcodeModalVisible(true)}
+          >
+            <Barcode size={16} color="#06B6D4" />
+            <Text style={styles.scanBarcodeText}>Scan Product</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Streak & Adherence Tracker Banner */}
@@ -176,6 +190,17 @@ export default function RoutineScreen() {
           </View>
           <Award size={24} color="#10B981" />
         </View>
+
+        {/* Phase 4: Phased Regimen Progression & Weekly Schedule */}
+        <PhasedRoutineCalendar
+          currentPhase={(routine as any)?.treatmentPhase || 1}
+          phaseName={(routine as any)?.phaseName || "Phase 1: Baseline Stabilization"}
+          phasedPlan={(routine as any)?.phasedPlan}
+          calendar={(routine as any)?.calendar}
+          barrierLockoutActive={(routine as any)?.barrierLockoutActive}
+          barrierLockoutMessage={(routine as any)?.barrierLockoutMessage}
+          productConflicts={(routine as any)?.productConflicts}
+        />
 
         {/* Tab Switcher: AM vs PM */}
         <View style={styles.tabSwitcher}>
@@ -272,6 +297,28 @@ export default function RoutineScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <BarcodeScannerModal
+        visible={isBarcodeModalVisible}
+        onClose={() => setIsBarcodeModalVisible(false)}
+        onProductAdded={(newProd) => {
+          if (routine) {
+            const newStep: RoutineStep = {
+              order: (routine.pmSteps?.length || 0) + 1,
+              stepType: newProd.category || "TREATMENT",
+              productId: `prod-${Date.now()}`,
+              productName: newProd.name,
+              productBrand: newProd.brand || "Brand",
+              whyChosen: "Scanned & validated via Open Beauty Facts",
+              targetIngredients: newProd.ingredients?.slice(0, 3) || [],
+            };
+            setRoutine({
+              ...routine,
+              pmSteps: [...(routine.pmSteps || []), newStep],
+            });
+          }
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -287,6 +334,25 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  scanBarcodeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#131B2E",
+    borderWidth: 1,
+    borderColor: "rgba(6, 182, 212, 0.4)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  scanBarcodeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#22D3EE",
   },
   title: {
     fontSize: 24,
@@ -294,9 +360,9 @@ const styles = StyleSheet.create({
     color: "#F9FAFB",
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#9CA3AF",
-    marginTop: 4,
+    marginTop: 2,
   },
   streakBanner: {
     flexDirection: "row",

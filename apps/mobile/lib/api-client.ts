@@ -179,6 +179,80 @@ export const apiClient = {
     });
   },
 
+  async calibrateHardware(profileData: any): Promise<{ profile: any; adaptiveThresholds: any }> {
+    return request<{ profile: any; adaptiveThresholds: any }>("/hardware/device-profile", {
+      method: "POST",
+      body: JSON.stringify(profileData),
+    });
+  },
+
+  async getDeviceHardwareProfile(deviceId: string): Promise<{ profile: any; adaptiveThresholds: any }> {
+    return request<{ profile: any; adaptiveThresholds: any }>(`/hardware/device-profile/${deviceId}`);
+  },
+
+  async auditCapabilities(caps: any): Promise<any> {
+    return request<any>("/hardware/capabilities-audit", {
+      method: "POST",
+      body: JSON.stringify(caps),
+    });
+  },
+
+  async getHardwareSampleAnalysis(mode = "lidar"): Promise<any> {
+    return request<any>(`/hardware/sample-analysis?mode=${mode}`);
+  },
+
+  async createPredictions(input: any): Promise<any> {
+    return request<any>("/hardware/predictions", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+
+  async getUserPredictions(userId: string): Promise<any[]> {
+    return request<any[]>(`/hardware/predictions/user/${userId}`);
+  },
+
+  // ── Phase 6: Longitudinal Intelligence ──
+
+  async getTimeline(userId: string, window: string = "30d"): Promise<any> {
+    return request<any>(`/longitudinal/timeline?userId=${userId}&window=${window}`);
+  },
+
+  async getSkinTwin(userId: string): Promise<any> {
+    return request<any>(`/longitudinal/skin-twin?userId=${userId}`);
+  },
+
+  async logLifestyleCheckIn(userId: string, data: any): Promise<any> {
+    return request<any>(`/longitudinal/lifestyle/check-in?userId=${userId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  async getLifestyleCheckIns(userId: string, days = 30): Promise<any> {
+    return request<any>(`/longitudinal/lifestyle/check-ins?userId=${userId}&days=${days}`);
+  },
+
+  async getLifestyleInsights(userId: string): Promise<any> {
+    return request<any>(`/longitudinal/lifestyle/insights?userId=${userId}`);
+  },
+
+  async getAchievements(userId: string): Promise<any> {
+    return request<any>(`/longitudinal/achievements?userId=${userId}`);
+  },
+
+  async evaluateAchievements(userId: string): Promise<any> {
+    return request<any>(`/longitudinal/achievements/evaluate?userId=${userId}`, {
+      method: "POST",
+    });
+  },
+
+  async markAchievementsSeen(userId: string): Promise<any> {
+    return request<any>(`/longitudinal/achievements/mark-seen?userId=${userId}`, {
+      method: "POST",
+    });
+  },
+
   createScanSocket(scanId: string): Socket {
     const socket = io(SOCKET_BASE_URL, {
       transports: ["websocket", "polling"],

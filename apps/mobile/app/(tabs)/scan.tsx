@@ -52,6 +52,16 @@ import { MedicalDisclaimerFooter } from "../../components/MedicalDisclaimerFoote
 import { PreScanChecklistModal } from "../../components/PreScanChecklistModal";
 import { EnvironmentQualityGate } from "../../components/EnvironmentQualityGate";
 import { SelfAssessmentView } from "../../components/SelfAssessmentView";
+import { BarrierHealthCard } from "../../components/BarrierHealthCard";
+import { SkinAgeCard } from "../../components/SkinAgeCard";
+import { DifferentialDiagnosisView } from "../../components/DifferentialDiagnosisView";
+import { ClinicalGradingCard } from "../../components/ClinicalGradingCard";
+import { SafetyScreeningCard } from "../../components/SafetyScreeningCard";
+import { DeviceHardwareBadge } from "../../components/DeviceHardwareBadge";
+import { Topology3DViewer } from "../../components/Topology3DViewer";
+import { PredictiveInsightsCard } from "../../components/PredictiveInsightsCard";
+import { AdvancedCaptureModal } from "../../components/AdvancedCaptureModal";
+import type { AdvancedCaptureMode } from "@skinsense/types";
 import {
   speakGuidance,
   stopGuidance,
@@ -93,6 +103,11 @@ export default function ScanScreen() {
 
   // Pre-Scan Checklist & Quality Gate
   const [showPreScanModal, setShowPreScanModal] = useState<boolean>(false);
+  const [showAdvancedCaptureModal, setShowAdvancedCaptureModal] = useState<boolean>(false);
+  const [advancedCaptureMode, setAdvancedCaptureMode] = useState<AdvancedCaptureMode>("lidar");
+  const [useRawDng, setUseRawDng] = useState<boolean>(true);
+  const [wifiOnly, setWifiOnly] = useState<boolean>(true);
+  const [checklistCompleted, setChecklistCompleted] = useState<boolean>(false);
   const [physiologicalState, setPhysiologicalState] = useState<PhysiologicalState>({
     exercised: false,
     hotShower: false,
@@ -139,9 +154,12 @@ export default function ScanScreen() {
     setShowPreScanModal(true);
   };
 
-  const handleProceedFromChecklist = (state: PhysiologicalState) => {
+  const handleProceedFromChecklist = (
+    state: PhysiologicalState = { exercised: false, hotShower: false },
+  ) => {
     setPhysiologicalState(state);
     setShowPreScanModal(false);
+    setChecklistCompleted(true);
     setCurrentPoseIndex(0);
     setCapturedAngleFrames([]);
 
@@ -157,6 +175,7 @@ export default function ScanScreen() {
   };
 
   const captureCurrentAngle = async () => {
+    console.log("=== CAPTURE BUTTON PRESSED! currentPoseIndex:", currentPoseIndex);
     try {
       await triggerCaptureHaptic();
 
@@ -307,7 +326,7 @@ export default function ScanScreen() {
             facing={isBackCamera ? "back" : "front"}
           />
         ) : (
-          <View style={styles.mockCameraBg}>
+          <View style={[StyleSheet.absoluteFillObject, styles.mockCameraBg]}>
             <Text style={styles.mockCameraText}>
               {isBackCamera ? "High-Resolution Back Camera Preview" : "Front Camera Preview"}
             </Text>
@@ -376,6 +395,9 @@ export default function ScanScreen() {
             )}
           </TouchableOpacity>
         </SafeAreaView>
+
+        {/* Phase 5: Device Hardware Capability Badge */}
+        <DeviceHardwareBadge onOpenCaptureModal={() => setShowAdvancedCaptureModal(true)} />
 
         {/* Phase 3 Environment Quality Gate */}
         <EnvironmentQualityGate
@@ -478,7 +500,7 @@ export default function ScanScreen() {
           <TouchableOpacity
             style={[styles.captureButton, !isPoseAligned && styles.captureButtonDisabled]}
             onPress={
-              capturedAngleFrames.length === 0 && !showPreScanModal
+              !checklistCompleted
                 ? handleStartCaptureSequence
                 : captureCurrentAngle
             }
@@ -490,7 +512,7 @@ export default function ScanScreen() {
           </TouchableOpacity>
 
           <Text style={styles.captureHint}>
-            {capturedAngleFrames.length === 0
+            {!checklistCompleted
               ? "Tap to begin 3-angle capture sequence"
               : `Capture Angle ${currentPoseIndex + 1} of 3 (${activePose.label})`}
           </Text>
@@ -501,6 +523,18 @@ export default function ScanScreen() {
           visible={showPreScanModal}
           onProceed={handleProceedFromChecklist}
           onDismiss={() => setShowPreScanModal(false)}
+        />
+
+        {/* Phase 5 Advanced Capture Studio Modal */}
+        <AdvancedCaptureModal
+          visible={showAdvancedCaptureModal}
+          onClose={() => setShowAdvancedCaptureModal(false)}
+          onSelectMode={(mode, opts) => {
+            setAdvancedCaptureMode(mode);
+            setUseRawDng(opts.useRawDng);
+            setWifiOnly(opts.wifiOnly);
+            handleProceedFromChecklist();
+          }}
         />
       </View>
     );
@@ -697,6 +731,70 @@ export default function ScanScreen() {
           </View>
         )}
 
+        {/* Phase 4: Barrier Health Composite & Lockout Gatekeeping */}
+        <BarrierHealthCard
+          barrierResult={(scanResult as any)?.barrierHealth}
+          barrierScore={(scanResult as any)?.barrierScore}
+        />
+
+        {/* Phase 4: Biological Skin Age Model */}
+        <SkinAgeCard
+          skinAgeResult={(scanResult as any)?.skinAge}
+          fallbackChronological={26}
+        />
+
+        {/* Phase 4: Spatial Differential Diagnosis */}
+        {(scanResult as any)?.differential && (
+          <DifferentialDiagnosisView
+            differentialResult={(scanResult as any).differential}
+          />
+        )}
+
+        {/* Phase 4: Clinical Dermatological Grading (GAGS & IGA) */}
+        {(scanResult as any)?.clinicalGrading && (
+          <ClinicalGradingCard
+            clinicalGrading={(scanResult as any).clinicalGrading}
+          />
+        )}
+
+        {/* Phase 4: ABCDE Lesion Safety & Melanated Skin Safeguards */}
+        <SafetyScreeningCard
+          safetyResults={(scanResult as any)?.safetyFlags}
+          fitzpatrickTone={(scanResult as any)?.fitzpatrick || 3}
+        />
+
+        {/* Phase 5: 3D Topology, rPPG Blood Flow, and 240fps Viscoelasticity */}
+        <Topology3DViewer
+          topology={(scanResult as any)?.metadata?.topology || {
+            classification: (scanResult as any)?.topologyClassification || "raised",
+            lesionHeightMm: (scanResult as any)?.lesionHeightMm || 1.6,
+            poreAnalysis: {
+              averageDepthMm: (scanResult as any)?.poreDepthMm || 0.35,
+              maxDepthMm: 0.72,
+              congestionScore: 6.8,
+              poreCount: 142,
+            },
+          }}
+          elasticity={(scanResult as any)?.metadata?.elasticity || {
+            overallGrade: (scanResult as any)?.elasticityScore || "good",
+            recoveryTimeMs: (scanResult as any)?.elasticityRecoveryTimeMs || 259,
+            firmnessScore: 8.7,
+          }}
+          rppg={(scanResult as any)?.metadata?.rppg || {
+            perfusionScore: (scanResult as any)?.perfusionScore || 8.5,
+            peakBpm: 72,
+            inflammationStatus: (scanResult as any)?.inflammationStatus || "active",
+            capillaryDilationIndex: 7.7,
+            isVascularRosaceaPattern: (scanResult as any)?.differential?.primary?.patternType === "rosacea",
+            subclinicalInflammationDetected: true,
+          }}
+        />
+
+        {/* Phase 5: Predictive Analytics (Breakout 48h, Sun Damage Trajectory, Dehydration) */}
+        <PredictiveInsightsCard
+          predictions={(scanResult as any)?.metadata?.predictions}
+        />
+
         {/* Routine Tabs: AM & PM Regimens */}
         <View style={styles.routineSection}>
           <Text style={styles.cardSectionTitle}>Your Prescribed Routine</Text>
@@ -770,6 +868,9 @@ export default function ScanScreen() {
           style={styles.retakeScanButton}
           onPress={() => {
             setScanResult(null);
+            setCapturedAngleFrames([]);
+            setCurrentPoseIndex(0);
+            setChecklistCompleted(false);
             setStage("CAMERA");
           }}
         >

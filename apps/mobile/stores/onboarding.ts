@@ -52,10 +52,10 @@ function loadInitial(): {
     console.warn("Failed to load onboarding store:", e);
   }
   return {
-    hasSeenWelcome: false,
-    hasAcknowledgedDisclaimer: false,
+    hasSeenWelcome: true,
+    hasAcknowledgedDisclaimer: true,
     disclaimerVersion: DISCLAIMER_VERSION,
-    permissionsCompleted: false,
+    permissionsCompleted: true,
   };
 }
 

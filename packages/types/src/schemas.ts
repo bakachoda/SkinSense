@@ -161,6 +161,17 @@ export const RoutineSchema = z.object({
   amSteps: z.array(RoutineStepSchema),
   pmSteps: z.array(RoutineStepSchema),
   conflicts: z.array(ConflictSchema).optional(),
+  treatmentPhase: z.number().optional(),
+  phaseName: z.string().optional(),
+  phasedPlan: z.any().optional(),
+  calendar: z.any().optional(),
+  timeline: z.record(z.string()).optional(),
+  complexityTier: z.string().optional(),
+  productConflicts: z.array(z.any()).optional(),
+  comedogenicityAlerts: z.array(z.any()).optional(),
+  adaptiveScanSchedule: z.any().optional(),
+  barrierLockoutActive: z.boolean().optional(),
+  barrierLockoutMessage: z.string().optional(),
 });
 export type Routine = z.infer<typeof RoutineSchema>;
 

@@ -81,6 +81,13 @@ model User {
   routines                  Routine[]
   adherenceLogs             AdherenceLog[]
   feedbacks                 Feedback[]
+  products                  UserProduct[]
+  medications               Medication[]
+  deviceProfiles            DeviceProfile[]
+  predictions               Prediction[]
+  lifestyleLogs             LifestyleLog[]
+  skinTrends                SkinTrend[]
+  achievements              Achievement[]
 
   @@index([supabaseId])
 }
@@ -92,11 +99,18 @@ model Scan {
   status             ScanStatus      @default(PENDING)
   imageKeys          String[]        // S3 object keys for uploaded images
   questionnaire      Json            // Structured quiz responses (validated by Zod at app layer)
-  captureMode        String?         // 'audio_guided', 'mirror', 'assisted', 'front_camera'
+  captureMode        String?         // 'audio_guided', 'mirror', 'assisted', 'front_camera', 'raw', 'lidar', 'multispectral', 'photometric_stereo', 'elasticity_240fps'
   calibrationKey     String?         // S3 key for white reference frame
   frameCount         Int?            // total frames uploaded
   environmentScore   String?         // 'green', 'yellow', 'red'
   physiologicalState Json?           // { exercised: bool, hotShower: bool }
+  deviceCapabilities Json?           // Phase 5: Hardware capabilities snapshot
+  rawFileUrl         String?         // Phase 5: RAW / DNG file url
+  depthMapUrl        String?         // Phase 5: 16-bit depth map PNG
+  pointCloudUrl      String?         // Phase 5: PLY / PointCloud
+  videoUrl           String?         // Phase 5: 240fps video url
+  gyroData           Json?           // Phase 5: Gyro samples for photometric stereo
+  multispectralUrls  Json?           // Phase 5: { red, green, blue, violet }
   createdAt          DateTime        @default(now())
 
   result             ScanResult?
@@ -128,7 +142,26 @@ model ScanResult {
   oilinessMap       Json?     // per-zone oiliness scores from specular analysis
   zoneCoverage      Json?     // per-zone coverage confidence 0-1
   scaleFactorMm     Float?    // pixels per mm at capture distance
-  metadata          Json      // Extensible: barrier score, skin age, etc. (added in later phases)
+  barrierScore      Int?      // Phase 4: composite barrier health score (0-100)
+  skinAge           Json?     // Phase 4: { biologicalAge, chronologicalAge, delta, zoneAges }
+  differential      Json?     // Phase 4: ranked differential diagnoses
+  fitzpatrick       Int?      // Phase 4: calibrated Fitzpatrick skin tone (1-6)
+  measuredSkinType  String?   // Phase 4: measured skin type (e.g. DEHYDRATED_OILY)
+  clinicalGrading   Json?     // Phase 4: { gags, iga }
+  treatmentPhase    Int?      // Phase 4: treatment dependency phase (0-4)
+  environmentalContext Json?  // Phase 4: UV, AQI, water hardness, humidity
+  safetyFlags       Json?     // Phase 4: ABCDE screening alerts & physician referral notes
+  topologyClassification String? // Phase 5: 'raised' | 'flat' | 'depressed'
+  lesionHeightMm    Float?    // Phase 5: Lesion elevation / depression (mm)
+  poreDepthMm       Float?    // Phase 5: Average pore depth (mm)
+  elasticityScore   String?   // Phase 5: 'excellent' | 'good' | 'fair' | 'poor'
+  elasticityRecoveryTimeMs Float? // Phase 5: Recovery tau constant (ms)
+  perfusionScore    Float?    // Phase 5: rPPG perfusion SNR (dB)
+  inflammationStatus String?  // Phase 5: 'active' | 'resolved' | 'none'
+  bacteriaLevel     Float?    // Phase 5: Violet porphyrin fluorescence level (0-10)
+  hasMakeup         Boolean?  // Phase 5: On-device ML makeup flag
+  hairCoveragePercent Float?  // Phase 5: Hair segmentation occlusion %
+  metadata          Json      // Extensible: image quality, blur variance, etc.
   modelVersion      String    // Identifies which model/version produced this result
   processingTimeMs  Int       // How long inference took in milliseconds
   createdAt         DateTime  @default(now())
@@ -196,5 +229,153 @@ model Feedback {
 
   @@index([userId])
   @@index([type])
+}
+
+model UserProduct {
+  id                String          @id @default(cuid())
+  userId            String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  brand             String
+  category          ProductCategory
+  ingredients       String[]        // Full INCI list
+  activeIngredients Json            // { name: string, concentration?: string }[]
+  routineSlot       String          // 'AM' | 'PM' | 'BOTH'
+  stepOrder         Int
+  scannedVia        String          // 'barcode' | 'ocr' | 'manual'
+  addedDate         DateTime        @default(now())
+
+  @@index([userId])
+  @@index([category])
+}
+
+model Medication {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  restriction String   // 'MINIMAL_ROUTINE' | 'NO_OTC_RETINOL' | 'NOTE_PHOTOSENSITIVITY' | 'MONITOR_THINNING' | 'NONE'
+  startDate   DateTime @default(now())
+  isActive    Boolean  @default(true)
+
+  @@index([userId])
+}
+
+// ──────────────────────────────────────────────
+// Phase 5: Hardware & Device Calibration
+// ──────────────────────────────────────────────
+
+model DeviceProfile {
+  id                      String   @id @default(cuid())
+  deviceId                String   @unique // Anonymized hardware hash
+  userId                  String?
+  user                    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  osType                  String   // 'ios' | 'android'
+  osVersion               String
+  deviceModel             String?  // e.g. "iPhone15,2" / "Pixel 8 Pro"
+  capabilities            Json     // DeviceCapabilities object
+  whiteBalanceMatrix      Json?    // 3x3 color transform
+  colorAccuracyDeltaE     Float?
+  noiseFloorRgb           Float[]  // Per-channel sensor noise [R, G, B]
+  dynamicRangeStops       Float?   // Measured dynamic range stops
+  calibrationDate         DateTime @default(now())
+  calibrationLightingLux  Float?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([deviceId])
+  @@index([userId])
+}
+
+model Prediction {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  predictionType String    // 'breakout' | 'sun_damage' | 'dehydration'
+  riskLevel      String    // 'low' | 'medium' | 'high'
+  confidence     Float
+  timeframe      String?   // '24-48 hours', 'by age 60', etc.
+  recommendation String?
+  inputFeatures  Json?
+  createdAt      DateTime  @default(now())
+  resolvedAt     DateTime?
+  wasAccurate    Boolean?
+
+  @@index([userId])
+  @@index([predictionType])
+}
+
+// ──────────────────────────────────────────────
+// Phase 6: Longitudinal Intelligence
+// ──────────────────────────────────────────────
+
+model LifestyleLog {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                DateTime @db.Date
+  sleepHours          Float
+  waterGlasses        Int
+  stressLevel         Int      // 1-5
+  exerciseMinutes     Int
+  sunExposureMinutes  Int
+  dietTags            String[] // ["dairy", "sugar", ...]
+  notes               String?
+  createdAt           DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId])
+}
+
+model SkinTrend {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  zone          String   // "forehead", "overall", etc.
+  concern       String   // "acne", "redness", "skinHealthScore", etc.
+  direction     String   // "improving" | "stable" | "declining" | "volatile"
+  slope         Float    // per-day change rate
+  currentValue  Float
+  previousValue Float
+  delta         Float
+  confidence    Float    // 0-1
+  window        String   // "7d" | "30d" | "90d" | "all"
+  dataPoints    Json     // TrendDataPoint[]
+  computedAt    DateTime @default(now())
+
+  @@unique([userId, zone, concern, window])
+  @@index([userId])
+}
+
+model Achievement {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId   String    // e.g. "first_scan", "7_day_streak"
+  progress        Float     @default(0) // 0-1, 1 = unlocked
+  unlockedAt      DateTime?
+  isNew           Boolean   @default(true) // unread
+  createdAt       DateTime  @default(now())
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+model CohortStats {
+  id              String   @id @default(cuid())
+  fitzpatrick     Int
+  ageRange        String   // "TEENS", "TWENTIES", etc.
+  concern         String   // "ACNE", "REDNESS", etc.
+  climateZone     String?  // "tropical", "temperate", "arid", etc.
+  metric          String   // "skinHealthScore", "barrierScore", etc.
+  p25             Float
+  median          Float
+  p75             Float
+  sampleSize      Int
+  topProducts     Json?    // WhatWorked[]
+  computedAt      DateTime @default(now())
+
+  @@unique([fitzpatrick, ageRange, concern, metric])
+  @@index([fitzpatrick, ageRange])
 }
 

@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Home, Camera, CalendarCheck, TrendingUp, Settings } from "lucide-react-native";
+import { Home, Camera, CalendarCheck, BarChart3, Settings } from "lucide-react-native";
 
 export default function TabLayout() {
   return (
@@ -46,8 +46,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="progress"
         options={{
-          title: "Progress",
-          tabBarIcon: ({ color, size }) => <TrendingUp size={size} color={color} />,
+          title: "Timeline",
+          tabBarIcon: ({ color, size }) => <BarChart3 size={size} color={color} />,
         }}
       />
       <Tabs.Screen
