@@ -5,10 +5,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuestionnaireStore } from "../../stores/questionnaire";
 import { apiClient } from "../../lib/api-client";
@@ -373,11 +373,16 @@ export default function HomeScreen() {
         {/* Clinical Minimalist Header */}
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <View style={{ flex: 1, marginRight: 8 }}>
-              <Text style={styles.brandTitle}>SKINSENSE</Text>
-              <Text style={styles.brandSubtitle} numberOfLines={1}>
-                Clinical Facial Telemetry
-              </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1, marginRight: 8 }}>
+              <View style={styles.brandLogoBox}>
+                <Sparkles size={18} color="#0284C7" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.brandTitle}>SKINSENSE</Text>
+                <Text style={styles.brandSubtitle} numberOfLines={1}>
+                  Clinical Facial Telemetry
+                </Text>
+              </View>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               {/* Membership Tier Badge */}
@@ -638,6 +643,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  brandLogoBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+    alignItems: "center",
+    justifyContent: "center",
   },
   brandTitle: {
     fontSize: 20,

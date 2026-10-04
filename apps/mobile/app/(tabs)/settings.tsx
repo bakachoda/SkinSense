@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   Modal,
   Switch,
   TextInput,
@@ -13,6 +12,7 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import * as WebBrowser from "expo-web-browser";
 import { useQuestionnaireStore } from "../../stores/questionnaire";

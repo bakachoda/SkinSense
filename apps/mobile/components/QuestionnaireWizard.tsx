@@ -7,8 +7,8 @@ import {
   TextInput,
   Switch,
   StyleSheet,
-  SafeAreaView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuestionnaireStore } from "../stores/questionnaire";
 import type { SkinTypeType, SkinConcernType, AgeRangeType } from "@skinsense/types";
 import { Check, ChevronRight, Sparkles, HelpCircle } from "lucide-react-native";

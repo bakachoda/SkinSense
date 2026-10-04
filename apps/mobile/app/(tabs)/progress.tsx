@@ -5,10 +5,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { BarChart3, ArrowDown, ArrowUp, Minus, Calendar, GitCompare, Printer } from "lucide-react-native";
 import { apiClient } from "../../lib/api-client";
 import { SkinTimelineChart } from "../../components/SkinTimelineChart";

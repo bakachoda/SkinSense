@@ -12,11 +12,22 @@ import type {
   SelfAssessment,
 } from "@skinsense/types";
 import { useAuthStore } from "../stores/auth";
+import Constants from "expo-constants";
 
-export const API_BASE_URL =
-  process.env["EXPO_PUBLIC_API_URL"] || "http://127.0.0.1:3000/api";
-export const SOCKET_BASE_URL =
-  process.env["EXPO_PUBLIC_SOCKET_URL"] || "http://127.0.0.1:3000";
+function resolveHostUrl(envUrl: string | undefined, defaultPath: string): string {
+  if (envUrl && !envUrl.includes("127.0.0.1") && !envUrl.includes("localhost")) {
+    return envUrl;
+  }
+  const hostUri = Constants.expoConfig?.hostUri || (Constants as any).manifest2?.extra?.expoGo?.debuggerHost;
+  if (hostUri) {
+    const hostIp = hostUri.split(":")[0];
+    return `http://${hostIp}:3000${defaultPath}`;
+  }
+  return envUrl || `http://127.0.0.1:3000${defaultPath}`;
+}
+
+export const API_BASE_URL = resolveHostUrl(process.env["EXPO_PUBLIC_API_URL"], "/api");
+export const SOCKET_BASE_URL = resolveHostUrl(process.env["EXPO_PUBLIC_SOCKET_URL"], "");
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = useAuthStore.getState().accessToken || "mock-dev-token";

@@ -7,6 +7,7 @@ import * as Sentry from "@sentry/react-native";
 import { useAuthStore } from "../stores/auth";
 import { mmkvPersister } from "../lib/query-persister";
 import { setupAuthListener } from "../lib/auth-listener";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { OfflineBanner } from "../components/OfflineBanner";
 
 // Initialize Sentry
@@ -54,13 +55,15 @@ function RootLayout() {
   }, []);
 
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{ persister: mmkvPersister }}
-    >
-      <OfflineBanner />
-      <AuthGate />
-    </PersistQueryClientProvider>
+    <SafeAreaProvider>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{ persister: mmkvPersister }}
+      >
+        <OfflineBanner />
+        <AuthGate />
+      </PersistQueryClientProvider>
+    </SafeAreaProvider>
   );
 }
 

@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
-  SafeAreaView,
   Dimensions,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useQuestionnaireStore } from "../../stores/questionnaire";
 import { QuestionnaireWizard } from "../../components/QuestionnaireWizard";
@@ -136,6 +136,13 @@ export default function ScanScreen() {
   const cameraRef = useRef<any>(null);
   const activePose = POSES[currentPoseIndex] || POSES[0]!;
 
+  // Request camera permission on mount so the dialog appears immediately
+  useEffect(() => {
+    if (!permission?.granted && !permission?.canAskAgain === false) {
+      requestPermission();
+    }
+  }, []);
+
   // Face alignment evaluation
   useEffect(() => {
     if (stage === "CAMERA") {
@@ -148,6 +155,32 @@ export default function ScanScreen() {
   // If questionnaire not yet completed, show questionnaire wizard
   if (!hasCompletedQuestionnaire) {
     return <QuestionnaireWizard onComplete={() => setStage("CAMERA")} />;
+  }
+
+  // Permission gate: show a full-screen prompt BEFORE rendering any camera UI
+  if (!permission?.granted) {
+    return (
+      <SafeAreaView style={styles.permissionGate}>
+        <View style={styles.permissionContent}>
+          <View style={styles.permissionIconCircle}>
+            <Camera size={48} color="#06B6D4" />
+          </View>
+          <Text style={styles.permissionTitle}>Camera Access Required</Text>
+          <Text style={styles.permissionDesc}>
+            SkinSense needs access to your camera to capture high-resolution skin scans for analysis.
+          </Text>
+          <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+            <Camera size={18} color="#0B0F19" />
+            <Text style={styles.permissionButtonText}>Grant Camera Access</Text>
+          </TouchableOpacity>
+          {permission?.canAskAgain === false && (
+            <Text style={styles.permissionHint}>
+              Permission was denied. Please enable camera access in your device Settings.
+            </Text>
+          )}
+        </View>
+      </SafeAreaView>
+    );
   }
 
   const handleStartCaptureSequence = () => {
@@ -319,22 +352,11 @@ export default function ScanScreen() {
         {/* Flash Simulation Overlay */}
         {flashActive && <View style={styles.flashOverlay} pointerEvents="none" />}
 
-        {permission?.granted ? (
-          <CameraView
-            ref={cameraRef}
-            style={StyleSheet.absoluteFillObject}
-            facing={isBackCamera ? "back" : "front"}
-          />
-        ) : (
-          <View style={[StyleSheet.absoluteFillObject, styles.mockCameraBg]}>
-            <Text style={styles.mockCameraText}>
-              {isBackCamera ? "High-Resolution Back Camera Preview" : "Front Camera Preview"}
-            </Text>
-            <TouchableOpacity style={styles.permButton} onPress={requestPermission}>
-              <Text style={styles.permButtonText}>Enable Camera</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <CameraView
+          ref={cameraRef}
+          style={StyleSheet.absoluteFill}
+          facing={isBackCamera ? "back" : "front"}
+        />
 
         {/* Top Controls: Mode Switcher & Voice Mute */}
         <SafeAreaView style={styles.topBar}>
@@ -889,7 +911,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#000000",
   },
   flashOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "#FFFFFF",
     zIndex: 999,
   },
@@ -1009,7 +1031,7 @@ const styles = StyleSheet.create({
     color: "#10B981",
   },
   ovalOverlayContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1481,5 +1503,64 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     color: "#0B0F19",
+  },
+
+  // Permission Gate styles
+  permissionGate: {
+    flex: 1,
+    backgroundColor: "#0B0F19",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  permissionContent: {
+    alignItems: "center",
+    paddingHorizontal: 36,
+  },
+  permissionIconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "rgba(6, 182, 212, 0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "rgba(6, 182, 212, 0.25)",
+  },
+  permissionTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#F8FAFC",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  permissionDesc: {
+    fontSize: 14,
+    color: "#94A3B8",
+    textAlign: "center",
+    lineHeight: 21,
+    marginBottom: 28,
+  },
+  permissionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#06B6D4",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 14,
+    gap: 10,
+  },
+  permissionButtonText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#0B0F19",
+  },
+  permissionHint: {
+    fontSize: 12,
+    color: "#EF4444",
+    textAlign: "center",
+    marginTop: 16,
+    lineHeight: 18,
   },
 });

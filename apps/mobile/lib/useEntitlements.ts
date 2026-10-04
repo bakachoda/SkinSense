@@ -55,7 +55,7 @@ export const useEntitlementsStore = create<EntitlementsState>((set, get) => ({
         set({ entitlements: data });
       }
     } catch (err) {
-      console.warn("Could not fetch entitlements, using cached defaults:", err);
+      console.log("[Entitlements] Backend unreachable, using cached defaults");
     }
   },
 
