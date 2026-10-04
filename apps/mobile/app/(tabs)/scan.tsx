@@ -48,7 +48,6 @@ import {
   Maximize2,
 } from "lucide-react-native";
 import { CircularProgressRing, AnalysisProgress } from "../../components/LoadingStates";
-import { MedicalDisclaimerFooter } from "../../components/MedicalDisclaimerFooter";
 import { PreScanChecklistModal } from "../../components/PreScanChecklistModal";
 import { EnvironmentQualityGate } from "../../components/EnvironmentQualityGate";
 import { SelfAssessmentView } from "../../components/SelfAssessmentView";
@@ -900,7 +899,6 @@ export default function ScanScreen() {
           <Text style={styles.retakeScanText}>Take Another Scan</Text>
         </TouchableOpacity>
       </ScrollView>
-      <MedicalDisclaimerFooter bottomOffset={8} />
     </SafeAreaView>
   );
 }
