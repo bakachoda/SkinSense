@@ -50,96 +50,130 @@ export function FaceZoneMap({ zoneScores }: Props) {
 
       {/* Interactive Face Map SVG */}
       <View style={styles.svgWrapper}>
-        <Svg width="260" height="320" viewBox="0 0 260 320">
-          {/* Base Face Contour */}
-          <Path
-            d="M 50,90 C 40,160 50,260 130,300 C 210,260 220,160 210,90 C 205,30 55,30 50,90 Z"
-            fill="#1E293B"
-            stroke="#334155"
-            strokeWidth="3"
+        <View style={{ width: 260, height: 320, position: "relative" }}>
+          <Svg width="260" height="320" viewBox="0 0 260 320">
+            {/* Base Face Contour */}
+            <Path
+              d="M 50,90 C 40,160 50,260 130,300 C 210,260 220,160 210,90 C 205,30 55,30 50,90 Z"
+              fill="#1E293B"
+              stroke="#334155"
+              strokeWidth="3"
+            />
+
+            {/* Forehead Zone */}
+            <G>
+              <Path
+                d="M 65,70 C 90,45 170,45 195,70 C 185,115 75,115 65,70 Z"
+                fill={getSeverityColor(foreheadScore)}
+                opacity="0.75"
+                stroke="#FFFFFF"
+                strokeWidth={selectedZone === "forehead" ? "2.5" : "1"}
+              />
+            </G>
+
+            {/* Periorbital (Under Eyes) Zone */}
+            <G>
+              {/* Left Eye Area */}
+              <Ellipse
+                cx="95"
+                cy="125"
+                rx="24"
+                ry="14"
+                fill={getSeverityColor(periorbitalScore)}
+                opacity="0.8"
+                stroke="#FFFFFF"
+                strokeWidth={selectedZone === "periorbital" ? "2.5" : "1"}
+              />
+              {/* Right Eye Area */}
+              <Ellipse
+                cx="165"
+                cy="125"
+                rx="24"
+                ry="14"
+                fill={getSeverityColor(periorbitalScore)}
+                opacity="0.8"
+                stroke="#FFFFFF"
+                strokeWidth={selectedZone === "periorbital" ? "2.5" : "1"}
+              />
+            </G>
+
+            {/* Nose Zone */}
+            <G>
+              <Path
+                d="M 120,128 L 140,128 L 145,195 C 138,202 122,202 115,195 Z"
+                fill={getSeverityColor(noseScore)}
+                opacity="0.85"
+                stroke="#FFFFFF"
+                strokeWidth={selectedZone === "nose" ? "2.5" : "1"}
+              />
+            </G>
+
+            {/* Left Cheek Zone */}
+            <G>
+              <Path
+                d="M 60,140 C 70,140 108,150 110,210 C 75,230 55,190 60,140 Z"
+                fill={getSeverityColor(leftCheekScore)}
+                opacity="0.75"
+                stroke="#FFFFFF"
+                strokeWidth={selectedZone === "left_cheek" ? "2.5" : "1"}
+              />
+            </G>
+
+            {/* Right Cheek Zone */}
+            <G>
+              <Path
+                d="M 200,140 C 190,140 152,150 150,210 C 185,230 205,190 200,140 Z"
+                fill={getSeverityColor(rightCheekScore)}
+                opacity="0.75"
+                stroke="#FFFFFF"
+                strokeWidth={selectedZone === "right_cheek" ? "2.5" : "1"}
+              />
+            </G>
+
+            {/* Chin Zone */}
+            <G>
+              <Path
+                d="M 100,230 C 130,225 130,225 160,230 C 160,270 100,270 100,230 Z"
+                fill={getSeverityColor(chinScore)}
+                opacity="0.8"
+                stroke="#FFFFFF"
+                strokeWidth={selectedZone === "chin" ? "2.5" : "1"}
+              />
+            </G>
+          </Svg>
+
+          {/* Interactive Touch Overlay Zones */}
+          <TouchableOpacity
+            style={{ position: "absolute", top: 45, left: 65, width: 130, height: 60 }}
+            onPress={() => setSelectedZone("forehead")}
+            activeOpacity={0.7}
           />
-
-          {/* Forehead Zone */}
-          <G onPress={() => setSelectedZone("forehead")}>
-            <Path
-              d="M 65,70 C 90,45 170,45 195,70 C 185,115 75,115 65,70 Z"
-              fill={getSeverityColor(foreheadScore)}
-              opacity="0.75"
-              stroke="#FFFFFF"
-              strokeWidth={selectedZone === "forehead" ? "2.5" : "1"}
-            />
-          </G>
-
-          {/* Periorbital (Under Eyes) Zone */}
-          <G onPress={() => setSelectedZone("periorbital")}>
-            {/* Left Eye Area */}
-            <Ellipse
-              cx="95"
-              cy="125"
-              rx="24"
-              ry="14"
-              fill={getSeverityColor(periorbitalScore)}
-              opacity="0.8"
-              stroke="#FFFFFF"
-              strokeWidth={selectedZone === "periorbital" ? "2.5" : "1"}
-            />
-            {/* Right Eye Area */}
-            <Ellipse
-              cx="165"
-              cy="125"
-              rx="24"
-              ry="14"
-              fill={getSeverityColor(periorbitalScore)}
-              opacity="0.8"
-              stroke="#FFFFFF"
-              strokeWidth={selectedZone === "periorbital" ? "2.5" : "1"}
-            />
-          </G>
-
-          {/* Nose Zone */}
-          <G onPress={() => setSelectedZone("nose")}>
-            <Path
-              d="M 120,128 L 140,128 L 145,195 C 138,202 122,202 115,195 Z"
-              fill={getSeverityColor(noseScore)}
-              opacity="0.85"
-              stroke="#FFFFFF"
-              strokeWidth={selectedZone === "nose" ? "2.5" : "1"}
-            />
-          </G>
-
-          {/* Left Cheek Zone */}
-          <G onPress={() => setSelectedZone("left_cheek")}>
-            <Path
-              d="M 60,140 C 70,140 108,150 110,210 C 75,230 55,190 60,140 Z"
-              fill={getSeverityColor(leftCheekScore)}
-              opacity="0.75"
-              stroke="#FFFFFF"
-              strokeWidth={selectedZone === "left_cheek" ? "2.5" : "1"}
-            />
-          </G>
-
-          {/* Right Cheek Zone */}
-          <G onPress={() => setSelectedZone("right_cheek")}>
-            <Path
-              d="M 200,140 C 190,140 152,150 150,210 C 185,230 205,190 200,140 Z"
-              fill={getSeverityColor(rightCheekScore)}
-              opacity="0.75"
-              stroke="#FFFFFF"
-              strokeWidth={selectedZone === "right_cheek" ? "2.5" : "1"}
-            />
-          </G>
-
-          {/* Chin Zone */}
-          <G onPress={() => setSelectedZone("chin")}>
-            <Path
-              d="M 100,230 C 130,225 130,225 160,230 C 160,270 100,270 100,230 Z"
-              fill={getSeverityColor(chinScore)}
-              opacity="0.8"
-              stroke="#FFFFFF"
-              strokeWidth={selectedZone === "chin" ? "2.5" : "1"}
-            />
-          </G>
-        </Svg>
+          <TouchableOpacity
+            style={{ position: "absolute", top: 110, left: 70, width: 120, height: 35 }}
+            onPress={() => setSelectedZone("periorbital")}
+            activeOpacity={0.7}
+          />
+          <TouchableOpacity
+            style={{ position: "absolute", top: 128, left: 115, width: 30, height: 70 }}
+            onPress={() => setSelectedZone("nose")}
+            activeOpacity={0.7}
+          />
+          <TouchableOpacity
+            style={{ position: "absolute", top: 140, left: 55, width: 55, height: 70 }}
+            onPress={() => setSelectedZone("left_cheek")}
+            activeOpacity={0.7}
+          />
+          <TouchableOpacity
+            style={{ position: "absolute", top: 140, left: 150, width: 55, height: 70 }}
+            onPress={() => setSelectedZone("right_cheek")}
+            activeOpacity={0.7}
+          />
+          <TouchableOpacity
+            style={{ position: "absolute", top: 225, left: 100, width: 60, height: 50 }}
+            onPress={() => setSelectedZone("chin")}
+            activeOpacity={0.7}
+          />
+        </View>
       </View>
 
       {/* Severity Legend */}
