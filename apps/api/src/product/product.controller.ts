@@ -12,11 +12,24 @@ import { SupabaseAuthGuard } from "../common/guards/supabase-auth.guard";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { ProductService } from "./product.service";
 import { ProductFilterSchema, type ProductFilter } from "@skinsense/types";
+import { QueueProducer } from "../queue/queue.producer";
 
 @Controller()
 @UseGuards(SupabaseAuthGuard)
 export class ProductController {
-  constructor(private productService: ProductService) {}
+  constructor(
+    private productService: ProductService,
+    private queueProducer: QueueProducer,
+  ) {}
+
+  @Post("products/sync")
+  async triggerCatalogSync() {
+    const jobId = await this.queueProducer.triggerCatalogSync();
+    return {
+      message: "Catalog sync job enqueued successfully",
+      jobId,
+    };
+  }
 
   @Get("products")
   findAll(@Query() query: Record<string, any>) {

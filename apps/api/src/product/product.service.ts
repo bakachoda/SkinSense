@@ -86,6 +86,79 @@ const KNOWN_BARCODE_PRODUCTS: Record<
       { name: "Tocopherol (Vitamin E)", concentration: "Antioxidant" },
     ],
   },
+  "8906128030018": {
+    name: "Niacinamide 10% Face Serum",
+    brand: "Minimalist",
+    category: "SERUM",
+    ingredients: [
+      "Aqua / Water",
+      "Niacinamide",
+      "Glycerin",
+      "Zinc PCA",
+      "Propanediol",
+      "Sodium Hyaluronate",
+      "Phenoxyethanol",
+      "Ethylhexylglycerin",
+    ],
+    activeIngredients: [
+      { name: "Niacinamide", concentration: "10%" },
+      { name: "Zinc PCA", concentration: "1%" },
+    ],
+  },
+  "8906117360218": {
+    name: "1% Hyaluronic Sunscreen Aqua Gel SPF 50",
+    brand: "The Derma Co",
+    category: "SPF",
+    ingredients: [
+      "Aqua",
+      "Ethylhexyl Methoxycinnamate",
+      "Butyl Methoxydibenzoylmethane",
+      "Hyaluronic Acid",
+      "Vitamin E",
+      "Zinc Oxide",
+      "Titanium Dioxide",
+      "Phenoxyethanol",
+    ],
+    activeIngredients: [
+      { name: "Hyaluronic Acid", concentration: "1%" },
+      { name: "Vitamin E", concentration: "Antioxidant" },
+    ],
+  },
+  "8904323201889": {
+    name: "Watermelon Cooling Sunscreen SPF 50+",
+    brand: "Dot & Key",
+    category: "SPF",
+    ingredients: [
+      "Aqua",
+      "Watermelon Fruit Extract",
+      "Hyaluronic Acid",
+      "Diethylamino Hydroxybenzoyl Hexyl Benzoate",
+      "Ethylhexyl Triazone",
+      "Glycerin",
+      "Phenoxyethanol",
+    ],
+    activeIngredients: [
+      { name: "Hyaluronic Acid", concentration: "Hydrator" },
+      { name: "Watermelon Extract", concentration: "Soothing" },
+    ],
+  },
+  "8906087770017": {
+    name: "Green Tea Alcohol-Free Toner",
+    brand: "Plum Goodness",
+    category: "TONER",
+    ingredients: [
+      "Aqua",
+      "Camellia Sinensis (Green Tea) Leaf Extract",
+      "Glycerin",
+      "Glycolic Acid",
+      "Phenoxyethanol",
+      "Ethylhexylglycerin",
+    ],
+    activeIngredients: [
+      { name: "Green Tea Extract", concentration: "Antioxidant" },
+      { name: "Glycolic Acid", concentration: "0.5%" },
+    ],
+  },
 };
 
 @Injectable()

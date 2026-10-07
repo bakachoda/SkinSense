@@ -2,7 +2,8 @@ import * as path from "path";
 import * as dotenv from "dotenv";
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
-import { PrismaClient, SkinType } from "@prisma/client";
+import { PrismaClient } from "../node_modules/.prisma/client";
+import { SkinType } from "@skinsense/types";
 import { SEED_PRODUCTS } from "./products-data";
 
 const prisma = new PrismaClient({
