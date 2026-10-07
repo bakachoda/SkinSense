@@ -3,8 +3,14 @@ import { Slot, useRouter, useSegments } from "expo-router";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { useEffect } from "react";
+import { LogBox } from "react-native";
 import * as Sentry from "@sentry/react-native";
 import { useAuthStore } from "../stores/auth";
+
+LogBox.ignoreLogs([
+  "Cannot connect to Expo CLI",
+  "Sending `onAnimatedValueUpdate`",
+]);
 import { mmkvPersister } from "../lib/query-persister";
 import { setupAuthListener } from "../lib/auth-listener";
 import { SafeAreaProvider } from "react-native-safe-area-context";

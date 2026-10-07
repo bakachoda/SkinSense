@@ -38,21 +38,31 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     ...(options.headers as Record<string, string>),
   };
 
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 2500);
 
-  if (!res.ok) {
-    let errMsg = `Request failed: ${res.status}`;
-    try {
-      const errJson = await res.json();
-      errMsg = errJson.message || errMsg;
-    } catch {}
-    throw new Error(errMsg);
+  try {
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+      signal: options.signal || controller.signal,
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      let errMsg = `Request failed: ${res.status}`;
+      try {
+        const errJson = await res.json();
+        errMsg = errJson.message || errMsg;
+      } catch {}
+      throw new Error(errMsg);
+    }
+
+    return res.json() as Promise<T>;
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
   }
-
-  return res.json() as Promise<T>;
 }
 
 export const apiClient = {
