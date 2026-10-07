@@ -9,22 +9,26 @@ import type {
   CapturedFrame,
   ScoredFrame,
   CaptureConfig,
+  AlignmentStatus,
+  FaceBoundingMetrics,
+  AlignmentEvaluation,
 } from "@skinsense/types";
 
 // ──────────────────────────────────────────────
-// Voice & Haptic Guidance (Phase 3, Section 1.3)
+// Voice & Haptic Guidance (Phase 3, Level 1)
 // ──────────────────────────────────────────────
 
 export async function speakGuidance(text: string) {
   try {
     const isSpeaking = await Speech.isSpeakingAsync();
     if (isSpeaking) {
-      await Speech.stop();
+      // Allow current phrase to finish completely — never cut off words mid-speech!
+      return;
     }
     Speech.speak(text, {
       language: "en-US",
       pitch: 1.0,
-      rate: 0.95,
+      rate: 1.02,
     });
   } catch (err) {
     // Non-fatal if speech is not supported in current environment
@@ -37,6 +41,68 @@ export async function stopGuidance() {
     await Speech.stop();
   } catch {}
 }
+
+/**
+ * Intelligent Debounced Voice Guidance Controller
+ * Prevents overlapping utterances, self-interruptions, and rapid phrase spamming.
+ */
+class GuidanceVoiceManager {
+  private lastSpokenText = "";
+  private lastSpokenTime = 0;
+  private minIntervalMs = 2800; // 2.8 seconds between duplicate corrections
+  private isMuted = false;
+
+  setMuted(muted: boolean) {
+    this.isMuted = muted;
+    if (muted) {
+      stopGuidance();
+    }
+  }
+
+  getMuted(): boolean {
+    return this.isMuted;
+  }
+
+  async speak(text: string, force = false) {
+    if (this.isMuted) return;
+
+    const now = Date.now();
+    const timeSinceLast = now - this.lastSpokenTime;
+
+    if (!force) {
+      // Don't interrupt if currently speaking
+      try {
+        const isSpeaking = await Speech.isSpeakingAsync();
+        if (isSpeaking) return;
+      } catch {}
+
+      // Skip if same phrase was spoken very recently
+      if (text === this.lastSpokenText && timeSinceLast < this.minIntervalMs) {
+        return;
+      }
+
+      // Skip if another phrase was spoken within cooldown
+      if (timeSinceLast < 2000) {
+        return;
+      }
+    } else {
+      // Forced transition (e.g. pose advance or capture completed)
+      await stopGuidance();
+    }
+
+    this.lastSpokenText = text;
+    this.lastSpokenTime = now;
+    await speakGuidance(text);
+  }
+
+  reset() {
+    this.lastSpokenText = "";
+    this.lastSpokenTime = 0;
+    stopGuidance();
+  }
+}
+
+export const voiceManager = new GuidanceVoiceManager();
 
 export async function triggerCaptureHaptic() {
   try {
@@ -73,8 +139,73 @@ export async function triggerSuccessHaptic() {
   } catch {}
 }
 
+export async function triggerSelectionTick() {
+  try {
+    if (Platform.OS !== "web") {
+      await Haptics.selectionAsync();
+    }
+  } catch {}
+}
+
+export async function triggerLockHaptic() {
+  try {
+    if (Platform.OS !== "web") {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
+  } catch {}
+}
+
+/**
+ * Multi-Modal Sonar Feedback Manager (Phase 3, Level 1)
+ * Provides real-time proximity feedback (tempo ramps up as alignment score approaches 100%).
+ * Uses rhythmic tactile pulses so the user holding the back camera gets immediate
+ * proximity feedback without seeing the screen.
+ */
+class SonarFeedbackManager {
+  private activeInterval: any = null;
+  private currentScore = 0;
+  private isMuted = false;
+
+  setMuted(muted: boolean) {
+    this.isMuted = muted;
+    if (muted) this.stop();
+  }
+
+  updateProximity(score: number, isAligned: boolean) {
+    this.currentScore = score;
+    if (this.isMuted || score <= 20) {
+      this.stop();
+      return;
+    }
+
+    // Interval ramps from 650ms (score ~30%) down to 140ms (score >= 90%)
+    const intervalMs = Math.max(140, Math.round(650 - (score / 100) * 500));
+
+    if (this.activeInterval) {
+      clearInterval(this.activeInterval);
+    }
+
+    this.activeInterval = setInterval(() => {
+      if (isAligned) {
+        triggerLockHaptic();
+      } else {
+        triggerSelectionTick();
+      }
+    }, intervalMs);
+  }
+
+  stop() {
+    if (this.activeInterval) {
+      clearInterval(this.activeInterval);
+      this.activeInterval = null;
+    }
+  }
+}
+
+export const sonarManager = new SonarFeedbackManager();
+
 // ──────────────────────────────────────────────
-// Pose Alignment & Geometry (Phase 3, Section 2)
+// Face Alignment Engine (Level 1 Guidance Math)
 // ──────────────────────────────────────────────
 
 export const TARGET_YAW_ANGLES: Record<PoseTarget, number> = {
@@ -82,6 +213,195 @@ export const TARGET_YAW_ANGLES: Record<PoseTarget, number> = {
   left_45: -45,
   right_45: 45,
 };
+
+/**
+ * Evaluates whether face is centered, at the right distance, and at target yaw.
+ * Ideal target box:
+ * - centerX: 0.50 (tolerance: ±0.12)
+ * - centerY: 0.44 (tolerance: ±0.14)
+ * - scale (boxHeight): 0.42 - 0.62 (ideal ~0.50)
+ * - yaw: targetYaw ± 8°
+ */
+export function evaluateFaceAlignment(
+  metrics: FaceBoundingMetrics,
+  targetPose: PoseTarget = "frontal",
+): AlignmentEvaluation {
+  // If box size is 0 or uninitialized, no face is detected
+  if (metrics.boxWidth <= 0.05 || metrics.boxHeight <= 0.05) {
+    return {
+      status: "NO_FACE",
+      score: 0,
+      instruction:
+        targetPose === "left_45"
+          ? "Turn head 45° to your left"
+          : targetPose === "right_45"
+          ? "Turn head 45° to your right"
+          : "Hold phone facing your face at eye level",
+      isAligned: false,
+      dx: 0,
+      dy: 0,
+      scale: 0,
+    };
+  }
+
+  const isProfile = targetPose === "left_45" || targetPose === "right_45";
+  const idealCenterX = 0.5;
+  const idealCenterY = 0.44;
+  // Standard clinical framing scale thresholds across all 3 poses:
+  const minScale = 0.34;
+  const maxScale = 0.68;
+  const targetYaw = TARGET_YAW_ANGLES[targetPose];
+
+  const dx = metrics.centerX - idealCenterX;
+  const dy = metrics.centerY - idealCenterY;
+  const scale = metrics.boxHeight;
+  const yawDiff = metrics.yaw - targetYaw;
+
+  // Enforce strict centering within the oval guide for all poses
+  const maxDx = 0.085;
+  const maxDy = 0.10;
+
+  // Face boundary edges (0.0 to 1.0)
+  const boxLeft = metrics.centerX - metrics.boxWidth / 2;
+  const boxRight = metrics.centerX + metrics.boxWidth / 2;
+  const boxTop = metrics.centerY - metrics.boxHeight / 2;
+  const boxBottom = metrics.centerY + metrics.boxHeight / 2;
+
+  // Calculate component error penalties (0.0 = perfect, 1.0 = out of range)
+  const xError = Math.min(1, Math.abs(dx) / (maxDx + 0.04));
+  const yError = Math.min(1, Math.abs(dy) / (maxDy + 0.04));
+
+  let scaleError = 0;
+  if (scale < minScale) {
+    scaleError = Math.min(1, (minScale - scale) / 0.18);
+  } else if (scale > maxScale) {
+    scaleError = Math.min(1, (scale - maxScale) / 0.18);
+  }
+
+  // Yaw tolerance: for 45° profile poses, allow ±18° window (27° to 63° is accepted)
+  const maxYawTolerance = isProfile ? 18 : 12;
+  const yawError = Math.min(1, Math.abs(yawDiff) / (maxYawTolerance + 6));
+
+  // Composite alignment score (0 - 100)
+  const compositeScore = Math.round(
+    Math.max(
+      0,
+      100 -
+        (xError * 30 +
+          yError * 25 +
+          scaleError * 25 +
+          yawError * 20),
+    ),
+  );
+
+  // Determine specific actionable guidance state:
+  // 1. Distance checks
+  if (scale < minScale) {
+    return {
+      status: "TOO_FAR",
+      score: Math.min(85, compositeScore),
+      instruction: "Move phone closer",
+      isAligned: false,
+      dx,
+      dy,
+      scale,
+    };
+  }
+
+  if (scale > maxScale) {
+    return {
+      status: "TOO_CLOSE",
+      score: Math.min(85, compositeScore),
+      instruction: "Move phone back a bit",
+      isAligned: false,
+      dx,
+      dy,
+      scale,
+    };
+  }
+
+  // 2. Strict centering checks (includes edge cut-off prevention)
+  if (dx < -maxDx || boxLeft < 0.04) {
+    return {
+      status: "OFF_CENTER_LEFT",
+      score: Math.min(85, compositeScore),
+      instruction: "Move phone slightly left",
+      isAligned: false,
+      dx,
+      dy,
+      scale,
+    };
+  }
+
+  if (dx > maxDx || boxRight > 0.96) {
+    return {
+      status: "OFF_CENTER_RIGHT",
+      score: Math.min(85, compositeScore),
+      instruction: "Move phone slightly right",
+      isAligned: false,
+      dx,
+      dy,
+      scale,
+    };
+  }
+
+  if (dy < -maxDy || boxTop < 0.04) {
+    return {
+      status: "OFF_CENTER_UP",
+      score: Math.min(85, compositeScore),
+      instruction: "Move phone down slightly",
+      isAligned: false,
+      dx,
+      dy,
+      scale,
+    };
+  }
+
+  if (dy > maxDy || boxBottom > 0.96) {
+    return {
+      status: "OFF_CENTER_DOWN",
+      score: Math.min(85, compositeScore),
+      instruction: "Move phone up slightly",
+      isAligned: false,
+      dx,
+      dy,
+      scale,
+    };
+  }
+
+  // 3. Head yaw rotation checks
+  if (Math.abs(yawDiff) > maxYawTolerance) {
+    let yawInstruction = "Center your head";
+    if (targetPose === "left_45") {
+      yawInstruction = yawDiff > 0 ? "Turn head 45° to your left" : "Turn head slightly right";
+    } else if (targetPose === "right_45") {
+      yawInstruction = yawDiff < 0 ? "Turn head 45° to your right" : "Turn head slightly left";
+    } else {
+      yawInstruction = yawDiff > 0 ? "Turn slightly left" : "Turn slightly right";
+    }
+
+    return {
+      status: "WRONG_YAW",
+      score: Math.min(85, compositeScore),
+      instruction: yawInstruction,
+      isAligned: false,
+      dx,
+      dy,
+      scale,
+    };
+  }
+
+  // All criteria within acceptable clinical tolerance!
+  return {
+    status: "ALIGNED",
+    score: Math.max(90, compositeScore),
+    instruction: "Hold still... Perfect alignment",
+    isAligned: true,
+    dx,
+    dy,
+    scale,
+  };
+}
 
 export function calculateHeadYaw(
   noseTipX: number,
@@ -133,6 +453,7 @@ export function checkPoseAlignment(
     instruction: currentYaw < targetYaw ? "Turn more to your right (45°)" : "Turn back slightly left",
   };
 }
+
 
 // ──────────────────────────────────────────────
 // Frame Scoring (Phase 3, Section 3)

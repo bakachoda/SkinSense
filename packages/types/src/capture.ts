@@ -163,3 +163,39 @@ export interface PreprocessedComposite {
   zoneCoverage: ZoneCoverageMap;
   anglesProcessed: number;
 }
+
+// ──────────────────────────────────────────────
+// Face Alignment Engine (Level 1 Guidance)
+// ──────────────────────────────────────────────
+
+export const AlignmentStatusSchema = z.enum([
+  "NO_FACE",
+  "TOO_FAR",
+  "TOO_CLOSE",
+  "OFF_CENTER_LEFT",
+  "OFF_CENTER_RIGHT",
+  "OFF_CENTER_UP",
+  "OFF_CENTER_DOWN",
+  "WRONG_YAW",
+  "ALIGNED",
+]);
+export type AlignmentStatus = z.infer<typeof AlignmentStatusSchema>;
+
+export interface FaceBoundingMetrics {
+  centerX: number; // 0.0 - 1.0 (normalized screen coordinates)
+  centerY: number; // 0.0 - 1.0
+  boxWidth: number; // 0.0 - 1.0
+  boxHeight: number; // 0.0 - 1.0
+  yaw: number; // degrees
+}
+
+export interface AlignmentEvaluation {
+  status: AlignmentStatus;
+  score: number; // 0 - 100
+  instruction: string;
+  isAligned: boolean;
+  dx: number; // horizontal offset from target center
+  dy: number; // vertical offset from target center
+  scale: number; // current face height ratio
+}
+

@@ -191,82 +191,122 @@ export function Interactive3DFaceMap({
 
       {/* Interactive 3D Mesh & Finding Pins */}
       <View style={styles.canvasContainer}>
-        <Svg width="280" height="340" viewBox="0 0 280 340">
-          <Defs>
-            <RadialGradient id="meshGlow" cx="50%" cy="50%" rx="50%" ry="50%">
-              <Stop offset="0%" stopColor="#F8FAFC" stopOpacity="1" />
-              <Stop offset="100%" stopColor="#EDF2F7" stopOpacity="1" />
-            </RadialGradient>
-            <RadialGradient id="sebumHeatmap" cx="50%" cy="30%" rx="40%" ry="30%">
-              <Stop offset="0%" stopColor="#FBBF24" stopOpacity="0.45" />
-              <Stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
-            </RadialGradient>
-            <RadialGradient id="erythemaHeatmap" cx="30%" cy="55%" rx="30%" ry="25%">
-              <Stop offset="0%" stopColor="#EF4444" stopOpacity="0.4" />
-              <Stop offset="100%" stopColor="#EF4444" stopOpacity="0" />
-            </RadialGradient>
-            <RadialGradient id="textureHeatmap" cx="50%" cy="50%" rx="20%" ry="20%">
-              <Stop offset="0%" stopColor="#06B6D4" stopOpacity="0.35" />
-              <Stop offset="100%" stopColor="#06B6D4" stopOpacity="0" />
-            </RadialGradient>
-          </Defs>
+        <View style={{ width: 280, height: 340, position: "relative" }}>
+          <Svg width="280" height="340" viewBox="0 0 280 340">
+            <Defs>
+              <RadialGradient id="meshGlow" cx="50%" cy="50%" rx="50%" ry="50%">
+                <Stop offset="0%" stopColor="#F8FAFC" stopOpacity="1" />
+                <Stop offset="100%" stopColor="#EDF2F7" stopOpacity="1" />
+              </RadialGradient>
+              <RadialGradient id="sebumHeatmap" cx="50%" cy="30%" rx="40%" ry="30%">
+                <Stop offset="0%" stopColor="#FBBF24" stopOpacity="0.45" />
+                <Stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+              </RadialGradient>
+              <RadialGradient id="erythemaHeatmap" cx="30%" cy="55%" rx="30%" ry="25%">
+                <Stop offset="0%" stopColor="#EF4444" stopOpacity="0.4" />
+                <Stop offset="100%" stopColor="#EF4444" stopOpacity="0" />
+              </RadialGradient>
+              <RadialGradient id="textureHeatmap" cx="50%" cy="50%" rx="20%" ry="20%">
+                <Stop offset="0%" stopColor="#06B6D4" stopOpacity="0.35" />
+                <Stop offset="100%" stopColor="#06B6D4" stopOpacity="0" />
+              </RadialGradient>
+            </Defs>
 
-          {/* Canonical 3D Head Silhouette */}
-          <Path
-            d="M 55,95 C 45,170 55,275 140,315 C 225,275 235,170 225,95 C 220,35 60,35 55,95 Z"
-            fill="url(#meshGlow)"
-            stroke="#CBD5E1"
-            strokeWidth="1.5"
-          />
+            {/* Canonical 3D Head Silhouette */}
+            <Path
+              d="M 55,95 C 45,170 55,275 140,315 C 225,275 235,170 225,95 C 220,35 60,35 55,95 Z"
+              fill="url(#meshGlow)"
+              stroke="#CBD5E1"
+              strokeWidth="1.5"
+            />
 
-          {/* 3D Wireframe Depth Latitudes */}
-          <Path
-            d="M 58,110 Q 140,140 222,110"
-            stroke="#E2E8F0"
-            strokeWidth="1"
-            fill="none"
-          />
-          <Path
-            d="M 64,170 Q 140,210 216,170"
-            stroke="#E2E8F0"
-            strokeWidth="1"
-            fill="none"
-          />
-          <Path
-            d="M 85,230 Q 140,265 195,230"
-            stroke="#E2E8F0"
-            strokeWidth="1"
-            fill="none"
-          />
-          {/* Central Sagittal Meridian */}
-          <Line x1="140" y1="40" x2="140" y2="315" stroke="#E2E8F0" strokeWidth="1" />
+            {/* 3D Wireframe Depth Latitudes */}
+            <Path
+              d="M 58,110 Q 140,140 222,110"
+              stroke="#E2E8F0"
+              strokeWidth="1"
+              fill="none"
+            />
+            <Path
+              d="M 64,170 Q 140,210 216,170"
+              stroke="#E2E8F0"
+              strokeWidth="1"
+              fill="none"
+            />
+            <Path
+              d="M 85,230 Q 140,265 195,230"
+              stroke="#E2E8F0"
+              strokeWidth="1"
+              fill="none"
+            />
+            {/* Central Sagittal Meridian */}
+            <Line x1="140" y1="40" x2="140" y2="315" stroke="#E2E8F0" strokeWidth="1" />
 
-          {/* Layer Specific Heatmap Overlays */}
-          {(activeLayer === "all" || activeLayer === "oiliness") && (
-            <Ellipse cx="140" cy="95" rx="65" ry="35" fill="url(#sebumHeatmap)" />
-          )}
+            {/* Layer Specific Heatmap Overlays */}
+            {(activeLayer === "all" || activeLayer === "oiliness") && (
+              <Ellipse cx="140" cy="95" rx="65" ry="35" fill="url(#sebumHeatmap)" />
+            )}
 
-          {(activeLayer === "all" || activeLayer === "erythema") && (
-            <>
-              <Ellipse cx="90" cy="180" rx="35" ry="28" fill="url(#erythemaHeatmap)" />
-              <Ellipse cx="190" cy="180" rx="35" ry="28" fill="url(#erythemaHeatmap)" />
-            </>
-          )}
+            {(activeLayer === "all" || activeLayer === "erythema") && (
+              <>
+                <Ellipse cx="90" cy="180" rx="35" ry="28" fill="url(#erythemaHeatmap)" />
+                <Ellipse cx="190" cy="180" rx="35" ry="28" fill="url(#erythemaHeatmap)" />
+              </>
+            )}
 
-          {(activeLayer === "all" || activeLayer === "texture") && (
-            <Ellipse cx="140" cy="165" rx="22" ry="25" fill="url(#textureHeatmap)" />
-          )}
+            {(activeLayer === "all" || activeLayer === "texture") && (
+              <Ellipse cx="140" cy="165" rx="22" ry="25" fill="url(#textureHeatmap)" />
+            )}
 
-          {/* Anatomical Landmark Outlines */}
-          {/* Eyes */}
-          <Ellipse cx="100" cy="130" rx="20" ry="10" stroke="#94A3B8" strokeWidth="1" fill="#FFFFFF" opacity="0.6" />
-          <Ellipse cx="180" cy="130" rx="20" ry="10" stroke="#94A3B8" strokeWidth="1" fill="#FFFFFF" opacity="0.6" />
-          {/* Nose Bridge & Tip */}
-          <Path d="M 140,120 L 136,175 Q 140,185 144,175 Z" stroke="#94A3B8" strokeWidth="1" fill="none" />
-          {/* Lips */}
-          <Path d="M 115,245 Q 140,240 165,245 Q 140,260 115,245 Z" stroke="#94A3B8" strokeWidth="1" fill="#FFFFFF" opacity="0.6" />
+            {/* Anatomical Landmark Outlines */}
+            {/* Eyes */}
+            <Ellipse cx="100" cy="130" rx="20" ry="10" stroke="#94A3B8" strokeWidth="1" fill="#FFFFFF" opacity="0.6" />
+            <Ellipse cx="180" cy="130" rx="20" ry="10" stroke="#94A3B8" strokeWidth="1" fill="#FFFFFF" opacity="0.6" />
+            {/* Nose Bridge & Tip */}
+            <Path d="M 140,120 L 136,175 Q 140,185 144,175 Z" stroke="#94A3B8" strokeWidth="1" fill="none" />
+            {/* Lips */}
+            <Path d="M 115,245 Q 140,240 165,245 Q 140,260 115,245 Z" stroke="#94A3B8" strokeWidth="1" fill="#FFFFFF" opacity="0.6" />
 
-          {/* Interactive Finding Pins */}
+            {/* Interactive Finding Pins */}
+            {filteredFindings.map((finding) => {
+              let cx = 140;
+              let cy = 100;
+              if (finding.zone === "forehead") {
+                cx = 140;
+                cy = 85;
+              } else if (finding.zone === "left_cheek") {
+                cx = 88;
+                cy = 185;
+              } else if (finding.zone === "right_cheek") {
+                cx = 192;
+                cy = 185;
+              } else if (finding.zone === "nose") {
+                cx = 140;
+                cy = 165;
+              } else if (finding.zone === "periorbital") {
+                cx = 95;
+                cy = 145;
+              } else if (finding.zone === "chin") {
+                cx = 140;
+                cy = 280;
+              }
+
+              const pinColor = getPinSeverityColor(finding.severity);
+
+              return (
+                <G key={finding.id}>
+                  {/* Outer Pulse Ring */}
+                  <Circle cx={cx} cy={cy} r="14" fill={pinColor} opacity="0.25" />
+                  {/* Mid Glow */}
+                  <Circle cx={cx} cy={cy} r="8" fill={pinColor} opacity="0.85" />
+                  {/* Center Core */}
+                  <Circle cx={cx} cy={cy} r="4" fill="#FFFFFF" />
+                </G>
+              );
+            })}
+          </Svg>
+
+          {/* Absolute touch targets overlay over SVG pins */}
           {filteredFindings.map((finding) => {
             let cx = 140;
             let cy = 100;
@@ -290,20 +330,23 @@ export function Interactive3DFaceMap({
               cy = 280;
             }
 
-            const pinColor = getPinSeverityColor(finding.severity);
-
             return (
-              <G key={finding.id} onPress={() => handleTapFinding(finding)}>
-                {/* Outer Pulse Ring */}
-                <Circle cx={cx} cy={cy} r="14" fill={pinColor} opacity="0.25" />
-                {/* Mid Glow */}
-                <Circle cx={cx} cy={cy} r="8" fill={pinColor} opacity="0.85" />
-                {/* Center Core */}
-                <Circle cx={cx} cy={cy} r="4" fill="#FFFFFF" />
-              </G>
+              <TouchableOpacity
+                key={`touch-${finding.id}`}
+                style={{
+                  position: "absolute",
+                  left: cx - 20,
+                  top: cy - 20,
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                }}
+                onPress={() => handleTapFinding(finding)}
+                activeOpacity={0.6}
+              />
             );
           })}
-        </Svg>
+        </View>
       </View>
 
       {/* Mini Zone Quick Legend */}
