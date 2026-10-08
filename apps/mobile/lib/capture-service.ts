@@ -18,20 +18,20 @@ import type {
 // Voice & Haptic Guidance (Phase 3, Level 1)
 // ──────────────────────────────────────────────
 
-export async function speakGuidance(text: string) {
+export async function speakGuidance(text: string, interrupt = false) {
   try {
-    const isSpeaking = await Speech.isSpeakingAsync();
-    if (isSpeaking) {
-      // Allow current phrase to finish completely — never cut off words mid-speech!
-      return;
+    if (interrupt) {
+      await Speech.stop();
+    } else {
+      const isSpeaking = await Speech.isSpeakingAsync();
+      if (isSpeaking) return;
     }
     Speech.speak(text, {
       language: "en-US",
       pitch: 1.0,
-      rate: 1.02,
+      rate: 1.18,
     });
   } catch (err) {
-    // Non-fatal if speech is not supported in current environment
     console.debug("[CaptureGuidance] Speech skipped:", err);
   }
 }
@@ -43,14 +43,20 @@ export async function stopGuidance() {
 }
 
 /**
- * Intelligent Debounced Voice Guidance Controller
- * Prevents overlapping utterances, self-interruptions, and rapid phrase spamming.
+ * Back-Camera Voice Guidance Controller
+ *
+ * Optimised for hands-blind operation where the user cannot see the screen.
+ * - Short cooldowns so corrections arrive fast
+ * - Duplicate suppression so the same phrase doesn't repeat within 1.4s
+ * - Priority interrupts for critical state changes (e.g. face lost / aligned)
  */
 class GuidanceVoiceManager {
   private lastSpokenText = "";
   private lastSpokenTime = 0;
-  private minIntervalMs = 2800; // 2.8 seconds between duplicate corrections
   private isMuted = false;
+
+  private static DUPLICATE_COOLDOWN_MS = 1400;
+  private static MIN_GAP_MS = 900;
 
   setMuted(muted: boolean) {
     this.isMuted = muted;
@@ -67,32 +73,27 @@ class GuidanceVoiceManager {
     if (this.isMuted) return;
 
     const now = Date.now();
-    const timeSinceLast = now - this.lastSpokenTime;
+    const gap = now - this.lastSpokenTime;
 
     if (!force) {
-      // Don't interrupt if currently speaking
       try {
         const isSpeaking = await Speech.isSpeakingAsync();
         if (isSpeaking) return;
       } catch {}
 
-      // Skip if same phrase was spoken very recently
-      if (text === this.lastSpokenText && timeSinceLast < this.minIntervalMs) {
+      if (text === this.lastSpokenText && gap < GuidanceVoiceManager.DUPLICATE_COOLDOWN_MS) {
         return;
       }
-
-      // Skip if another phrase was spoken within cooldown
-      if (timeSinceLast < 2000) {
+      if (gap < GuidanceVoiceManager.MIN_GAP_MS) {
         return;
       }
     } else {
-      // Forced transition (e.g. pose advance or capture completed)
       await stopGuidance();
     }
 
     this.lastSpokenText = text;
     this.lastSpokenTime = now;
-    await speakGuidance(text);
+    await speakGuidance(text, force);
   }
 
   reset() {
@@ -173,13 +174,13 @@ class SonarFeedbackManager {
 
   updateProximity(score: number, isAligned: boolean) {
     this.currentScore = score;
-    if (this.isMuted || score <= 20) {
+    if (this.isMuted || score <= 15) {
       this.stop();
       return;
     }
 
-    // Interval ramps from 650ms (score ~30%) down to 140ms (score >= 90%)
-    const intervalMs = Math.max(140, Math.round(650 - (score / 100) * 500));
+    // Ramps from 500ms (score ~20%) down to 100ms (score >= 95%) — tighter for back-camera
+    const intervalMs = Math.max(100, Math.round(500 - (score / 100) * 400));
 
     if (this.activeInterval) {
       clearInterval(this.activeInterval);
@@ -226,17 +227,11 @@ export function evaluateFaceAlignment(
   metrics: FaceBoundingMetrics,
   targetPose: PoseTarget = "frontal",
 ): AlignmentEvaluation {
-  // If box size is 0 or uninitialized, no face is detected
   if (metrics.boxWidth <= 0.05 || metrics.boxHeight <= 0.05) {
     return {
       status: "NO_FACE",
       score: 0,
-      instruction:
-        targetPose === "left_45"
-          ? "Turn head 45° to your left"
-          : targetPose === "right_45"
-          ? "Turn head 45° to your right"
-          : "Hold phone facing your face at eye level",
+      instruction: "No face detected. Hold phone at arm's length facing you.",
       isAligned: false,
       dx: 0,
       dy: 0,
@@ -295,16 +290,13 @@ export function evaluateFaceAlignment(
   );
 
   // Determine specific actionable guidance state:
-  // 1. Distance checks
   if (scale < minScale) {
     return {
       status: "TOO_FAR",
       score: Math.min(85, compositeScore),
-      instruction: "Move phone closer",
+      instruction: "Move closer",
       isAligned: false,
-      dx,
-      dy,
-      scale,
+      dx, dy, scale,
     };
   }
 
@@ -312,24 +304,19 @@ export function evaluateFaceAlignment(
     return {
       status: "TOO_CLOSE",
       score: Math.min(85, compositeScore),
-      instruction: "Move phone back a bit",
+      instruction: "Move back",
       isAligned: false,
-      dx,
-      dy,
-      scale,
+      dx, dy, scale,
     };
   }
 
-  // 2. Strict centering checks (includes edge cut-off prevention)
   if (dx < -maxDx || boxLeft < 0.04) {
     return {
       status: "OFF_CENTER_LEFT",
       score: Math.min(85, compositeScore),
-      instruction: "Move phone slightly left",
+      instruction: "Shift left",
       isAligned: false,
-      dx,
-      dy,
-      scale,
+      dx, dy, scale,
     };
   }
 
@@ -337,11 +324,9 @@ export function evaluateFaceAlignment(
     return {
       status: "OFF_CENTER_RIGHT",
       score: Math.min(85, compositeScore),
-      instruction: "Move phone slightly right",
+      instruction: "Shift right",
       isAligned: false,
-      dx,
-      dy,
-      scale,
+      dx, dy, scale,
     };
   }
 
@@ -349,11 +334,9 @@ export function evaluateFaceAlignment(
     return {
       status: "OFF_CENTER_UP",
       score: Math.min(85, compositeScore),
-      instruction: "Move phone down slightly",
+      instruction: "Tilt down",
       isAligned: false,
-      dx,
-      dy,
-      scale,
+      dx, dy, scale,
     };
   }
 
@@ -361,23 +344,20 @@ export function evaluateFaceAlignment(
     return {
       status: "OFF_CENTER_DOWN",
       score: Math.min(85, compositeScore),
-      instruction: "Move phone up slightly",
+      instruction: "Tilt up",
       isAligned: false,
-      dx,
-      dy,
-      scale,
+      dx, dy, scale,
     };
   }
 
-  // 3. Head yaw rotation checks
   if (Math.abs(yawDiff) > maxYawTolerance) {
-    let yawInstruction = "Center your head";
+    let yawInstruction = "Face forward";
     if (targetPose === "left_45") {
-      yawInstruction = yawDiff > 0 ? "Turn head 45° to your left" : "Turn head slightly right";
+      yawInstruction = yawDiff > 0 ? "Turn left more" : "Turn right a bit";
     } else if (targetPose === "right_45") {
-      yawInstruction = yawDiff < 0 ? "Turn head 45° to your right" : "Turn head slightly left";
+      yawInstruction = yawDiff < 0 ? "Turn right more" : "Turn left a bit";
     } else {
-      yawInstruction = yawDiff > 0 ? "Turn slightly left" : "Turn slightly right";
+      yawInstruction = yawDiff > 0 ? "Turn right" : "Turn left";
     }
 
     return {
@@ -385,21 +365,16 @@ export function evaluateFaceAlignment(
       score: Math.min(85, compositeScore),
       instruction: yawInstruction,
       isAligned: false,
-      dx,
-      dy,
-      scale,
+      dx, dy, scale,
     };
   }
 
-  // All criteria within acceptable clinical tolerance!
   return {
     status: "ALIGNED",
     score: Math.max(90, compositeScore),
-    instruction: "Hold still... Perfect alignment",
+    instruction: "Perfect. Hold still.",
     isAligned: true,
-    dx,
-    dy,
-    scale,
+    dx, dy, scale,
   };
 }
 
@@ -524,16 +499,7 @@ export class CaptureService {
   async startSequence() {
     this.currentPoseIndex = 0;
     this.capturedFrames = [];
-
-    if (this.mode === "audio_guided") {
-      await speakGuidance("Hold the phone at arm's length facing your face.");
-    } else if (this.mode === "mirror") {
-      await speakGuidance("Face your mirror and point the rear camera at your reflection.");
-    } else if (this.mode === "assisted") {
-      await speakGuidance("Photographer, please center the subject's face in the frame.");
-    } else {
-      await speakGuidance("Front camera selfie mode active. Center your face.");
-    }
+    await speakGuidance("Hold phone at arm's length facing your face.");
   }
 
   async advancePose(): Promise<{ done: boolean; nextPose?: PoseTarget }> {

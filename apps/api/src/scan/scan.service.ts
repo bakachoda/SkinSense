@@ -76,6 +76,7 @@ export class ScanService {
       userId: user.id,
       imageKey: key,
       imageKeys,
+      imageBase64: data.imageBase64,
       calibrationKey: data.calibrationKey,
       captureMode: data.captureMode,
       environmentScore: data.environmentScore,

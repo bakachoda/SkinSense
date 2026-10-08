@@ -29,7 +29,7 @@ function resolveHostUrl(envUrl: string | undefined, defaultPath: string): string
 export const API_BASE_URL = resolveHostUrl(process.env["EXPO_PUBLIC_API_URL"], "/api");
 export const SOCKET_BASE_URL = resolveHostUrl(process.env["EXPO_PUBLIC_SOCKET_URL"], "");
 
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(endpoint: string, options: RequestInit = {}, timeoutMs = 8000): Promise<T> {
   const token = useAuthStore.getState().accessToken || "mock-dev-token";
 
   const headers: Record<string, string> = {
@@ -39,7 +39,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   };
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 2500);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -85,7 +85,7 @@ export const apiClient = {
     return request<CreateScanResponse>("/scans", {
       method: "POST",
       body: JSON.stringify(body),
-    });
+    }, 30000);
   },
 
   async submitSelfAssessment(

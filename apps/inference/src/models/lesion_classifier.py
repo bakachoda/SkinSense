@@ -1,103 +1,44 @@
-import torch
-import torch.nn as nn
-from PIL import Image
 import numpy as np
+from PIL import Image
 from typing import List, Dict, Any, Optional
 
 from ..schemas.scan import Finding, BoundingBox
-from ..config import settings
 
-class ResBlock(nn.Module):
-    """Residual building block for skin lesion feature extraction."""
-    def __init__(self, channels: int):
-        super().__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(channels, channels, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(channels, channels, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(channels),
-        )
-        self.relu = nn.ReLU(inplace=True)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.relu(x + self.conv(x))
-
-class SkinLesionNet(nn.Module):
-    """
-    Multi-task PyTorch architecture for dermatology classification.
-    Predicts lesion class probabilities, severity index [0..100], and bounding box coordinates.
-    """
-    def __init__(self, num_classes: int = 7):
-        super().__init__()
-        self.stem = nn.Sequential(
-            nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
-        )
-        self.res1 = ResBlock(64)
-        self.res2 = ResBlock(64)
-        self.pool = nn.AdaptiveAvgPool2d((1, 1))
-
-        # Classification head: 7 lesion types
-        self.cls_head = nn.Sequential(
-            nn.Linear(64, 32),
-            nn.ReLU(inplace=True),
-            nn.Linear(32, num_classes),
-        )
-
-        # Severity regression head [0..100]
-        self.severity_head = nn.Sequential(
-            nn.Linear(64, 16),
-            nn.ReLU(inplace=True),
-            nn.Linear(16, 1),
-            nn.Sigmoid(),
-        )
-
-    def forward(self, x: torch.Tensor):
-        feat = self.stem(x)
-        feat = self.res1(feat)
-        feat = self.res2(feat)
-        pooled = self.pool(feat).flatten(1)
-        
-        logits = self.cls_head(pooled)
-        severity = self.severity_head(pooled) * 100.0
-        return logits, severity
 
 class LesionClassifier:
-    """Manages lesion model inference, image tensorization, and finding post-processing."""
+    """
+    Pixel-driven lesion detection using colorimetric analysis.
+    Detects redness, pigmentation, oiliness, texture, and dryness signals
+    directly from zone crop pixel data.
+    """
 
-    CLASSES = [
-        "papule",
-        "pustule",
-        "comedone",
-        "dark_spot",
-        "redness_patch",
-        "texture_rough",
-        "dryness_patch",
-    ]
+    REDNESS_A_THRESHOLD = 16.0
+    PIGMENT_L_STD_THRESHOLD = 8.0
+    OILINESS_HIGHLIGHT_THRESHOLD = 5.0
+    TEXTURE_ENERGY_THRESHOLD = 12.0
 
-    def __init__(self, device: str = settings.device):
-        self.device = torch.device(device if torch.cuda.is_available() and device == "cuda" else "cpu")
-        self.model = SkinLesionNet(num_classes=len(self.CLASSES)).to(self.device)
-        self.model.eval()
+    def _rgb_to_lab(self, img_arr: np.ndarray) -> np.ndarray:
+        rgb = img_arr.astype(np.float32) / 255.0
+        mask = rgb > 0.04045
+        rgb[mask] = np.power((rgb[mask] + 0.055) / 1.055, 2.4)
+        rgb[~mask] = rgb[~mask] / 12.92
 
-    def preprocess_crop(self, crop: Image.Image, size: int = 224) -> torch.Tensor:
-        """Converts PIL crop to normalized ImageNet tensor (1, 3, size, size)."""
-        resized = crop.resize((size, size), Image.Resampling.BILINEAR)
-        arr = np.array(resized, dtype=np.float32) / 255.0
-        
-        # Normalize
-        mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
-        std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
-        norm_arr = (arr - mean) / std
+        x = rgb[..., 0] * 0.4124564 + rgb[..., 1] * 0.3575761 + rgb[..., 2] * 0.1804375
+        y = rgb[..., 0] * 0.2126729 + rgb[..., 1] * 0.7151522 + rgb[..., 2] * 0.0721750
+        z = rgb[..., 0] * 0.0193339 + rgb[..., 1] * 0.1191920 + rgb[..., 2] * 0.9503041
 
-        # HWC to CHW
-        tensor = torch.from_numpy(norm_arr.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
-        return tensor
+        x /= 0.95047
+        z /= 1.08883
+
+        def f(t):
+            delta = 6.0 / 29.0
+            return np.where(t > delta ** 3, np.cbrt(t), (t / (3.0 * delta ** 2)) + (4.0 / 29.0))
+
+        return np.stack([116.0 * f(y) - 16.0, 500.0 * (f(x) - f(y)), 200.0 * (f(y) - f(z))], axis=-1)
+
+    def _texture_energy(self, gray: np.ndarray) -> float:
+        gy, gx = np.gradient(gray.astype(np.float32))
+        return float(np.mean(np.sqrt(gx ** 2 + gy ** 2)))
 
     def detect_findings_in_zone(
         self,
@@ -106,98 +47,117 @@ class LesionClassifier:
         scan_id: str,
         questionnaire_concerns: Optional[List[str]] = None,
     ) -> List[Finding]:
-        """Runs PyTorch lesion detection on an anatomical zone crop."""
         crop: Image.Image = zone_data["crop"]
         norm_bbox = zone_data["normalized_bbox"]
+        img_arr = np.array(crop)
+        gray = np.array(crop.convert("L"), dtype=np.float32)
 
-        # Signal check from colorimetry
-        crop_arr = np.array(crop)
+        if img_arr.size == 0 or gray.size == 0:
+            return []
+
+        lab = self._rgb_to_lab(img_arr)
+        l_channel = lab[..., 0]
+        a_channel = lab[..., 1]
+
         findings: List[Finding] = []
+        concerns = [c.upper() for c in (questionnaire_concerns or [])]
 
-        with torch.no_grad():
-            tensor = self.preprocess_crop(crop)
-            logits, severity_pred = self.model(tensor)
-            probs = torch.softmax(logits, dim=1).squeeze(0).cpu().numpy()
-            base_severity = float(severity_pred.item())
+        mean_a = float(np.mean(a_channel))
+        l_std = float(np.std(l_channel))
+        high_lum_pct = float(np.sum(gray > 220) / gray.size) * 100.0
+        tex_energy = self._texture_energy(gray)
 
-        concerns = [c.upper() for c in (questionnaire_concerns or ["ACNE", "REDNESS"])]
+        # Redness detection: high a* channel indicates microvascular flushing
+        if mean_a > self.REDNESS_A_THRESHOLD:
+            severity = min(90.0, max(25.0, (mean_a - 10.0) * 4.0))
+            confidence = min(0.95, max(0.5, (mean_a - self.REDNESS_A_THRESHOLD) / 20.0 + 0.6))
+            findings.append(Finding(
+                id=f"f-{scan_id}-{zone_name}-redness",
+                type="redness_patch",
+                zone=zone_name,
+                severity=round(severity, 1),
+                confidence=round(confidence, 2),
+                boundingBox=BoundingBox(
+                    x=round(norm_bbox["x"] + norm_bbox["w"] * 0.15, 3),
+                    y=round(norm_bbox["y"] + norm_bbox["h"] * 0.15, 3),
+                    w=round(norm_bbox["w"] * 0.7, 3),
+                    h=round(norm_bbox["h"] * 0.7, 3),
+                ),
+                description=f"Erythema detected in {zone_name.replace('_', ' ')} (a*={mean_a:.1f})",
+            ))
 
-        # Specific zone heuristic boosts based on clinical dermatological distribution
-        if zone_name in ["left_cheek", "right_cheek", "forehead"] and "ACNE" in concerns:
-            # Detect papules or comedones
-            conf = float(probs[0] * 0.4 + 0.55)  # papule
-            sev = round(max(35.0, min(85.0, base_severity * 0.4 + 45.0)), 1)
-            findings.append(
-                Finding(
-                    id=f"f-{scan_id}-{zone_name}-papule",
-                    type="papule",
-                    zone=zone_name,
-                    severity=sev,
-                    confidence=round(conf, 2),
-                    boundingBox=BoundingBox(
-                        x=round(norm_bbox["x"] + norm_bbox["w"] * 0.35, 3),
-                        y=round(norm_bbox["y"] + norm_bbox["h"] * 0.40, 3),
-                        w=round(norm_bbox["w"] * 0.25, 3),
-                        h=round(norm_bbox["h"] * 0.25, 3),
-                    ),
-                    description=f"Inflammatory papule identified in {zone_name.replace('_', ' ')}",
-                )
-            )
+        # Pigmentation detection: high L* standard deviation indicates uneven tone
+        if l_std > self.PIGMENT_L_STD_THRESHOLD:
+            severity = min(85.0, max(20.0, l_std * 4.5))
+            confidence = min(0.92, max(0.5, (l_std - self.PIGMENT_L_STD_THRESHOLD) / 15.0 + 0.55))
+            findings.append(Finding(
+                id=f"f-{scan_id}-{zone_name}-pigment",
+                type="dark_spot",
+                zone=zone_name,
+                severity=round(severity, 1),
+                confidence=round(confidence, 2),
+                boundingBox=BoundingBox(
+                    x=round(norm_bbox["x"] + norm_bbox["w"] * 0.25, 3),
+                    y=round(norm_bbox["y"] + norm_bbox["h"] * 0.3, 3),
+                    w=round(norm_bbox["w"] * 0.5, 3),
+                    h=round(norm_bbox["h"] * 0.4, 3),
+                ),
+                description=f"Uneven pigmentation in {zone_name.replace('_', ' ')} (L* std={l_std:.1f})",
+            ))
 
-        if zone_name in ["nose", "forehead"] and ("ACNE" in concerns or "OILINESS" in concerns):
-            # Comedones
-            conf = float(probs[2] * 0.4 + 0.52)
-            findings.append(
-                Finding(
-                    id=f"f-{scan_id}-{zone_name}-comedone",
-                    type="comedone",
-                    zone=zone_name,
-                    severity=round(max(30.0, min(70.0, base_severity * 0.3 + 38.0)), 1),
-                    confidence=round(conf, 2),
-                    boundingBox=BoundingBox(
-                        x=round(norm_bbox["x"] + norm_bbox["w"] * 0.4, 3),
-                        y=round(norm_bbox["y"] + norm_bbox["h"] * 0.3, 3),
-                        w=round(norm_bbox["w"] * 0.2, 3),
-                        h=round(norm_bbox["h"] * 0.2, 3),
-                    ),
-                    description=f"Sebaceous follicular occlusion (comedone) in {zone_name.replace('_', ' ')}",
-                )
-            )
+        # Oiliness detection: specular highlights (T-zone emphasis)
+        if zone_name in ["forehead", "nose"] and high_lum_pct > self.OILINESS_HIGHLIGHT_THRESHOLD:
+            severity = min(80.0, max(20.0, high_lum_pct * 6.0 + 20.0))
+            findings.append(Finding(
+                id=f"f-{scan_id}-{zone_name}-oiliness",
+                type="comedone",
+                zone=zone_name,
+                severity=round(severity, 1),
+                confidence=round(min(0.85, 0.5 + high_lum_pct / 30.0), 2),
+                boundingBox=BoundingBox(
+                    x=round(norm_bbox["x"] + norm_bbox["w"] * 0.2, 3),
+                    y=round(norm_bbox["y"] + norm_bbox["h"] * 0.2, 3),
+                    w=round(norm_bbox["w"] * 0.6, 3),
+                    h=round(norm_bbox["h"] * 0.6, 3),
+                ),
+                description=f"Sebaceous activity in {zone_name.replace('_', ' ')} ({high_lum_pct:.1f}% specular)",
+            ))
 
-        if zone_name in ["right_cheek", "left_cheek"] and "REDNESS" in concerns:
-            findings.append(
-                Finding(
-                    id=f"f-{scan_id}-{zone_name}-erythema",
-                    type="redness_patch",
-                    zone=zone_name,
-                    severity=round(max(25.0, min(75.0, base_severity * 0.35 + 42.0)), 1),
-                    confidence=0.88,
-                    boundingBox=BoundingBox(
-                        x=round(norm_bbox["x"] + norm_bbox["w"] * 0.2, 3),
-                        y=round(norm_bbox["y"] + norm_bbox["h"] * 0.2, 3),
-                        w=round(norm_bbox["w"] * 0.6, 3),
-                        h=round(norm_bbox["h"] * 0.5, 3),
-                    ),
-                    description=f"Microvascular erythema in {zone_name.replace('_', ' ')}",
-                )
-            )
+        # Texture roughness: high gradient energy indicates pore visibility or roughness
+        if tex_energy > self.TEXTURE_ENERGY_THRESHOLD:
+            severity = min(75.0, max(15.0, tex_energy * 2.5))
+            findings.append(Finding(
+                id=f"f-{scan_id}-{zone_name}-texture",
+                type="texture_rough",
+                zone=zone_name,
+                severity=round(severity, 1),
+                confidence=round(min(0.80, 0.45 + tex_energy / 40.0), 2),
+                boundingBox=BoundingBox(
+                    x=round(norm_bbox["x"], 3),
+                    y=round(norm_bbox["y"], 3),
+                    w=round(norm_bbox["w"], 3),
+                    h=round(norm_bbox["h"], 3),
+                ),
+                description=f"Surface roughness in {zone_name.replace('_', ' ')} (energy={tex_energy:.1f})",
+            ))
 
-        if zone_name in ["right_cheek", "forehead"] and "PIGMENTATION" in concerns:
-            findings.append(
-                Finding(
-                    id=f"f-{scan_id}-{zone_name}-pigment",
-                    type="dark_spot",
-                    zone=zone_name,
-                    severity=round(max(20.0, min(65.0, base_severity * 0.3 + 35.0)), 1),
-                    confidence=0.84,
-                    boundingBox=BoundingBox(
-                        x=round(norm_bbox["x"] + norm_bbox["w"] * 0.3, 3),
-                        y=round(norm_bbox["y"] + norm_bbox["h"] * 0.5, 3),
-                        w=round(norm_bbox["w"] * 0.25, 3),
-                        h=round(norm_bbox["h"] * 0.25, 3),
-                    ),
-                    description=f"Epidermal hyperpigmentation macule in {zone_name.replace('_', ' ')}",
-                )
-            )
+        # Dryness detection: low oiliness + low luminance variance
+        mean_l = float(np.mean(l_channel))
+        if high_lum_pct < 2.0 and mean_l < 55.0:
+            severity = min(70.0, max(15.0, (55.0 - mean_l) * 2.0 + 20.0))
+            findings.append(Finding(
+                id=f"f-{scan_id}-{zone_name}-dryness",
+                type="dryness_patch",
+                zone=zone_name,
+                severity=round(severity, 1),
+                confidence=0.6,
+                boundingBox=BoundingBox(
+                    x=round(norm_bbox["x"], 3),
+                    y=round(norm_bbox["y"], 3),
+                    w=round(norm_bbox["w"], 3),
+                    h=round(norm_bbox["h"], 3),
+                ),
+                description=f"Dehydration indicators in {zone_name.replace('_', ' ')}",
+            ))
 
         return findings

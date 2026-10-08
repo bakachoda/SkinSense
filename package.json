@@ -12,9 +12,11 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
   "devDependencies": {
-    "turbo": "^2.4.0",
+    "@types/react": "~19.2.4",
+    "event-target-shim": "^5.0.1",
     "prettier": "^3.4.0",
-    "event-target-shim": "^5.0.1"
+    "turbo": "^2.11.7",
+    "typescript": "~6.0.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -25,5 +27,8 @@
       "msgpackr-extract",
       "prisma"
     ]
+  },
+  "dependencies": {
+    "expo": "^57.0.27"
   }
 }

@@ -233,6 +233,7 @@ export type ProductFilter = z.infer<typeof ProductFilterSchema>;
 export const CreateScanRequestSchema = z.object({
   imageKey: z.string().optional(),
   imageKeys: z.array(z.string()).optional(),
+  imageBase64: z.string().optional(),
   calibrationKey: z.string().optional(),
   captureMode: z.string().optional(),
   frameCount: z.number().optional(),
@@ -261,6 +262,7 @@ export const ScanJobPayloadSchema = z.object({
   userId: z.string(),
   imageKey: z.string().optional(),
   imageKeys: z.array(z.string()).optional(),
+  imageBase64: z.string().optional(),
   calibrationKey: z.string().optional(),
   captureMode: z.string().optional(),
   environmentScore: z.string().optional(),

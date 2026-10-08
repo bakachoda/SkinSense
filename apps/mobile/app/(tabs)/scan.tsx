@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import Constants from "expo-constants";
 import { useQuestionnaireStore } from "../../stores/questionnaire";
 import { QuestionnaireWizard } from "../../components/QuestionnaireWizard";
 import { FaceZoneMap } from "../../components/FaceZoneMap";
@@ -20,7 +19,6 @@ import { apiClient } from "../../lib/api-client";
 import type {
   ScanResult,
   Routine,
-  CaptureMode,
   PoseTarget,
   PhysiologicalState,
   EnvironmentQualityScore,
@@ -44,8 +42,6 @@ import {
   HelpCircle,
   Volume2,
   VolumeX,
-  FlipHorizontal,
-  Users,
   Compass,
   CheckCircle2,
   Droplets,
@@ -109,46 +105,7 @@ const POSES: { id: PoseTarget; label: string; targetYaw: number }[] = [
   { id: "right_45", label: "Right 45°", targetYaw: 45 },
 ];
 
-let cachedBridgeUrl: string | null = null;
-
-async function fetchVisionBridge(base64Image: string, targetPose: string = "frontal"): Promise<any> {
-  const hostUri = Constants.expoConfig?.hostUri || (Constants as any).manifest2?.extra?.expoGo?.debuggerHost;
-  const hostIp = hostUri ? hostUri.split(":")[0] : "10.37.58.16";
-  const candidateUrls = [
-    `http://10.37.58.16:5005/detect-face`,
-    `http://${hostIp}:5005/detect-face`,
-    `http://127.0.0.1:5005/detect-face`,
-    `http://localhost:5005/detect-face`,
-  ];
-
-  const payload = JSON.stringify({ image: base64Image, targetPose });
-
-  if (cachedBridgeUrl) {
-    try {
-      const res = await fetch(cachedBridgeUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: payload,
-      });
-      if (res.ok) return await res.json();
-    } catch {}
-  }
-
-  for (const url of candidateUrls) {
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: payload,
-      });
-      if (res.ok) {
-        cachedBridgeUrl = url;
-        return await res.json();
-      }
-    } catch {}
-  }
-  throw new Error("Bridge unreachable");
-}
+import { detectFaceLocal, detectFaceViaBridge, useMLKit } from "../../lib/on-device-face-detector";
 
 export default function ScanScreen() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -161,7 +118,6 @@ export default function ScanScreen() {
 
   // Navigation & Stages
   const [stage, setStage] = useState<CaptureStage>("CAMERA");
-  const [captureMode, setCaptureMode] = useState<CaptureMode>("audio_guided");
   const [currentPoseIndex, setCurrentPoseIndex] = useState<number>(0);
   const [capturedAngleFrames, setCapturedAngleFrames] = useState<string[]>([]);
   const [flashActive, setFlashActive] = useState<boolean>(false);
@@ -187,7 +143,6 @@ export default function ScanScreen() {
   const [holdProgressMs, setHoldProgressMs] = useState<number>(0);
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const [showDevPanel, setShowDevPanel] = useState<boolean>(false);
-  const [bridgeActive, setBridgeActive] = useState<boolean>(false);
   const isSamplingRef = useRef<boolean>(false);
 
   // Pre-Scan Checklist & Quality Gate
@@ -306,10 +261,13 @@ export default function ScanScreen() {
     };
   }, [stage, checklistCompleted, alignmentEval.isAligned, isCapturing, currentPoseIndex]);
 
-  // Level 1 Solution 1: Live Vision Bridge sampling loop
+  // Face detection sampling loop
+  // ML Kit (dev build): on-device ~20ms, uses file URI
+  // Vision bridge (Expo Go): HTTP to Python :5005, uses base64
   useEffect(() => {
     let timeoutId: any = null;
     let isDisposed = false;
+    const interval = useMLKit ? 250 : 450;
 
     async function sampleFrame() {
       if (isDisposed || stage !== "CAMERA" || !permission?.granted) return;
@@ -318,50 +276,48 @@ export default function ScanScreen() {
         isSamplingRef.current = true;
         try {
           const snapshot = await cameraRef.current.takePictureAsync({
-            quality: 0.15,
-            base64: true,
+            quality: useMLKit ? 0.1 : 0.15,
+            base64: !useMLKit,
             shutterSound: false,
           });
 
-          if (!isDisposed && snapshot?.base64) {
-            const data = await fetchVisionBridge(snapshot.base64, activePose.id);
+          if (isDisposed) { isSamplingRef.current = false; return; }
 
-            if (!isDisposed && data && typeof data.faceDetected === "boolean") {
-              setBridgeActive(true);
-              if (data.faceDetected) {
-                setChecklistCompleted(true);
-                setFaceMetrics({
-                  centerX: data.centerX,
-                  centerY: data.centerY,
-                  boxWidth: data.boxWidth,
-                  boxHeight: data.boxHeight,
-                  yaw: data.yaw || 0,
-                });
-              } else {
-                setFaceMetrics({
-                  centerX: 0,
-                  centerY: 0,
-                  boxWidth: 0,
-                  boxHeight: 0,
-                  yaw: 0,
-                });
-              }
+          let result;
+          if (useMLKit && snapshot?.uri) {
+            result = await detectFaceLocal(snapshot.uri, snapshot.width, snapshot.height);
+          } else if (!useMLKit && snapshot?.base64) {
+            result = await detectFaceViaBridge(snapshot.base64, activePose.id);
+          }
+
+          if (!isDisposed && result) {
+            if (result.faceDetected) {
+              setChecklistCompleted(true);
+              setFaceMetrics(result.metrics);
+            } else {
+              setFaceMetrics({
+                centerX: 0,
+                centerY: 0,
+                boxWidth: 0,
+                boxHeight: 0,
+                yaw: 0,
+              });
             }
           }
         } catch {
-          if (!isDisposed) setBridgeActive(false);
+          // Non-fatal — next sample will retry
         } finally {
           isSamplingRef.current = false;
         }
       }
 
       if (!isDisposed) {
-        timeoutId = setTimeout(sampleFrame, 450);
+        timeoutId = setTimeout(sampleFrame, interval);
       }
     }
 
     if (stage === "CAMERA" && permission?.granted) {
-      timeoutId = setTimeout(sampleFrame, 600);
+      timeoutId = setTimeout(sampleFrame, 500);
     }
 
     return () => {
@@ -416,13 +372,7 @@ export default function ScanScreen() {
     setHoldProgressMs(0);
 
     if (!voiceMuted) {
-      if (captureMode === "audio_guided") {
-        voiceManager.speak("Hold phone at eye level. Center your face in the guide.", true);
-      } else if (captureMode === "mirror") {
-        voiceManager.speak("Face your mirror and point the rear camera at your reflection.", true);
-      } else {
-        voiceManager.speak("Center face in oval for front selfie scan.", true);
-      }
+      voiceManager.speak("Hold phone at eye level. Center your face in the guide.", true);
     }
   };
 
@@ -441,19 +391,21 @@ export default function ScanScreen() {
 
       let frameUri = `scans/pose_${activePose.id}_${Date.now()}.jpg`;
 
-      // Real high-resolution camera capture via CameraView
       if (cameraRef.current?.takePictureAsync) {
         try {
           const photo = await cameraRef.current.takePictureAsync({
             quality: 0.92,
+            base64: true,
             skipProcessing: false,
           });
           if (photo?.uri) {
             frameUri = photo.uri;
-            console.log(`[CameraView] Captured real photo for pose ${activePose.id}:`, photo.uri);
+          }
+          if (photo?.base64) {
+            (globalThis as any).__lastCapturedBase64 = photo.base64;
           }
         } catch (camErr) {
-          console.warn("[CameraView] Native takePictureAsync fallback:", camErr);
+          console.warn("[CameraView] takePictureAsync error:", camErr);
         }
       }
 
@@ -502,19 +454,22 @@ export default function ScanScreen() {
   const submitMultiAngleDataset = async (frames: string[]) => {
     setStage("UPLOADING");
     setProgressPercent(15);
-    setProgressStage("Uploading 3-angle HDR & flash frames...");
+    setProgressStage("Uploading photo for analysis...");
 
     try {
-      // 1. Request presigned upload keys
-      const presign = await apiClient.presignUpload("image/jpeg", 4 * 1024 * 1024);
       setProgressPercent(35);
 
-      // 2. Dispatch multi-angle scan with Phase 3 metadata
+      const imageBase64 = (globalThis as any).__lastCapturedBase64 as string | undefined;
+      if (!imageBase64) {
+        throw new Error("No photo data captured. Please retake the scan.");
+      }
+
       const scanRes = await apiClient.createScan({
-        imageKeys: frames.length > 0 ? frames : [presign.key],
+        imageKeys: frames,
+        imageBase64,
         calibrationKey: isWhiteCalibrated ? calibrationKey : undefined,
-        captureMode,
-        frameCount: frames.length * 5, // 3 HDR + 2 flash per angle
+        captureMode: "audio_guided",
+        frameCount: frames.length,
         environmentScore,
         physiologicalState,
         questionnaire,
@@ -563,34 +518,42 @@ export default function ScanScreen() {
         setErrorMessage(event.error || "Analysis failed. Please try again.");
         setStage("ERROR");
       });
+
+      // Polling fallback: the BullMQ job may finish before the WebSocket joins the room
+      let pollStopped = false;
+      const stopPolling = () => { pollStopped = true; };
+      socket.on("scan:complete", stopPolling);
+      socket.on("scan:error", stopPolling);
+
+      const pollForResult = async () => {
+        const delays = [3000, 4000, 5000, 6000, 8000, 10000];
+        for (const delay of delays) {
+          if (pollStopped) return;
+          await new Promise((r) => setTimeout(r, delay));
+          if (pollStopped) return;
+          try {
+            const res = await apiClient.getScanResult(scanId);
+            if (res?.result && !pollStopped) {
+              pollStopped = true;
+              socket.disconnect();
+              setScanResult(res.result);
+              setStage("RESULTS");
+              return;
+            }
+          } catch {
+            // scan still processing — continue polling
+          }
+        }
+      };
+      pollForResult();
     } catch (err: any) {
-      console.warn("[Capture] Backend offline, engaging offline analysis fallback:", err);
-      // Seamless offline fallback so test runs never crash
-      setActiveScanId("offline-demo");
-      setProgressPercent(100);
-      setStage("SELF_ASSESSMENT");
+      console.warn("[Capture] Upload failed:", err);
+      setErrorMessage(err.message || "Could not reach the analysis server. Check your connection and try again.");
+      setStage("ERROR");
     }
   };
 
   const handleSelfAssessmentComplete = async (data: CreateSelfAssessment) => {
-    if (activeScanId === "offline-demo") {
-      setStage("ANALYZING");
-      setServerStage("segmentation");
-      setTimeout(() => setServerStage("detection"), 800);
-      setTimeout(() => setServerStage("scoring"), 1600);
-      setTimeout(() => {
-        setScanResult({
-          skinHealthScore: 78,
-          findings: [],
-          scaleFactorMm: 10.2,
-          zoneScores: { forehead: 82, cheeks: 75, chin: 76, nose: 79 },
-          oilinessMap: { forehead: 35, nose: 42, cheeks: 25, chin: 28 },
-        } as any);
-        setStage("RESULTS");
-      }, 2400);
-      return;
-    }
-
     try {
       if (activeScanId) {
         const res = await apiClient.submitSelfAssessment(activeScanId, data);
@@ -617,8 +580,6 @@ export default function ScanScreen() {
   // RENDER: CAMERA CAPTURE VIEW
   // ==========================================
   if (stage === "CAMERA") {
-    const isBackCamera = captureMode === "audio_guided" || captureMode === "mirror" || captureMode === "assisted";
-
     return (
       <View style={styles.cameraContainer}>
         {/* Flash Simulation Overlay */}
@@ -627,7 +588,7 @@ export default function ScanScreen() {
         <CameraView
           ref={cameraRef}
           style={StyleSheet.absoluteFill}
-          facing={isBackCamera ? "back" : "front"}
+          facing="back"
           enableTorch={flashActive}
         />
 
@@ -635,40 +596,14 @@ export default function ScanScreen() {
         <View style={[styles.topSection, { paddingTop: Math.max(insets.top, Platform.OS === "android" ? 38 : 20) }]}>
           {/* Top Bar: Mode Selector & Action Icons */}
           <View style={styles.topHudBar}>
-            {/* Mode Selector Pill */}
-            <TouchableOpacity
-              style={styles.modeDropdownPill}
-              onPress={() => {
-                const modes: CaptureMode[] = ["audio_guided", "mirror", "assisted", "front_camera"];
-                const nextIdx = (modes.indexOf(captureMode) + 1) % modes.length;
-                setCaptureMode(modes[nextIdx]!);
-              }}
-              activeOpacity={0.8}
-            >
-              {captureMode === "audio_guided" && <Volume2 size={13} color="#10B981" />}
-              {captureMode === "mirror" && <FlipHorizontal size={13} color="#06B6D4" />}
-              {captureMode === "assisted" && <Users size={13} color="#8B5CF6" />}
-              {captureMode === "front_camera" && <Camera size={13} color="#F59E0B" />}
-              <Text style={styles.modeDropdownText}>
-                {captureMode === "audio_guided"
-                  ? "Rear (Audio)"
-                  : captureMode === "mirror"
-                  ? "Mirror"
-                  : captureMode === "assisted"
-                  ? "Assisted"
-                  : "Front Cam"}
-              </Text>
-              <ChevronDown size={11} color="#94A3B8" />
-            </TouchableOpacity>
+            {/* Rear Camera Badge */}
+            <View style={styles.modeDropdownPill}>
+              <Volume2 size={13} color="#10B981" />
+              <Text style={styles.modeDropdownText}>Rear Camera</Text>
+            </View>
 
-            {/* Actions: Vision Bridge Pill, Lab Specs Modal & Voice Mute */}
+            {/* Actions: Lab Specs Modal & Voice Mute */}
             <View style={styles.topActionsRow}>
-              {bridgeActive && (
-                <View style={styles.bridgePill}>
-                  <View style={styles.bridgeDot} />
-                  <Text style={styles.bridgeText}>AI Live</Text>
-                </View>
-              )}
               <TouchableOpacity
                 style={styles.topIconBtn}
                 onPress={() => setShowAdvancedCaptureModal(true)}
@@ -1483,28 +1418,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-  },
-  bridgePill: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(16, 185, 129, 0.18)",
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 14,
-    gap: 5,
-    borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.4)",
-  },
-  bridgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#10B981",
-  },
-  bridgeText: {
-    color: "#10B981",
-    fontSize: 10,
-    fontWeight: "700",
   },
   topIconBtn: {
     width: 34,

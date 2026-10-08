@@ -108,10 +108,10 @@ class SeverityScorer:
         else:
             oiliness_score = min(100.0, max(10.0, high_lum_pct * 4.0 + 15.0))
 
-        # 6. Dryness (inverse relation to oiliness modulated by texture micro-fissuring)
-        concerns = questionnaire.get("concerns", []) if questionnaire else []
-        dryness_bonus = 20.0 if "DRYNESS" in concerns else 0.0
-        dryness_score = min(100.0, max(5.0, (100.0 - oiliness_score) * 0.4 + dryness_bonus))
+        # 6. Dryness (inverse of oiliness modulated by low luminance variance)
+        l_range = float(np.ptp(l_channel))
+        dryness_raw = (100.0 - oiliness_score) * 0.35 + max(0, (30.0 - l_range)) * 0.5
+        dryness_score = min(100.0, max(5.0, dryness_raw))
 
         return ZoneScore(
             acne=round(acne_score, 1),

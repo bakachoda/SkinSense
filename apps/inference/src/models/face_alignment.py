@@ -1,84 +1,125 @@
 import numpy as np
+import cv2
 from PIL import Image
 from typing import Dict, List, Tuple, Any
 
+frontal_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+profile_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_profileface.xml")
+eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
+
 class FaceZone:
-    def __init__(self, name: str, bbox: Tuple[float, float, float, float], landmark_indices: List[int]):
+    def __init__(self, name: str, bbox: Tuple[float, float, float, float]):
         self.name = name
-        # bbox format: (min_x, min_y, max_x, max_y) in normalized [0, 1] coords
         self.bbox = bbox
-        self.landmark_indices = landmark_indices
 
 class FaceAlignment:
-    """
-    Facial landmark localization & anatomical zone segmentation.
-    Models canonical 468-point facial mesh geometry.
-    """
-
-    # Anatomical zone definitions matching Phase 1 MVP Section 3.3
     ZONE_DEFINITIONS = {
-        "forehead": FaceZone("forehead", (0.24, 0.10, 0.76, 0.32), [10, 67, 109, 151, 338, 297]),
-        "nose": FaceZone("nose", (0.40, 0.32, 0.60, 0.58), [6, 197, 195, 5, 4, 1, 2, 98, 327]),
-        "left_cheek": FaceZone("left_cheek", (0.18, 0.42, 0.42, 0.70), [205, 50, 187, 207, 214, 216]),
-        "right_cheek": FaceZone("right_cheek", (0.58, 0.42, 0.82, 0.70), [425, 280, 411, 427, 434, 436]),
-        "chin": FaceZone("chin", (0.35, 0.70, 0.65, 0.90), [152, 377, 400, 176, 148, 175]),
-        "periorbital": FaceZone("periorbital", (0.22, 0.28, 0.78, 0.45), [33, 133, 159, 145, 263, 362, 386, 374]),
+        "forehead": FaceZone("forehead", (0.24, 0.10, 0.76, 0.32)),
+        "nose": FaceZone("nose", (0.40, 0.32, 0.60, 0.58)),
+        "left_cheek": FaceZone("left_cheek", (0.18, 0.42, 0.42, 0.70)),
+        "right_cheek": FaceZone("right_cheek", (0.58, 0.42, 0.82, 0.70)),
+        "chin": FaceZone("chin", (0.35, 0.70, 0.65, 0.90)),
+        "periorbital": FaceZone("periorbital", (0.22, 0.28, 0.78, 0.45)),
     }
 
-    def __init__(self):
-        self.total_landmarks = 468
+    def _detect_face(self, img_bgr: np.ndarray) -> Tuple[bool, Tuple[int, int, int, int]]:
+        """Detect face using OpenCV Haar cascades. Returns (found, (x, y, w, h))."""
+        gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+        gray = cv2.equalizeHist(gray)
+
+        faces = frontal_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80))
+        if len(faces) == 0:
+            faces = profile_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4, minSize=(80, 80))
+        if len(faces) == 0:
+            return False, (0, 0, 0, 0)
+
+        largest = max(faces, key=lambda f: f[2] * f[3])
+        return True, tuple(largest)
+
+    def _estimate_yaw(self, face_crop_gray: np.ndarray) -> float:
+        """Estimate head yaw from eye positions within the face crop."""
+        eyes = eye_cascade.detectMultiScale(face_crop_gray, scaleFactor=1.1, minNeighbors=4, minSize=(15, 15))
+        if len(eyes) < 2:
+            return 0.0
+
+        sorted_eyes = sorted(eyes, key=lambda e: e[0])
+        left_eye = sorted_eyes[0]
+        right_eye = sorted_eyes[-1]
+
+        left_cx = left_eye[0] + left_eye[2] / 2
+        right_cx = right_eye[0] + right_eye[2] / 2
+        face_w = face_crop_gray.shape[1]
+        mid = face_w / 2.0
+        eye_mid = (left_cx + right_cx) / 2.0
+
+        offset = (eye_mid - mid) / face_w
+        yaw = offset * 60.0
+        return float(np.clip(yaw, -45, 45))
 
     def extract_landmarks(self, img: Image.Image) -> Dict[str, Any]:
-        """
-        Extracts 468 landmarks and partitions the face into 6 anatomical zones.
-        Returns landmark metadata and cropped zone bounding boxes.
-        """
         w, h = img.size
+        img_bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
 
-        # Generate canonical 468-point landmark grid fitted to face proportions
-        landmarks: List[Dict[str, float]] = []
-        for i in range(self.total_landmarks):
-            # Compute canonical barycentric mesh anchor
-            angle = (i / self.total_landmarks) * 2 * np.pi
-            r = 0.35 * (0.8 + 0.2 * np.cos(3 * angle))
-            lx = 0.5 + r * np.sin(angle)
-            ly = 0.5 - r * np.cos(angle) * 1.15
-            landmarks.append({
-                "index": i,
-                "x": round(float(np.clip(lx, 0.05, 0.95)), 4),
-                "y": round(float(np.clip(ly, 0.05, 0.95)), 4),
-                "z": round(float(-0.05 * np.cos(angle)), 4)
-            })
+        found, (fx, fy, fw, fh) = self._detect_face(img_bgr)
+
+        if not found:
+            return {
+                "face_detected": False,
+                "confidence": 0.0,
+                "landmarks_count": 0,
+                "landmarks": [],
+                "zones": {},
+            }
+
+        face_gray = cv2.cvtColor(img_bgr[fy:fy+fh, fx:fx+fw], cv2.COLOR_BGR2GRAY)
+        yaw = self._estimate_yaw(face_gray)
+
+        # Expand face bounding box by 40% for full-head zone extraction
+        expand = 0.4
+        cx, cy = fx + fw / 2, fy + fh / 2
+        ew = fw * (1 + expand)
+        eh = fh * (1 + expand * 1.2)
+        ex = int(max(0, cx - ew / 2))
+        ey = int(max(0, cy - eh / 2))
+        ex2 = int(min(w, cx + ew / 2))
+        ey2 = int(min(h, cy + eh / 2))
+
+        face_img = img.crop((ex, ey, ex2, ey2))
 
         zones: Dict[str, Dict[str, Any]] = {}
+        face_w_px, face_h_px = face_img.size
+
         for name, zone_def in self.ZONE_DEFINITIONS.items():
             min_x, min_y, max_x, max_y = zone_def.bbox
-            
-            # Pixel bounding coordinates
-            px_min_x = max(0, int(min_x * w))
-            px_min_y = max(0, int(min_y * h))
-            px_max_x = min(w, int(max_x * w))
-            px_max_y = min(h, int(max_y * h))
+            px_min_x = max(0, int(min_x * face_w_px))
+            px_min_y = max(0, int(min_y * face_h_px))
+            px_max_x = min(face_w_px, int(max_x * face_w_px))
+            px_max_y = min(face_h_px, int(max_y * face_h_px))
 
-            crop = img.crop((px_min_x, px_min_y, px_max_x, px_max_y))
+            crop = face_img.crop((px_min_x, px_min_y, px_max_x, px_max_y))
+            if crop.size[0] < 10 or crop.size[1] < 10:
+                crop = face_img
 
             zones[name] = {
                 "name": name,
                 "normalized_bbox": {
-                    "x": min_x,
-                    "y": min_y,
+                    "x": round(min_x, 4),
+                    "y": round(min_y, 4),
                     "w": round(max_x - min_x, 4),
                     "h": round(max_y - min_y, 4),
                 },
                 "pixel_bbox": [px_min_x, px_min_y, px_max_x, px_max_y],
                 "crop": crop,
-                "anchor_landmarks": zone_def.landmark_indices,
             }
+
+        confidence = 0.95 if yaw == 0.0 else max(0.6, 0.95 - abs(yaw) / 100)
 
         return {
             "face_detected": True,
-            "confidence": 0.985,
-            "landmarks_count": self.total_landmarks,
-            "landmarks": landmarks,
+            "confidence": round(confidence, 3),
+            "landmarks_count": 0,
+            "landmarks": [],
+            "yaw": round(yaw, 1),
+            "face_bbox": {"x": fx, "y": fy, "w": fw, "h": fh},
             "zones": zones,
         }
