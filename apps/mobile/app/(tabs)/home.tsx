@@ -56,9 +56,9 @@ const DEFAULT_SKIN_TWIN: SkinTwinResult = {
     { metric: "barrierScore", userValue: 65, percentile: 58, cohortMedian: 62, cohortP25: 45, cohortP75: 78 },
   ],
   whatWorked: [
-    { productName: "CeraVe Hydrating Cleanser", productCategory: "CLEANSER", successRate: 0.78, usersWhoImproved: 892, avgImprovement: 12, topConcern: "ACNE" },
-    { productName: "La Roche-Posay SPF 50", productCategory: "SPF", successRate: 0.85, usersWhoImproved: 1203, avgImprovement: 8, topConcern: "REDNESS" },
-    { productName: "The Ordinary Niacinamide 10%", productCategory: "SERUM", successRate: 0.72, usersWhoImproved: 756, avgImprovement: 15, topConcern: "ACNE" },
+    { productName: "Minimalist Salicylic + LHA Cleanser", productCategory: "CLEANSER", successRate: 0.78, usersWhoImproved: 892, avgImprovement: 12, topConcern: "ACNE" },
+    { productName: "The Derma Co 1% Hyaluronic Sunscreen", productCategory: "SPF", successRate: 0.85, usersWhoImproved: 1203, avgImprovement: 8, topConcern: "REDNESS" },
+    { productName: "Minimalist Niacinamide 10% Serum", productCategory: "SERUM", successRate: 0.72, usersWhoImproved: 756, avgImprovement: 15, topConcern: "ACNE" },
   ],
   matchConfidence: 0.87,
 };

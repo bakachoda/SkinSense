@@ -2,7 +2,16 @@
   "extends": "../../packages/config/tsconfig.node.json",
   "compilerOptions": {
     "rootDir": "./src",
+<<<<<<< HEAD
     "outDir": "./dist"
+=======
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@prisma/client": ["./node_modules/.prisma/client"]
+    }
+>>>>>>> 2788b5afe59e2200fec5802125ab66e502976592
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts"]

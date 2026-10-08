@@ -10,6 +10,7 @@ module.exports = {
   testEnvironment: "node",
   moduleNameMapper: {
     "^@skinsense/types$": "<rootDir>/../../../packages/types/dist/index.js",
+    "^@prisma/client$": "<rootDir>/../node_modules/.prisma/client",
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
 };
