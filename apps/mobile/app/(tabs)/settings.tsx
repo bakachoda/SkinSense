@@ -19,16 +19,11 @@ import { useQuestionnaireStore } from "../../stores/questionnaire";
 import { useAuthStore } from "../../stores/auth";
 import { QuestionnaireWizard } from "../../components/QuestionnaireWizard";
 import { apiClient } from "../../lib/api-client";
-import {
-  DISCLAIMER_FULL,
-  PRIVACY_POLICY_URL,
-  TERMS_OF_SERVICE_URL,
-} from "@skinsense/types";
+import { DISCLAIMER_FULL, PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from "@skinsense/types";
 import {
   User,
   ShieldAlert,
   Bell,
-  Database,
   Info,
   LifeBuoy,
   ChevronRight,
@@ -69,7 +64,6 @@ export default function SettingsScreen() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
-  const [showDeleteDataModal, setShowDeleteDataModal] = useState(false);
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackType, setFeedbackType] = useState<"feedback" | "bug">("feedback");
@@ -89,13 +83,7 @@ export default function SettingsScreen() {
     maxScansPerMonth,
     refresh: refreshEntitlements,
   } = useEntitlements();
-  const {
-    isOffline,
-    queuedCount,
-    isSyncing,
-    flushQueue,
-    toggleSimulateOffline,
-  } = useOfflineSync();
+  const { isOffline, queuedCount, isSyncing, flushQueue, toggleSimulateOffline } = useOfflineSync();
 
   // Phase 3 Capture Quality Toggles
   const [audioGuidanceEnabled, setAudioGuidanceEnabled] = useState(true);
@@ -152,22 +140,12 @@ export default function SettingsScreen() {
         [{ text: "OK" }],
       );
     } catch {
-      Alert.alert("Export Notice", "Your diagnostic history and profile data has been packaged for download.");
+      Alert.alert(
+        "Export Notice",
+        "Your diagnostic history and profile data has been packaged for download.",
+      );
     } finally {
       setExportLoading(false);
-    }
-  };
-
-  const handleDeleteData = async () => {
-    try {
-      await apiClient.deleteUserData();
-      resetQuestionnaire();
-      setShowDeleteDataModal(false);
-      Alert.alert("Data Purged", "All scans, routines, and profile answers have been deleted.");
-    } catch {
-      resetQuestionnaire();
-      setShowDeleteDataModal(false);
-      Alert.alert("Data Purged", "Your local scan and routine cache has been cleared.");
     }
   };
 
@@ -178,7 +156,10 @@ export default function SettingsScreen() {
     resetQuestionnaire();
     signOut();
     setShowDeleteAccountModal(false);
-    Alert.alert("Account Deleted", "Your account and all associated data have been permanently removed.");
+    Alert.alert(
+      "Account Deleted",
+      "Your account and all associated data have been permanently removed.",
+    );
   };
 
   const handleChangePassword = () => {
@@ -216,7 +197,12 @@ export default function SettingsScreen() {
 
       setShowFeedbackModal(false);
       setFeedbackContent("");
-      Alert.alert("Thank You", feedbackType === "bug" ? "Bug report submitted with diagnostic logs." : "Thanks for your feedback!");
+      Alert.alert(
+        "Thank You",
+        feedbackType === "bug"
+          ? "Bug report submitted with diagnostic logs."
+          : "Thanks for your feedback!",
+      );
     } catch (e: any) {
       Alert.alert("Submission Notice", "Thank you! Your feedback has been received.");
       setShowFeedbackModal(false);
@@ -242,7 +228,7 @@ export default function SettingsScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Settings</Text>
-          <Text style={styles.subtitle}>Account, notifications, data & legal policies</Text>
+          <Text style={styles.subtitle}>Account, notifications & legal policies</Text>
         </View>
 
         {/* ── 0. MEMBERSHIP & SUBSCRIPTION (PHASE 11) ── */}
@@ -299,64 +285,6 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── 0B. OFFLINE & RESILIENCE (PHASE 13) ── */}
-        <View style={styles.sectionHeaderRow}>
-          {isOffline ? (
-            <WifiOff size={14} color="#DC2626" />
-          ) : (
-            <Wifi size={14} color="#15803D" />
-          )}
-          <Text style={styles.sectionHeaderTitle}>Offline Resilience & Sync</Text>
-        </View>
-        <View style={styles.cardGroup}>
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Connection Status</Text>
-            <Text
-              style={[
-                styles.rowValue,
-                { color: isOffline ? "#DC2626" : "#15803D", fontWeight: "700" },
-              ]}
-            >
-              {isOffline ? "Simulated Offline" : "Online & Connected"}
-            </Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Pending Queue</Text>
-            <Text style={styles.rowValue}>
-              {queuedCount} mutation{queuedCount === 1 ? "" : "s"} cached
-            </Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={[styles.row, { justifyContent: "space-between" }]}>
-            <Text style={styles.rowLabel}>Simulate Offline Mode</Text>
-            <Switch
-              value={isOffline}
-              onValueChange={toggleSimulateOffline}
-              trackColor={{ false: "#E5E7EB", true: "#DC2626" }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-          {queuedCount > 0 && (
-            <>
-              <View style={styles.divider} />
-              <TouchableOpacity
-                style={styles.clickableRow}
-                onPress={flushQueue}
-                disabled={isSyncing || isOffline}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <RefreshCw size={14} color="#0284C7" />
-                  <Text style={[styles.rowLabel, { color: "#0284C7" }]}>
-                    {isSyncing ? "Syncing..." : "Sync Pending Mutations Now"}
-                  </Text>
-                </View>
-                <ChevronRight size={18} color="#0284C7" />
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-
         {/* ── 1. ACCOUNT SECTION ── */}
         <View style={styles.sectionHeaderRow}>
           <User size={14} color="#111827" />
@@ -382,89 +310,12 @@ export default function SettingsScreen() {
             onPress={() => setShowDeleteAccountModal(true)}
             accessibilityLabel="Delete Account"
           >
-            <Text style={[styles.rowLabel, { color: "#DC2626" }]}>Delete Account</Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Trash2 size={15} color="#DC2626" style={{ marginRight: 10 }} />
+              <Text style={[styles.rowLabel, { color: "#DC2626" }]}>Delete Account</Text>
+            </View>
             <ChevronRight size={18} color="#DC2626" />
           </TouchableOpacity>
-        </View>
-
-        {/* ── 2. SKIN PROFILE SECTION ── */}
-        <View style={styles.sectionHeaderRow}>
-          <User size={14} color="#111827" />
-          <Text style={styles.sectionHeaderTitle}>Skin Profile</Text>
-        </View>
-        <View style={styles.cardGroup}>
-          <TouchableOpacity
-            style={styles.clickableRow}
-            onPress={() => setShowProfileModal(true)}
-            accessibilityLabel="Edit Skin Profile"
-          >
-            <View>
-              <Text style={styles.rowLabel}>Edit Skin Profile</Text>
-              <Text style={styles.rowSubLabel}>
-                {questionnaire.skinType} • {questionnaire.concerns.join(", ")}
-              </Text>
-            </View>
-            <ChevronRight size={18} color="#9CA3AF" />
-          </TouchableOpacity>
-        </View>
-
-        {/* ── 2b. CAPTURE QUALITY (PHASE 3) ── */}
-        <View style={styles.sectionHeaderRow}>
-          <Camera size={14} color="#111827" />
-          <Text style={styles.sectionHeaderTitle}>Capture Quality (Clinical Diagnostic)</Text>
-        </View>
-        <View style={styles.cardGroup}>
-          <View style={styles.switchRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowLabel}>Audio-Guided Self-Scan</Text>
-              <Text style={styles.rowSubLabel}>Uses rear camera with voice + haptic cues</Text>
-            </View>
-            <Switch
-              value={audioGuidanceEnabled}
-              onValueChange={setAudioGuidanceEnabled}
-              trackColor={{ false: "#E5E7EB", true: "#111827" }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.switchRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowLabel}>Multi-Angle 3-Pose Capture</Text>
-              <Text style={styles.rowSubLabel}>Frontal, Left 45°, and Right 45°</Text>
-            </View>
-            <Switch
-              value={multiAngleEnabled}
-              onValueChange={setMultiAngleEnabled}
-              trackColor={{ false: "#E5E7EB", true: "#111827" }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.switchRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowLabel}>Dual Validation Self-Assessment</Text>
-              <Text style={styles.rowSubLabel}>Zone checklist & touch-to-mark spot pins</Text>
-            </View>
-            <Switch
-              value={selfAssessmentEnabled}
-              onValueChange={setSelfAssessmentEnabled}
-              trackColor={{ false: "#E5E7EB", true: "#111827" }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.switchRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowLabel}>D65 White Point Calibration</Text>
-              <Text style={styles.rowSubLabel}>Paper reference normalization</Text>
-            </View>
-            <Switch
-              value={whiteCalibrationEnabled}
-              onValueChange={setWhiteCalibrationEnabled}
-              trackColor={{ false: "#E5E7EB", true: "#111827" }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
         </View>
 
         {/* ── 3. NOTIFICATIONS SECTION ── */}
@@ -513,125 +364,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* ── 3b. DERMATOLOGIST & HEALTH ECOSYSTEM (PHASE 7) ── */}
-        <View style={styles.sectionHeaderRow}>
-          <Stethoscope size={14} color="#111827" />
-          <Text style={styles.sectionHeaderTitle}>Clinical Ecosystem</Text>
-        </View>
-        <View style={styles.cardGroup}>
-          <TouchableOpacity
-            style={styles.clickableRow}
-            onPress={() => setShowClinicalExportModal(true)}
-            accessibilityLabel="Clinical Dermatologist Export"
-          >
-            <View>
-              <Text style={styles.rowLabel}>Clinical Intake Summary (PDF)</Text>
-              <Text style={styles.rowSubLabel}>ICD-10 mapped codes, GAGS score & INCI analysis</Text>
-            </View>
-            <ChevronRight size={18} color="#9CA3AF" />
-          </TouchableOpacity>
-          <View style={styles.divider} />
-          <TouchableOpacity
-            style={styles.clickableRow}
-            onPress={() => setShowDermShareModal(true)}
-            accessibilityLabel="Share with Dermatologist"
-          >
-            <View>
-              <Text style={styles.rowLabel}>Share with Dermatologist</Text>
-              <Text style={styles.rowSubLabel}>Create a secure, 90-day view-only invite link</Text>
-            </View>
-            <ChevronRight size={18} color="#9CA3AF" />
-          </TouchableOpacity>
-          <View style={styles.divider} />
-          <TouchableOpacity
-            style={styles.clickableRow}
-            onPress={() => setShowDiagnosisModal(true)}
-            accessibilityLabel="Log Doctor Diagnosis"
-          >
-            <View>
-              <Text style={styles.rowLabel}>Log Doctor Diagnosis & Rx</Text>
-              <Text style={styles.rowSubLabel}>Reconcile prescriptions with OTC skincare regimen</Text>
-            </View>
-            <ChevronRight size={18} color="#9CA3AF" />
-          </TouchableOpacity>
-          <View style={styles.divider} />
-          <TouchableOpacity
-            style={styles.clickableRow}
-            onPress={() => setShowProfileSwitcherModal(true)}
-            accessibilityLabel="Family Profiles"
-          >
-            <View>
-              <Text style={styles.rowLabel}>Family Profiles & Privacy</Text>
-              <Text style={styles.rowSubLabel}>Manage isolated accounts with optional Face ID</Text>
-            </View>
-            <ChevronRight size={18} color="#9CA3AF" />
-          </TouchableOpacity>
-        </View>
-
-        {/* ── 4. DATA SECTION ── */}
-        <View style={styles.sectionHeaderRow}>
-          <Database size={14} color="#111827" />
-          <Text style={styles.sectionHeaderTitle}>Data & Residency</Text>
-        </View>
-        <View style={styles.cardGroup}>
-          <TouchableOpacity
-            style={styles.clickableRow}
-            onPress={handleExportData}
-            accessibilityLabel="Export My Data"
-          >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Download size={15} color="#4B5563" style={{ marginRight: 10 }} />
-              <Text style={styles.rowLabel}>Export My Data</Text>
-            </View>
-            {exportLoading ? (
-              <ActivityIndicator size="small" color="#111827" />
-            ) : (
-              <ChevronRight size={18} color="#9CA3AF" />
-            )}
-          </TouchableOpacity>
-          <View style={styles.divider} />
-          <TouchableOpacity
-            style={styles.clickableRow}
-            onPress={() => {
-              const nextRegion = dataRegion === "US" ? "EU" : dataRegion === "EU" ? "APAC" : "US";
-              setDataRegion(nextRegion);
-              Alert.alert(
-                "Data Residency Updated",
-                `All personal scans, routines, and images will be stored exclusively in the ${nextRegion} region (GDPR Article 45 compliant).`,
-              );
-            }}
-            accessibilityLabel="Data Residency Region"
-          >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Globe size={15} color="#4B5563" style={{ marginRight: 10 }} />
-              <View>
-                <Text style={styles.rowLabel}>Storage Region ({dataRegion})</Text>
-                <Text style={styles.rowSubLabel}>
-                  {dataRegion === "US"
-                    ? "US-East (AWS / Supabase US)"
-                    : dataRegion === "EU"
-                      ? "EU-Frankfurt (GDPR Strict Residency)"
-                      : "APAC-Singapore (Asia Pacific)"}
-                </Text>
-              </View>
-            </View>
-            <ChevronRight size={18} color="#9CA3AF" />
-          </TouchableOpacity>
-          <View style={styles.divider} />
-          <TouchableOpacity
-            style={styles.clickableRow}
-            onPress={() => setShowDeleteDataModal(true)}
-            accessibilityLabel="Delete All My Data"
-          >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Trash2 size={15} color="#DC2626" style={{ marginRight: 10 }} />
-              <Text style={[styles.rowLabel, { color: "#DC2626" }]}>Delete All My Data</Text>
-            </View>
-            <ChevronRight size={18} color="#DC2626" />
-          </TouchableOpacity>
-        </View>
-
-        {/* ── 5. ABOUT SECTION ── */}
+        {/* ── 4. ABOUT SECTION ── */}
         <View style={styles.sectionHeaderRow}>
           <Info size={14} color="#111827" />
           <Text style={styles.sectionHeaderTitle}>About</Text>
@@ -710,26 +443,13 @@ export default function SettingsScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* ── MODAL: EDIT SKIN PROFILE ── */}
-      <Modal visible={showProfileModal} animationType="slide" onRequestClose={() => setShowProfileModal(false)}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Edit Skin Profile</Text>
-            <TouchableOpacity onPress={() => setShowProfileModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <X size={20} color="#111827" />
-            </TouchableOpacity>
-          </View>
-          <QuestionnaireWizard
-            onComplete={() => {
-              setShowProfileModal(false);
-              Alert.alert("Profile Updated", "Your personalized routine recommendations have been recalculated.");
-            }}
-          />
-        </SafeAreaView>
-      </Modal>
-
       {/* ── MODAL: CHANGE PASSWORD ── */}
-      <Modal visible={showPasswordModal} animationType="fade" transparent onRequestClose={() => setShowPasswordModal(false)}>
+      <Modal
+        visible={showPasswordModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowPasswordModal(false)}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalCardTitle}>Change Password</Text>
@@ -764,10 +484,7 @@ export default function SettingsScreen() {
               >
                 <Text style={styles.modalCancelText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalPrimaryBtn}
-                onPress={handleChangePassword}
-              >
+              <TouchableOpacity style={styles.modalPrimaryBtn} onPress={handleChangePassword}>
                 <Text style={styles.modalPrimaryText}>Update</Text>
               </TouchableOpacity>
             </View>
@@ -775,39 +492,20 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
-      {/* ── MODAL: DELETE ALL DATA ── */}
-      <Modal visible={showDeleteDataModal} animationType="fade" transparent onRequestClose={() => setShowDeleteDataModal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={[styles.modalCardTitle, { color: "#DC2626" }]}>Delete All Data</Text>
-            <Text style={styles.modalCardBody}>
-              This will permanently delete all your scans, routines, and skin profile data. Your account will remain active, but you&apos;ll need to retake the questionnaire.
-            </Text>
-            <View style={styles.modalButtonsRow}>
-              <TouchableOpacity
-                style={styles.modalCancelBtn}
-                onPress={() => setShowDeleteDataModal(false)}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalPrimaryBtn, { backgroundColor: "#DC2626" }]}
-                onPress={handleDeleteData}
-              >
-                <Text style={[styles.modalPrimaryText, { color: "#FFFFFF" }]}>Delete Data</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
       {/* ── MODAL: DELETE ACCOUNT ── */}
-      <Modal visible={showDeleteAccountModal} animationType="fade" transparent onRequestClose={() => setShowDeleteAccountModal(false)}>
+      <Modal
+        visible={showDeleteAccountModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowDeleteAccountModal(false)}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={[styles.modalCardTitle, { color: "#DC2626" }]}>Delete Account</Text>
             <Text style={styles.modalCardBody}>
-              This will permanently delete your account and all associated data, including scan history, routines, and skin profile. This action cannot be undone.
+              This will permanently delete your account and all associated data, including scan
+              history, routines, skin profile, and questionnaire answers. This action cannot be
+              undone.
             </Text>
             <View style={styles.modalButtonsRow}>
               <TouchableOpacity
@@ -820,7 +518,9 @@ export default function SettingsScreen() {
                 style={[styles.modalPrimaryBtn, { backgroundColor: "#DC2626" }]}
                 onPress={handleDeleteAccount}
               >
-                <Text style={[styles.modalPrimaryText, { color: "#FFFFFF" }]}>Delete Account</Text>
+                <Text style={[styles.modalPrimaryText, { color: "#FFFFFF" }]}>
+                  Delete Everything
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -828,11 +528,18 @@ export default function SettingsScreen() {
       </Modal>
 
       {/* ── MODAL: FULL MEDICAL DISCLAIMER ── */}
-      <Modal visible={showDisclaimerModal} animationType="slide" onRequestClose={() => setShowDisclaimerModal(false)}>
+      <Modal
+        visible={showDisclaimerModal}
+        animationType="slide"
+        onRequestClose={() => setShowDisclaimerModal(false)}
+      >
         <SafeAreaView style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Medical Disclaimer</Text>
-            <TouchableOpacity onPress={() => setShowDisclaimerModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity
+              onPress={() => setShowDisclaimerModal(false)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <X size={20} color="#111827" />
             </TouchableOpacity>
           </View>
@@ -855,7 +562,12 @@ export default function SettingsScreen() {
       </Modal>
 
       {/* ── MODAL: FEEDBACK / BUG REPORT ── */}
-      <Modal visible={showFeedbackModal} animationType="fade" transparent onRequestClose={() => setShowFeedbackModal(false)}>
+      <Modal
+        visible={showFeedbackModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowFeedbackModal(false)}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalCardTitle}>

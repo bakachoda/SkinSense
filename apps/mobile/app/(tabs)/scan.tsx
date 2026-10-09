@@ -42,26 +42,12 @@ import {
   HelpCircle,
   Volume2,
   VolumeX,
-  Compass,
-  CheckCircle2,
   Droplets,
   Ruler,
-  Maximize2,
-  Sliders,
   Play,
   Check,
-  ChevronDown,
-  ChevronUp,
-  Zap,
-  Target,
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
-  ArrowDown,
 } from "lucide-react-native";
 import { CircularProgressRing, AnalysisProgress } from "../../components/LoadingStates";
-import { PreScanChecklistModal } from "../../components/PreScanChecklistModal";
-import { EnvironmentQualityGate } from "../../components/EnvironmentQualityGate";
 import { SelfAssessmentView } from "../../components/SelfAssessmentView";
 import { BarrierHealthCard } from "../../components/BarrierHealthCard";
 import { SkinAgeCard } from "../../components/SkinAgeCard";
@@ -71,8 +57,6 @@ import { SafetyScreeningCard } from "../../components/SafetyScreeningCard";
 import { DeviceHardwareBadge } from "../../components/DeviceHardwareBadge";
 import { Topology3DViewer } from "../../components/Topology3DViewer";
 import { PredictiveInsightsCard } from "../../components/PredictiveInsightsCard";
-import { AdvancedCaptureModal } from "../../components/AdvancedCaptureModal";
-import type { AdvancedCaptureMode } from "@skinsense/types";
 import {
   speakGuidance,
   stopGuidance,
@@ -92,6 +76,7 @@ import {
 const { width } = Dimensions.get("window");
 
 type CaptureStage =
+  | "INSTRUCTIONS"
   | "CAMERA"
   | "UPLOADING"
   | "SELF_ASSESSMENT"
@@ -105,7 +90,7 @@ const POSES: { id: PoseTarget; label: string; targetYaw: number }[] = [
   { id: "right_45", label: "Right 45°", targetYaw: 45 },
 ];
 
-import { detectFaceLocal, detectFaceViaBridge, useMLKit } from "../../lib/on-device-face-detector";
+import { detectFace } from "../../lib/on-device-face-detector";
 
 export default function ScanScreen() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -117,7 +102,7 @@ export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
 
   // Navigation & Stages
-  const [stage, setStage] = useState<CaptureStage>("CAMERA");
+  const [stage, setStage] = useState<CaptureStage>("INSTRUCTIONS");
   const [currentPoseIndex, setCurrentPoseIndex] = useState<number>(0);
   const [capturedAngleFrames, setCapturedAngleFrames] = useState<string[]>([]);
   const [flashActive, setFlashActive] = useState<boolean>(false);
@@ -142,15 +127,8 @@ export default function ScanScreen() {
   });
   const [holdProgressMs, setHoldProgressMs] = useState<number>(0);
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
-  const [showDevPanel, setShowDevPanel] = useState<boolean>(false);
   const isSamplingRef = useRef<boolean>(false);
 
-  // Pre-Scan Checklist & Quality Gate
-  const [showPreScanModal, setShowPreScanModal] = useState<boolean>(false);
-  const [showAdvancedCaptureModal, setShowAdvancedCaptureModal] = useState<boolean>(false);
-  const [advancedCaptureMode, setAdvancedCaptureMode] = useState<AdvancedCaptureMode>("lidar");
-  const [useRawDng, setUseRawDng] = useState<boolean>(true);
-  const [wifiOnly, setWifiOnly] = useState<boolean>(true);
   const [checklistCompleted, setChecklistCompleted] = useState<boolean>(false);
   const [physiologicalState, setPhysiologicalState] = useState<PhysiologicalState>({
     exercised: false,
@@ -180,12 +158,6 @@ export default function ScanScreen() {
   const cameraRef = useRef<any>(null);
   const activePose = POSES[currentPoseIndex] || POSES[0]!;
 
-  // Request camera permission on mount so the dialog appears immediately
-  useEffect(() => {
-    if (!permission?.granted && !permission?.canAskAgain === false) {
-      requestPermission();
-    }
-  }, []);
 
   // Sync voiceManager and sonarManager mute state
   useEffect(() => {
@@ -195,6 +167,16 @@ export default function ScanScreen() {
       sonarManager.stop();
     }
   }, [voiceMuted]);
+
+  // Speak initial guidance when camera stage opens
+  useEffect(() => {
+    if (stage === "CAMERA" && !voiceMuted) {
+      const timer = setTimeout(() => {
+        voiceManager.speak("Hold phone at eye level. Center your face in the oval guide.", true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [stage]);
 
   // Level 1: Face alignment evaluation engine & Sonar Audio Feedback Loop
   useEffect(() => {
@@ -261,13 +243,12 @@ export default function ScanScreen() {
     };
   }, [stage, checklistCompleted, alignmentEval.isAligned, isCapturing, currentPoseIndex]);
 
-  // Face detection sampling loop
-  // ML Kit (dev build): on-device ~20ms, uses file URI
-  // Vision bridge (Expo Go): HTTP to Python :5005, uses base64
+  // Face detection sampling loop — ML Kit on-device only
   useEffect(() => {
     let timeoutId: any = null;
     let isDisposed = false;
-    const interval = useMLKit ? 250 : 450;
+
+    console.log("[Scan] sampling effect:", { stage, granted: permission?.granted, isCapturing });
 
     async function sampleFrame() {
       if (isDisposed || stage !== "CAMERA" || !permission?.granted) return;
@@ -276,43 +257,39 @@ export default function ScanScreen() {
         isSamplingRef.current = true;
         try {
           const snapshot = await cameraRef.current.takePictureAsync({
-            quality: useMLKit ? 0.1 : 0.15,
-            base64: !useMLKit,
+            quality: 0.4,
+            base64: false,
             shutterSound: false,
           });
 
           if (isDisposed) { isSamplingRef.current = false; return; }
 
-          let result;
-          if (useMLKit && snapshot?.uri) {
-            result = await detectFaceLocal(snapshot.uri, snapshot.width, snapshot.height);
-          } else if (!useMLKit && snapshot?.base64) {
-            result = await detectFaceViaBridge(snapshot.base64, activePose.id);
-          }
+          if (snapshot?.uri) {
+            const result = await detectFace(snapshot.uri, snapshot.width, snapshot.height);
 
-          if (!isDisposed && result) {
-            if (result.faceDetected) {
-              setChecklistCompleted(true);
-              setFaceMetrics(result.metrics);
-            } else {
-              setFaceMetrics({
-                centerX: 0,
-                centerY: 0,
-                boxWidth: 0,
-                boxHeight: 0,
-                yaw: 0,
-              });
+            if (!isDisposed) {
+              if (result.faceDetected) {
+                setFaceMetrics(result.metrics);
+              } else {
+                setFaceMetrics({
+                  centerX: 0,
+                  centerY: 0,
+                  boxWidth: 0,
+                  boxHeight: 0,
+                  yaw: 0,
+                });
+              }
             }
           }
-        } catch {
-          // Non-fatal — next sample will retry
+        } catch (e) {
+          console.warn("[Scan] sampling error:", e);
         } finally {
           isSamplingRef.current = false;
         }
       }
 
       if (!isDisposed) {
-        timeoutId = setTimeout(sampleFrame, interval);
+        timeoutId = setTimeout(sampleFrame, 250);
       }
     }
 
@@ -328,53 +305,10 @@ export default function ScanScreen() {
 
   // If questionnaire not yet completed, show questionnaire wizard
   if (!hasCompletedQuestionnaire) {
-    return <QuestionnaireWizard onComplete={() => setStage("CAMERA")} />;
+    return <QuestionnaireWizard onComplete={() => setStage("INSTRUCTIONS")} />;
   }
 
-  // Permission gate: show a full-screen prompt BEFORE rendering any camera UI
-  if (!permission?.granted) {
-    return (
-      <SafeAreaView style={styles.permissionGate}>
-        <View style={styles.permissionContent}>
-          <View style={styles.permissionIconCircle}>
-            <Camera size={48} color="#06B6D4" />
-          </View>
-          <Text style={styles.permissionTitle}>Camera Access Required</Text>
-          <Text style={styles.permissionDesc}>
-            SkinSense needs access to your camera to capture high-resolution skin scans for analysis.
-          </Text>
-          <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-            <Camera size={18} color="#0B0F19" />
-            <Text style={styles.permissionButtonText}>Grant Camera Access</Text>
-          </TouchableOpacity>
-          {permission?.canAskAgain === false && (
-            <Text style={styles.permissionHint}>
-              Permission was denied. Please enable camera access in your device Settings.
-            </Text>
-          )}
-        </View>
-      </SafeAreaView>
-    );
-  }
 
-  const handleStartCaptureSequence = () => {
-    setShowPreScanModal(true);
-  };
-
-  const handleProceedFromChecklist = (
-    state: PhysiologicalState = { exercised: false, hotShower: false },
-  ) => {
-    setPhysiologicalState(state);
-    setShowPreScanModal(false);
-    setChecklistCompleted(true);
-    setCurrentPoseIndex(0);
-    setCapturedAngleFrames([]);
-    setHoldProgressMs(0);
-
-    if (!voiceMuted) {
-      voiceManager.speak("Hold phone at eye level. Center your face in the guide.", true);
-    }
-  };
 
   const captureCurrentAngle = async () => {
     if (isCapturing) return;
@@ -577,12 +511,86 @@ export default function ScanScreen() {
   };
 
   // ==========================================
+  // RENDER: INSTRUCTIONS SCREEN
+  // ==========================================
+  if (stage === "INSTRUCTIONS") {
+    return (
+      <SafeAreaView style={styles.instructionsContainer}>
+        <View style={styles.instructionsContent}>
+          <View style={styles.instructionsIconCircle}>
+            <Camera size={40} color="#10B981" />
+          </View>
+          <Text style={styles.instructionsTitle}>Skin Scan</Text>
+          <Text style={styles.instructionsSubtitle}>
+            We'll capture 3 angles of your face for a complete analysis.
+          </Text>
+
+          <View style={styles.instructionsList}>
+            <View style={styles.instructionItem}>
+              <View style={styles.instructionBullet}>
+                <Sun size={16} color="#F59E0B" />
+              </View>
+              <Text style={styles.instructionText}>
+                Find good, even lighting — natural daylight works best
+              </Text>
+            </View>
+            <View style={styles.instructionItem}>
+              <View style={styles.instructionBullet}>
+                <Camera size={16} color="#06B6D4" />
+              </View>
+              <Text style={styles.instructionText}>
+                Hold the phone at arm's length, rear camera facing you
+              </Text>
+            </View>
+            <View style={styles.instructionItem}>
+              <View style={styles.instructionBullet}>
+                <Volume2 size={16} color="#8B5CF6" />
+              </View>
+              <Text style={styles.instructionText}>
+                Voice guidance will walk you through each pose — just listen and follow
+              </Text>
+            </View>
+            <View style={styles.instructionItem}>
+              <View style={styles.instructionBullet}>
+                <Check size={16} color="#10B981" />
+              </View>
+              <Text style={styles.instructionText}>
+                Stay still when aligned — photos are captured automatically
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.instructionsBottom}>
+          <TouchableOpacity
+            style={styles.startScanButton}
+            onPress={async () => {
+              if (!permission?.granted) {
+                const result = await requestPermission();
+                if (!result.granted) return;
+              }
+              setChecklistCompleted(true);
+              setCurrentPoseIndex(0);
+              setCapturedAngleFrames([]);
+              setHoldProgressMs(0);
+              setStage("CAMERA");
+            }}
+            activeOpacity={0.8}
+          >
+            <Play size={20} color="#FFFFFF" />
+            <Text style={styles.startScanText}>Start Scan</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ==========================================
   // RENDER: CAMERA CAPTURE VIEW
   // ==========================================
   if (stage === "CAMERA") {
     return (
       <View style={styles.cameraContainer}>
-        {/* Flash Simulation Overlay */}
         {flashActive && <View style={styles.flashOverlay} pointerEvents="none" />}
 
         <CameraView
@@ -592,132 +600,39 @@ export default function ScanScreen() {
           enableTorch={flashActive}
         />
 
-        {/* Top Header & Guidance Section (Sequential, Zero Overlap) */}
+        {/* Minimal top bar: pose progress + voice mute */}
         <View style={[styles.topSection, { paddingTop: Math.max(insets.top, Platform.OS === "android" ? 38 : 20) }]}>
-          {/* Top Bar: Mode Selector & Action Icons */}
           <View style={styles.topHudBar}>
-            {/* Rear Camera Badge */}
-            <View style={styles.modeDropdownPill}>
-              <Volume2 size={13} color="#10B981" />
-              <Text style={styles.modeDropdownText}>Rear Camera</Text>
-            </View>
-
-            {/* Actions: Lab Specs Modal & Voice Mute */}
-            <View style={styles.topActionsRow}>
-              <TouchableOpacity
-                style={styles.topIconBtn}
-                onPress={() => setShowAdvancedCaptureModal(true)}
-                activeOpacity={0.8}
-              >
-                <Zap size={14} color="#06B6D4" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.topIconBtn}
-                onPress={() => setVoiceMuted(!voiceMuted)}
-                activeOpacity={0.8}
-              >
-                {voiceMuted ? (
-                  <VolumeX size={15} color="#EF4444" />
-                ) : (
-                  <Volume2 size={15} color="#10B981" />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Unified Clinical HUD: Pose Stepper & Guidance in One Cohesive Card */}
-          <View style={styles.hudCard}>
-            {/* Pose Stepper Row */}
-            <View style={styles.poseStepper}>
-              {POSES.map((pose, idx) => {
-                const isCurrent = currentPoseIndex === idx;
-                const isCompleted = idx < currentPoseIndex;
-                return (
-                  <TouchableOpacity
-                    key={pose.id}
-                    style={[
-                      styles.poseStepItem,
-                      isCurrent && styles.poseStepItemCurrent,
-                      isCompleted && styles.poseStepItemCompleted,
-                    ]}
-                    onPress={() => {
-                      setCurrentPoseIndex(idx);
-                      setFaceMetrics({
-                        centerX: 0,
-                        centerY: 0,
-                        boxWidth: 0,
-                        boxHeight: 0,
-                        yaw: 0,
-                      });
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    {isCompleted ? (
-                      <CheckCircle2 size={12} color="#10B981" />
-                    ) : (
-                      <View
-                        style={[
-                          styles.poseStepBadge,
-                          isCurrent && styles.poseStepBadgeCurrent,
-                        ]}
-                      >
-                        <Text style={[styles.poseStepNum, isCurrent && styles.poseStepNumCurrent]}>
-                          {idx + 1}
-                        </Text>
-                      </View>
-                    )}
-                    <Text
-                      style={[
-                        styles.poseStepLabel,
-                        isCurrent && styles.poseStepLabelCurrent,
-                        isCompleted && styles.poseStepLabelCompleted,
-                      ]}
-                    >
-                      {pose.label.split(" ")[0]}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Hairline Divider */}
-            <View style={styles.hudDivider} />
-
-            {/* Real-time Guidance Feedback Row */}
-            <View style={styles.feedbackRow}>
-              <View
-                style={[
-                  styles.feedbackScoreBadge,
-                  alignmentEval.status === "ALIGNED"
-                    ? styles.feedbackScoreReady
-                    : alignmentEval.status === "NO_FACE"
-                      ? styles.feedbackScoreError
-                      : styles.feedbackScoreWarn,
-                ]}
-              >
+            {/* Pose progress dots (non-interactive) */}
+            <View style={styles.poseDotsRow}>
+              {POSES.map((pose, idx) => (
                 <View
+                  key={pose.id}
                   style={[
-                    styles.statusPillDot,
-                    {
-                      backgroundColor:
-                        alignmentEval.status === "ALIGNED"
-                          ? "#10B981"
-                          : alignmentEval.status === "NO_FACE"
-                            ? "#EF4444"
-                            : "#F59E0B",
-                    },
+                    styles.poseDot,
+                    idx < currentPoseIndex && styles.poseDotDone,
+                    idx === currentPoseIndex && styles.poseDotCurrent,
                   ]}
                 />
-                <Text style={styles.feedbackScoreText}>{alignmentEval.score}%</Text>
-              </View>
-              <Text style={styles.feedbackText} numberOfLines={1}>
-                {framingStatus}
-              </Text>
+              ))}
             </View>
+
+            {/* Voice mute toggle */}
+            <TouchableOpacity
+              style={styles.topIconBtn}
+              onPress={() => setVoiceMuted(!voiceMuted)}
+              activeOpacity={0.8}
+            >
+              {voiceMuted ? (
+                <VolumeX size={15} color="#EF4444" />
+              ) : (
+                <Volume2 size={15} color="#10B981" />
+              )}
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Centered Guide Oval with Uncluttered Viewport */}
+        {/* Guide oval */}
         <View style={styles.ovalOverlayContainer} pointerEvents="none">
           <View
             style={[
@@ -732,16 +647,13 @@ export default function ScanScreen() {
               activePose.id === "right_45" && styles.guideOvalRight,
             ]}
           >
-            {/* Interior subtle alignment crosshairs */}
             <View style={styles.crosshairH} />
             <View style={styles.crosshairV} />
 
-            {/* Auto-Capture Hold Countdown Overlay */}
             {holdProgressMs > 0 && (
               <View style={styles.holdCountdownBox}>
-                <Zap size={13} color="#10B981" />
                 <Text style={styles.holdCountdownText}>
-                  Capturing in {((800 - holdProgressMs) / 1000).toFixed(1)}s
+                  {((800 - holdProgressMs) / 1000).toFixed(1)}s
                 </Text>
                 <View style={styles.holdProgressBar}>
                   <View
@@ -753,252 +665,9 @@ export default function ScanScreen() {
                 </View>
               </View>
             )}
-
-            {/* Directional Nudge Hint (when off center) */}
-            {alignmentEval.status === "OFF_CENTER_LEFT" && (
-              <View style={styles.nudgeBadge}>
-                <ArrowLeft size={14} color="#F59E0B" />
-                <Text style={styles.nudgeText}>Nudge Left</Text>
-              </View>
-            )}
-            {alignmentEval.status === "OFF_CENTER_RIGHT" && (
-              <View style={styles.nudgeBadge}>
-                <Text style={styles.nudgeText}>Nudge Right</Text>
-                <ArrowRight size={14} color="#F59E0B" />
-              </View>
-            )}
-            {alignmentEval.status === "OFF_CENTER_UP" && (
-              <View style={styles.nudgeBadge}>
-                <ArrowDown size={14} color="#F59E0B" />
-                <Text style={styles.nudgeText}>Nudge Down</Text>
-              </View>
-            )}
-            {alignmentEval.status === "OFF_CENTER_DOWN" && (
-              <View style={styles.nudgeBadge}>
-                <ArrowUp size={14} color="#F59E0B" />
-                <Text style={styles.nudgeText}>Nudge Up</Text>
-              </View>
-            )}
-            {alignmentEval.status === "TOO_FAR" && (
-              <View style={styles.nudgeBadge}>
-                <Maximize2 size={13} color="#EF4444" />
-                <Text style={styles.nudgeText}>Move Closer</Text>
-              </View>
-            )}
-            {alignmentEval.status === "TOO_CLOSE" && (
-              <View style={styles.nudgeBadge}>
-                <Ruler size={13} color="#EF4444" />
-                <Text style={styles.nudgeText}>Move Back</Text>
-              </View>
-            )}
-            {alignmentEval.status === "WRONG_YAW" && (
-              <View style={styles.nudgeBadge}>
-                <Compass size={13} color="#F59E0B" />
-                <Text style={styles.nudgeText}>
-                  {activePose.id === "left_45"
-                    ? "Turn Left 45°"
-                    : activePose.id === "right_45"
-                    ? "Turn Right 45°"
-                    : "Center Head"}
-                </Text>
-              </View>
-            )}
           </View>
         </View>
 
-        {/* Floating Dev Simulator Drawer (Only visible when toggled) */}
-        {showDevPanel && (
-          <View style={styles.floatingDevDrawer}>
-            <View style={styles.devDrawerHeader}>
-              <Text style={styles.devDrawerTitle}>Developer Simulation</Text>
-              <TouchableOpacity onPress={() => setShowDevPanel(false)}>
-                <ChevronDown size={16} color="#94A3B8" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.devScroll}
-            >
-              <TouchableOpacity
-                style={[
-                  styles.devPresetBtn,
-                  alignmentEval.status === "NO_FACE" && styles.devPresetBtnActive,
-                ]}
-                onPress={() => {
-                  setChecklistCompleted(true);
-                  setFaceMetrics({
-                    centerX: 0,
-                    centerY: 0,
-                    boxWidth: 0,
-                    boxHeight: 0,
-                    yaw: 0,
-                  });
-                }}
-              >
-                <Text style={styles.devPresetText}>No Face</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.devPresetBtn,
-                  alignmentEval.status === "TOO_FAR" && styles.devPresetBtnActive,
-                ]}
-                onPress={() => {
-                  setChecklistCompleted(true);
-                  setFaceMetrics({
-                    centerX: 0.5,
-                    centerY: 0.44,
-                    boxWidth: 0.28,
-                    boxHeight: 0.28,
-                    yaw: activePose.targetYaw,
-                  });
-                }}
-              >
-                <Text style={styles.devPresetText}>Too Far</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.devPresetBtn,
-                  alignmentEval.status === "TOO_CLOSE" && styles.devPresetBtnActive,
-                ]}
-                onPress={() => {
-                  setChecklistCompleted(true);
-                  setFaceMetrics({
-                    centerX: 0.5,
-                    centerY: 0.44,
-                    boxWidth: 0.75,
-                    boxHeight: 0.75,
-                    yaw: activePose.targetYaw,
-                  });
-                }}
-              >
-                <Text style={styles.devPresetText}>Too Close</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.devPresetBtn,
-                  alignmentEval.status === "OFF_CENTER_LEFT" && styles.devPresetBtnActive,
-                ]}
-                onPress={() => {
-                  setChecklistCompleted(true);
-                  setFaceMetrics({
-                    centerX: 0.32,
-                    centerY: 0.44,
-                    boxWidth: 0.5,
-                    boxHeight: 0.5,
-                    yaw: activePose.targetYaw,
-                  });
-                }}
-              >
-                <Text style={styles.devPresetText}>Left ⬅</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.devPresetBtn,
-                  alignmentEval.status === "OFF_CENTER_RIGHT" && styles.devPresetBtnActive,
-                ]}
-                onPress={() => {
-                  setChecklistCompleted(true);
-                  setFaceMetrics({
-                    centerX: 0.68,
-                    centerY: 0.44,
-                    boxWidth: 0.5,
-                    boxHeight: 0.5,
-                    yaw: activePose.targetYaw,
-                  });
-                }}
-              >
-                <Text style={styles.devPresetText}>Right ➡</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.devPresetBtn,
-                  styles.devPresetBtnLock,
-                  alignmentEval.status === "ALIGNED" && styles.devPresetBtnActiveGreen,
-                ]}
-                onPress={() => {
-                  setChecklistCompleted(true);
-                  setFaceMetrics({
-                    centerX: 0.5,
-                    centerY: 0.44,
-                    boxWidth: 0.5,
-                    boxHeight: 0.5,
-                    yaw: activePose.targetYaw,
-                  });
-                }}
-              >
-                <Zap size={12} color="#10B981" />
-                <Text style={styles.devPresetTextGreen}>Aligned & Auto-Snap</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Clean Bottom Shutter Dock */}
-        <View style={[styles.shutterContainer, { bottom: Math.max(insets.bottom, Platform.OS === "android" ? 24 : 16) }]}>
-          <View style={styles.shutterRow}>
-            {/* Shutter Button (Manual Override) - Dead Center */}
-            <TouchableOpacity
-              style={[
-                styles.captureButton,
-                alignmentEval.status === "ALIGNED" && styles.captureButtonAligned,
-              ]}
-              onPress={
-                !checklistCompleted
-                  ? handleStartCaptureSequence
-                  : captureCurrentAngle
-              }
-              activeOpacity={0.8}
-              disabled={isCapturing}
-            >
-              <View
-                style={[
-                  styles.captureInner,
-                  alignmentEval.status === "ALIGNED" && styles.captureInnerAligned,
-                ]}
-              >
-                {isCapturing ? (
-                  <ActivityIndicator color="#0B0F19" size="small" />
-                ) : (
-                  <Camera size={26} color="#0B0F19" />
-                )}
-              </View>
-            </TouchableOpacity>
-
-            {/* Right Mini Dev Sim Trigger (Docked to side) */}
-            <TouchableOpacity
-              style={styles.miniDevToggle}
-              onPress={() => setShowDevPanel(!showDevPanel)}
-              activeOpacity={0.8}
-            >
-              <Sliders size={14} color="#06B6D4" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Pre-Scan Checklist Modal */}
-        <PreScanChecklistModal
-          visible={showPreScanModal}
-          onProceed={handleProceedFromChecklist}
-          onDismiss={() => setShowPreScanModal(false)}
-        />
-
-        {/* Phase 5 Advanced Capture Studio Modal */}
-        <AdvancedCaptureModal
-          visible={showAdvancedCaptureModal}
-          onClose={() => setShowAdvancedCaptureModal(false)}
-          onSelectMode={(mode, opts) => {
-            setAdvancedCaptureMode(mode);
-            setUseRawDng(opts.useRawDng);
-            setWifiOnly(opts.wifiOnly);
-            handleProceedFromChecklist();
-          }}
-        />
       </View>
     );
   }
@@ -1011,7 +680,7 @@ export default function ScanScreen() {
       <SafeAreaView style={styles.progressContainer}>
         <View style={styles.progressCard}>
           <CircularProgressRing progress={progressPercent} label={progressStage} />
-          <Text style={styles.progressSub}>Multi-Angle 16-Frame HDR S3 Ingestion Active</Text>
+          <Text style={styles.progressSub}>Analyzing your skin...</Text>
         </View>
       </SafeAreaView>
     );
@@ -1041,7 +710,7 @@ export default function ScanScreen() {
           <AnalysisProgress
             serverStage={serverStage}
             onTimeoutWait={() => {}}
-            onTimeoutHome={() => setStage("CAMERA")}
+            onTimeoutHome={() => setStage("INSTRUCTIONS")}
           />
         </View>
       </SafeAreaView>
@@ -1057,7 +726,7 @@ export default function ScanScreen() {
         <AlertCircle size={48} color="#EF4444" />
         <Text style={styles.errorTitle}>Analysis Interrupted</Text>
         <Text style={styles.errorDesc}>{errorMessage}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => setStage("CAMERA")}>
+        <TouchableOpacity style={styles.retryButton} onPress={() => setStage("INSTRUCTIONS")}>
           <RefreshCw size={18} color="#FFFFFF" />
           <Text style={styles.retryButtonText}>Retake Photo</Text>
         </TouchableOpacity>
@@ -1334,7 +1003,7 @@ export default function ScanScreen() {
             setCapturedAngleFrames([]);
             setCurrentPoseIndex(0);
             setChecklistCompleted(false);
-            setStage("CAMERA");
+            setStage("INSTRUCTIONS");
           }}
         >
           <Camera size={20} color="#FFFFFF" />
@@ -1358,6 +1027,69 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     backgroundColor: "#FFFFFF",
     zIndex: 999,
+  },
+  instructionsContainer: {
+    flex: 1,
+    backgroundColor: "#0B0F19",
+    justifyContent: "space-between",
+  },
+  instructionsContent: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 28,
+  },
+  instructionsIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(16, 185, 129, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  instructionsTitle: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#F1F5F9",
+    marginBottom: 8,
+  },
+  instructionsSubtitle: {
+    fontSize: 15,
+    color: "#94A3B8",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+  instructionsList: {
+    width: "100%",
+    gap: 18,
+  },
+  instructionItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 14,
+  },
+  instructionBullet: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+  },
+  instructionText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#CBD5E1",
+    lineHeight: 20,
+    paddingTop: 8,
+  },
+  instructionsBottom: {
+    alignItems: "center",
+    paddingBottom: 36,
+    paddingHorizontal: 28,
   },
   mockCameraBg: {
     flex: 1,
@@ -1398,26 +1130,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
   },
-  modeDropdownPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(15, 23, 42, 0.82)",
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 18,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.15)",
-  },
-  modeDropdownText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#F8FAFC",
-  },
-  topActionsRow: {
+  poseDotsRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+  },
+  poseDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+  },
+  poseDotCurrent: {
+    backgroundColor: "#F59E0B",
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  poseDotDone: {
+    backgroundColor: "#10B981",
   },
   topIconBtn: {
     width: 34,
@@ -1428,123 +1159,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.15)",
-  },
-  hudCard: {
-    alignSelf: "center",
-    width: "92%",
-    maxWidth: 360,
-    marginTop: 10,
-    backgroundColor: "rgba(11, 15, 25, 0.88)",
-    borderRadius: 18,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  poseStepper: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  poseStepItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-    gap: 5,
-  },
-  poseStepItemCurrent: {
-    backgroundColor: "rgba(16, 185, 129, 0.2)",
-    borderWidth: 1,
-    borderColor: "#10B981",
-  },
-  poseStepItemCompleted: {
-    backgroundColor: "rgba(16, 185, 129, 0.1)",
-  },
-  poseStepBadge: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  poseStepBadgeCurrent: {
-    backgroundColor: "#10B981",
-  },
-  poseStepNum: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#94A3B8",
-  },
-  poseStepNumCurrent: {
-    color: "#0B0F19",
-  },
-  poseStepLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#94A3B8",
-  },
-  poseStepLabelCurrent: {
-    color: "#10B981",
-    fontWeight: "700",
-  },
-  poseStepLabelCompleted: {
-    color: "#10B981",
-  },
-  hudDivider: {
-    height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    marginVertical: 5,
-    width: "100%",
-  },
-  feedbackRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 2,
-  },
-  feedbackScoreBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 8,
-    backgroundColor: "rgba(16, 185, 129, 0.25)",
-    gap: 4,
-  },
-  feedbackScoreReady: {
-    backgroundColor: "rgba(16, 185, 129, 0.25)",
-  },
-  feedbackScoreWarn: {
-    backgroundColor: "rgba(245, 158, 11, 0.25)",
-  },
-  feedbackScoreError: {
-    backgroundColor: "rgba(239, 68, 68, 0.25)",
-  },
-  statusPillDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  feedbackScoreText: {
-    color: "#FFFFFF",
-    fontSize: 11,
-    fontWeight: "800",
-  },
-  feedbackText: {
-    color: "#F8FAFC",
-    fontSize: 12,
-    fontWeight: "600",
-    flexShrink: 1,
   },
   ovalOverlayContainer: {
     ...StyleSheet.absoluteFill,
@@ -1627,84 +1241,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#10B981",
     borderRadius: 2,
   },
-  nudgeBadge: {
-    position: "absolute",
-    top: 24,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(15, 23, 42, 0.9)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#F59E0B",
-    gap: 6,
-  },
-  nudgeText: {
-    color: "#F59E0B",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-
-  floatingDevDrawer: {
-    position: "absolute",
-    bottom: 110,
-    alignSelf: "center",
-    width: "92%",
-    backgroundColor: "rgba(11, 15, 25, 0.95)",
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "rgba(6, 182, 212, 0.3)",
-    zIndex: 60,
-  },
-  devDrawerHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  devDrawerTitle: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#06B6D4",
-  },
-  devScroll: {
-    gap: 6,
-    alignItems: "center",
-  },
-  devPresetBtn: {
-    backgroundColor: "rgba(30, 41, 59, 0.8)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.15)",
-  },
-  devPresetBtnActive: {
-    backgroundColor: "rgba(245, 158, 11, 0.3)",
-    borderColor: "#F59E0B",
-  },
-  devPresetBtnLock: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderColor: "rgba(16, 185, 129, 0.5)",
-  },
-  devPresetBtnActiveGreen: {
-    backgroundColor: "rgba(16, 185, 129, 0.3)",
-    borderColor: "#10B981",
-  },
-  devPresetText: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: "#CBD5E1",
-  },
-  devPresetTextGreen: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#10B981",
-  },
   shutterContainer: {
     position: "absolute",
     bottom: Platform.OS === "android" ? 20 : 16,
@@ -1712,48 +1248,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 30,
   },
-  shutterRow: {
-    position: "relative",
+  startScanButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    width: "100%",
-  },
-  miniDevToggle: {
-    position: "absolute",
-    right: 24,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(15, 23, 42, 0.8)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(6, 182, 212, 0.3)",
-  },
-  captureButton: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    borderWidth: 4,
-    borderColor: "rgba(255, 255, 255, 0.5)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  captureButtonAligned: {
-    borderColor: "#10B981",
-    backgroundColor: "rgba(16, 185, 129, 0.15)",
-  },
-  captureInner: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: "#F8FAFC",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  captureInnerAligned: {
+    gap: 10,
     backgroundColor: "#10B981",
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 28,
+  },
+  startScanText: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
   progressContainer: {
     flex: 1,

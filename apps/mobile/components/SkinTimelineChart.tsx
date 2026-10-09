@@ -47,15 +47,16 @@ const DIRECTION_CONFIG: Record<TrendDirection, { icon: any; color: string; label
   volatile: { icon: AlertTriangle, color: "#F59E0B", label: "Volatile" },
 };
 
-function MiniSparkline({ dataPoints, color }: { dataPoints: { value: number }[]; color: string }) {
+function MiniSparkline({ dataPoints, color, chartWidth }: { dataPoints: { value: number }[]; color: string; chartWidth?: number }) {
   if (dataPoints.length < 2) return null;
 
+  const w = chartWidth ?? CHART_WIDTH;
   const values = dataPoints.map((dp) => dp.value);
   const minVal = Math.min(...values);
   const maxVal = Math.max(...values);
   const range = maxVal - minVal || 1;
 
-  const pointSpacing = CHART_WIDTH / (values.length - 1);
+  const pointSpacing = w / (values.length - 1);
 
   const points = values.map((v, i) => ({
     x: i * pointSpacing,
@@ -63,7 +64,7 @@ function MiniSparkline({ dataPoints, color }: { dataPoints: { value: number }[];
   }));
 
   return (
-    <View style={[styles.sparklineContainer, { width: CHART_WIDTH, height: CHART_HEIGHT }]}>
+    <View style={[styles.sparklineContainer, { width: w, height: CHART_HEIGHT }]}>
       {/* Grid lines */}
       {[0, 0.25, 0.5, 0.75, 1].map((pct) => (
         <View
@@ -153,7 +154,7 @@ function TrendBadge({ trend }: { trend: ConcernTrend }) {
         <Text style={styles.trendZone}>{zoneName}</Text>
       </View>
 
-      <MiniSparkline dataPoints={trend.dataPoints} color={color} />
+      <MiniSparkline dataPoints={trend.dataPoints} color={color} chartWidth={232} />
 
       <View style={styles.trendFooter}>
         <View style={[styles.directionBadge, { backgroundColor: `${config.color}15` }]}>
@@ -480,6 +481,7 @@ const styles = StyleSheet.create({
   },
   sparklineContainer: {
     position: "relative",
+    overflow: "hidden",
   },
   gridLine: {
     position: "absolute",

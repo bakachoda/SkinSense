@@ -136,9 +136,9 @@ export class ScanProcessor extends WorkerHost {
 
       // Fitzpatrick from inference colorimetry or fallback
       const fitzResult = this.fitzpatrickService.classifyTone(
-        inferenceMetadata.meanL ?? 58.5,
-        inferenceMetadata.meanA ?? 12.2,
-        inferenceMetadata.meanB ?? 14.8,
+        inferenceMetadata["meanL"] ?? 58.5,
+        inferenceMetadata["meanA"] ?? 12.2,
+        inferenceMetadata["meanB"] ?? 14.8,
       );
       const envContext = this.environmentalService.getEnvironmentalContext();
 
@@ -278,9 +278,9 @@ export class ScanProcessor extends WorkerHost {
         metadata: {
           modelVersion: "v2.5-inference",
           processingTimeMs,
-          imageQualityScore: inferenceMetadata.imageQualityScore ?? 0,
-          faceDetected: inferenceMetadata.faceDetected ?? true,
-          qualityGate: inferenceMetadata.qualityGate,
+          imageQualityScore: inferenceMetadata["imageQualityScore"] ?? 0,
+          faceDetected: inferenceMetadata["faceDetected"] ?? true,
+          qualityGate: inferenceMetadata["qualityGate"],
           selfAuditConfidence: selfAudit.confidence,
           scars,
           topology,
